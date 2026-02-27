@@ -49,4 +49,63 @@ public class Request : BaseEntity
 
         Status = RequestStatus.Pending;
     }
+    private void AddAudit(string eventType, string detail)
+    {
+        _auditLogs.Add(new AuditLog(Id, eventType, detail));
+    }
+    public void Assign(Guid courierId)
+    {
+        if (Status != RequestStatus.Pending)
+            throw new InvalidOperationException("Only pending requests can be assigned.");
+
+        var assignment = new Assignment(Id, courierId);
+        _assignments.Add(assignment);
+
+        Status = RequestStatus.Assigned;
+        MarkAsUpdated();
+
+        AddAudit("Assigned", $"Request assigned to courier {courierId}");
+    }
+    public void Start()
+    {
+        if (Status != RequestStatus.Assigned)
+            throw new InvalidOperationException("Only assigned requests can start.");
+
+        Status = RequestStatus.InProgress;
+        MarkAsUpdated();
+
+        AddAudit("Started", "Request marked as in progress.");
+    }
+    public void Complete(decimal? actualCost = null)
+    {
+        if (Status != RequestStatus.InProgress)
+            throw new InvalidOperationException("Only in-progress requests can be completed.");
+
+        Status = RequestStatus.Completed;
+        MarkAsUpdated();
+
+        AddAudit("Completed", "Request completed.");
+    }
+    public void Cancel()
+    {
+        if (Status == RequestStatus.Completed)
+            throw new InvalidOperationException("Completed requests cannot be cancelled.");
+
+        Status = RequestStatus.Cancelled;
+        MarkAsUpdated();
+
+        AddAudit("Cancelled", "Request cancelled.");
+    }
+    public void SubmitSurvey(int rating, string? comment)
+    {
+        if (Status != RequestStatus.Completed)
+            throw new InvalidOperationException("Survey can only be submitted after completion.");
+
+        if (Survey != null)
+            throw new InvalidOperationException("Survey already submitted.");
+
+        Survey = new Survey(Id, rating, comment);
+
+        AddAudit("SurveySubmitted", "Satisfaction survey submitted.");
+    }
 }
