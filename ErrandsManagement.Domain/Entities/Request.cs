@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Domain.Common;
+using ErrandsManagement.Domain.Common.Exceptions;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.ValueObjects;
 
@@ -56,7 +57,7 @@ public class Request : BaseEntity
     public void Assign(Guid courierId)
     {
         if (Status != RequestStatus.Pending)
-            throw new InvalidOperationException("Only pending requests can be assigned.");
+            throw new InvalidRequestStateException("Only pending requests can be assigned.");
 
         var assignment = new Assignment(Id, courierId);
         _assignments.Add(assignment);
@@ -69,7 +70,7 @@ public class Request : BaseEntity
     public void Start()
     {
         if (Status != RequestStatus.Assigned)
-            throw new InvalidOperationException("Only assigned requests can start.");
+            throw new InvalidRequestStateException("Only assigned requests can start.");
 
         Status = RequestStatus.InProgress;
         MarkAsUpdated();
@@ -79,7 +80,7 @@ public class Request : BaseEntity
     public void Complete(decimal? actualCost = null)
     {
         if (Status != RequestStatus.InProgress)
-            throw new InvalidOperationException("Only in-progress requests can be completed.");
+            throw new InvalidRequestStateException("Only in-progress requests can be completed.");
 
         Status = RequestStatus.Completed;
         MarkAsUpdated();
@@ -89,7 +90,7 @@ public class Request : BaseEntity
     public void Cancel()
     {
         if (Status == RequestStatus.Completed)
-            throw new InvalidOperationException("Completed requests cannot be cancelled.");
+            throw new InvalidRequestStateException("Completed requests cannot be cancelled.");
 
         Status = RequestStatus.Cancelled;
         MarkAsUpdated();
@@ -99,10 +100,10 @@ public class Request : BaseEntity
     public void SubmitSurvey(int rating, string? comment)
     {
         if (Status != RequestStatus.Completed)
-            throw new InvalidOperationException("Survey can only be submitted after completion.");
+            throw new SurveyNotAllowedException("Survey can only be submitted after completion.");
 
         if (Survey != null)
-            throw new InvalidOperationException("Survey already submitted.");
+            throw new SurveyNotAllowedException("Survey already submitted.");
 
         Survey = new Survey(Id, rating, comment);
 
