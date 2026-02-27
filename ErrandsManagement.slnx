@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ErrandsManagement.API/ErrandsManagement.API.csproj" />
+  <Project Path="ErrandsManagement.Application/ErrandsManagement.Application.csproj" />
+  <Project Path="ErrandsManagement.Domain/ErrandsManagement.Domain.csproj" />
+  <Project Path="ErrandsManagement.Infrastructure/ErrandsManagement.Infrastructure.csproj" />
+</Solution>
