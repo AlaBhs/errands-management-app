@@ -49,6 +49,7 @@ public class Request : BaseEntity
         EstimatedCost = estimatedCost;
 
         Status = RequestStatus.Pending;
+        AddAudit("Created", "Request created.");
     }
     private void AddAudit(string eventType, string detail)
     {
