@@ -1,6 +1,6 @@
 ﻿using ErrandsManagement.Application.Common.Interfaces;
-using ErrandsManagement.Infrastructure.Persistence;
-using ErrandsManagement.Infrastructure.Persistence.Repositories;
+using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

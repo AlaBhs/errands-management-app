@@ -1,7 +1,7 @@
 ﻿using ErrandsManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace ErrandsManagement.Infrastructure.Persistence;
+namespace ErrandsManagement.Infrastructure.Data;
 
 public sealed class AppDbContext : DbContext
 {

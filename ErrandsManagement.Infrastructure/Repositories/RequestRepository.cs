@@ -1,8 +1,9 @@
 ﻿using ErrandsManagement.Application.Common.Interfaces;
 using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace ErrandsManagement.Infrastructure.Persistence.Repositories;
+namespace ErrandsManagement.Infrastructure.Repositories;
 
 public sealed class RequestRepository : IRequestRepository
 {

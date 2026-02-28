@@ -8,6 +8,7 @@
   <ItemGroup>
     <Folder Include="Identity\" />
     <Folder Include="Authentication\" />
+    <Folder Include="Data\Configurations\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
