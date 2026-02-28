@@ -4,11 +4,11 @@ using ErrandsManagement.Domain.ValueObjects;
 
 namespace ErrandsManagement.Application.Requests.Commands.CreateRequest;
 
-public sealed class CreateRequestCommandHandler
+public sealed class CreateRequestHandler
 {
     private readonly IRequestRepository _requestRepository;
 
-    public CreateRequestCommandHandler(IRequestRepository requestRepository)
+    public CreateRequestHandler(IRequestRepository requestRepository)
     {
         _requestRepository = requestRepository;
     }
@@ -21,7 +21,7 @@ public sealed class CreateRequestCommandHandler
             command.Street,
             command.City,
             command.PostalCode,
-            command.City,
+            command.Country,
             command.Note);
 
         var request = new Request(
