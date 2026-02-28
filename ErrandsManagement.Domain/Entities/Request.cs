@@ -29,7 +29,9 @@ public class Request : BaseEntity
     public IReadOnlyCollection<Attachment> Attachments => _attachments.AsReadOnly();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLogs.AsReadOnly();
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     private Request() { } // For EF
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     public Request(
         string title,

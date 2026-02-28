@@ -10,7 +10,9 @@ public class User : BaseEntity
     public bool IsActive { get; private set; }
     public UserRole Role { get; private set; }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     private User() { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     public User(string fullName, string email, UserRole role)
     {
