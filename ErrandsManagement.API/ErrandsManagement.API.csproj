@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ErrandsManagement.Application\ErrandsManagement.Application.csproj" />
+    <ProjectReference Include="..\ErrandsManagement.Infrastructure\ErrandsManagement.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
