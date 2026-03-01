@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Application.Requests.Commands.CreateRequest;
+using ErrandsManagement.Domain.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ErrandsManagement.API.Controllers;
@@ -37,5 +38,11 @@ public sealed class RequestsController : ControllerBase
     public IActionResult Ping()
     {
         return Ok("API is working");
+    }
+
+    [HttpGet("test-exception")]
+    public IActionResult TestException()
+    {
+        throw new InvalidRequestStateException("Test domain exception.");
     }
 }
