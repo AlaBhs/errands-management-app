@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Application.Requests.Commands.CreateRequest;
+using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,11 @@ namespace ErrandsManagement.API.Controllers;
 public sealed class RequestsController : ControllerBase
 {
     private readonly CreateRequestHandler _handler;
-
-    public RequestsController(CreateRequestHandler handler)
+    private readonly GetRequestByIdHandler _getHandler;
+    public RequestsController(CreateRequestHandler handler,GetRequestByIdHandler getHandler)
     {
         _handler = handler;
+        _getHandler = getHandler;
     }
 
     [HttpPost]
@@ -29,9 +31,18 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(
+    Guid id,
+    CancellationToken cancellationToken)
     {
-        return Ok(); // placeholder
+        var result = await _getHandler.Handle(
+            new GetRequestByIdQuery(id),
+            cancellationToken);
+
+        if (result is null)
+            return NotFound();
+
+        return Ok(result);
     }
 
     [HttpGet("ping")]

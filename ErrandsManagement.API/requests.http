@@ -17,3 +17,7 @@ Content-Type: application/json
   "deadline": null,
   "estimatedCost": 20
 }
+
+### Get Request by ID
+GET {{baseUrl}}/api/requests/26b96ac6-9ca8-4270-a54a-c48ce7f95a4a
+Content-Type: application/json
