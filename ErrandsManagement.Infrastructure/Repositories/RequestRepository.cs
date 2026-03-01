@@ -23,6 +23,7 @@ public sealed class RequestRepository : IRequestRepository
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Requests
+            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
     public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken)
