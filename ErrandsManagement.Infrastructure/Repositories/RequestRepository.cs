@@ -25,4 +25,10 @@ public sealed class RequestRepository : IRequestRepository
         return await _context.Requests
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
+    public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Requests
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }
