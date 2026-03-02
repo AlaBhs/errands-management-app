@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
+using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Application.Requests.Commands.StartRequest;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<GetAllRequestsHandler>();
         services.AddScoped<AssignRequestHandler>();
         services.AddScoped<StartRequestHandler>();
+        services.AddScoped<CancelRequestHandler>();
 
         return services;
     }
