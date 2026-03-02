@@ -1,4 +1,4 @@
-﻿using ErrandsManagement.Application.Common.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
