@@ -34,6 +34,7 @@ public sealed class CreateRequestHandler
             command.EstimatedCost);
 
         await _requestRepository.AddAsync(request, cancellationToken);
+        await _requestRepository.SaveChangesAsync(cancellationToken);
 
         return request.Id;
     }
