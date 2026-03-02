@@ -1,6 +1,6 @@
 ﻿
 using ErrandsManagement.Application.Common.Exceptions;
-using ErrandsManagement.Application.Common.Interfaces;
+using ErrandsManagement.Application.Interfaces;
 
 namespace ErrandsManagement.Application.Requests.Commands.AssignRequest
 {
