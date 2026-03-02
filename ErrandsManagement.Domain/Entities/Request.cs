@@ -62,6 +62,9 @@ public class Request : BaseEntity
         if (Status != RequestStatus.Pending)
             throw new InvalidRequestStateException("Only pending requests can be assigned.");
 
+        if (_assignments.Any(a => a.IsActive))
+            throw new InvalidRequestStateException("Request already has an active assignment.");
+
         var assignment = new Assignment(Id, courierId);
         _assignments.Add(assignment);
 
@@ -75,30 +78,39 @@ public class Request : BaseEntity
         if (Status != RequestStatus.Assigned)
             throw new InvalidRequestStateException("Only assigned requests can start.");
 
+        var assignment = GetActiveAssignment();
+        assignment.Start();
+
         Status = RequestStatus.InProgress;
         MarkAsUpdated();
 
         AddAudit("Started", "Request marked as in progress.");
     }
-    public void Complete(decimal? actualCost = null)
+    public void Complete(decimal? actualCost = null, string? note = null)
     {
         if (Status != RequestStatus.InProgress)
             throw new InvalidRequestStateException("Only in-progress requests can be completed.");
+
+        var assignment = GetActiveAssignment();
+        assignment.Complete(actualCost, note);
 
         Status = RequestStatus.Completed;
         MarkAsUpdated();
 
         AddAudit("Completed", "Request completed.");
     }
-    public void Cancel()
+    public void Cancel(string reason)
     {
         if (Status == RequestStatus.Completed)
             throw new InvalidRequestStateException("Completed requests cannot be cancelled.");
 
+        if (Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException("Request is already cancelled.");
+
         Status = RequestStatus.Cancelled;
         MarkAsUpdated();
 
-        AddAudit("Cancelled", "Request cancelled.");
+        AddAudit("Cancelled", $"Request cancelled. Reason: {reason}");
     }
     public void SubmitSurvey(int rating, string? comment)
     {
@@ -112,4 +124,14 @@ public class Request : BaseEntity
 
         AddAudit("SurveySubmitted", "Satisfaction survey submitted.");
     }
+    private Assignment GetActiveAssignment()
+    {
+        var assignment = _assignments.LastOrDefault(a => a.IsActive);
+
+        if (assignment == null)
+            throw new InvalidRequestStateException("No active assignment found.");
+
+        return assignment;
+    }
+
 }
