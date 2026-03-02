@@ -1,5 +1,5 @@
-﻿using ErrandsManagement.Application.Common.Interfaces;
-using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Interfaces;
 
 namespace ErrandsManagement.Application.Requests.Queries.GetRequestById
 {
