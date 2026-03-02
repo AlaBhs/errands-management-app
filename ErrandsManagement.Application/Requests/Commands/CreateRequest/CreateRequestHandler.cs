@@ -1,4 +1,4 @@
-﻿using ErrandsManagement.Application.Common.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.ValueObjects;
 

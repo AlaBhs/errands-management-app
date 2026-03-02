@@ -99,7 +99,7 @@ public class Request : BaseEntity
 
         AddAudit("Completed", "Request completed.");
     }
-    public void Cancel(string reason)
+    public void Cancel(string? reason)
     {
         if (Status == RequestStatus.Completed)
             throw new InvalidRequestStateException("Completed requests cannot be cancelled.");
@@ -107,10 +107,16 @@ public class Request : BaseEntity
         if (Status == RequestStatus.Cancelled)
             throw new InvalidRequestStateException("Request is already cancelled.");
 
+        if (Status == RequestStatus.InProgress && string.IsNullOrWhiteSpace(reason))
+            throw new InvalidRequestStateException("Cancellation reason is required when request is in progress.");
+
         Status = RequestStatus.Cancelled;
         MarkAsUpdated();
 
-        AddAudit("Cancelled", $"Request cancelled. Reason: {reason}");
+        AddAudit("Cancelled",
+            string.IsNullOrWhiteSpace(reason)
+                ? "Request cancelled."
+                : $"Request cancelled. Reason: {reason}");
     }
     public void SubmitSurvey(int rating, string? comment)
     {
