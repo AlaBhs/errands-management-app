@@ -13,17 +13,18 @@ public sealed class RequestRepository : IRequestRepository
     {
         _context = context;
     }
-
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+    }
     public async Task AddAsync(Request request, CancellationToken cancellationToken)
     {
         await _context.Requests.AddAsync(request, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Requests
-            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
     public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken)
