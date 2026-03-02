@@ -6,6 +6,5 @@ public enum RequestStatus
     Assigned,
     InProgress,
     Completed,
-    Cancelled,
-    Failed
+    Cancelled
 }
