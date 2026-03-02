@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.Requests.Commands.CreateRequest;
+﻿using ErrandsManagement.Application.Requests.Commands.AssignRequest;
+using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,16 @@ public sealed class RequestsController : ControllerBase
 {
     private readonly CreateRequestHandler _handler;
     private readonly GetRequestByIdHandler _getHandler;
-    public RequestsController(CreateRequestHandler handler,GetRequestByIdHandler getHandler)
+    private readonly AssignRequestHandler _assignHandler;
+
+    public RequestsController(
+        CreateRequestHandler handler,
+        GetRequestByIdHandler getHandler, 
+        AssignRequestHandler assignHandler)
     {
         _handler = handler;
         _getHandler = getHandler;
+        _assignHandler = assignHandler;
     }
 
     [HttpPost]
@@ -45,6 +52,21 @@ public sealed class RequestsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPatch("{id:guid}/assign")]
+    public async Task<IActionResult> Assign(
+        Guid id,
+        AssignRequestCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (id != command.RequestId)
+            return BadRequest();
+
+        await _assignHandler.Handle(command, cancellationToken);
+
+        return NoContent();
+    }
+
+    // ============================= DEBUG =============================
     [HttpGet("ping")]
     public IActionResult Ping()
     {
@@ -56,4 +78,5 @@ public sealed class RequestsController : ControllerBase
     {
         throw new InvalidRequestStateException("Test domain exception.");
     }
+    // ============================= DEBUG =============================
 }
