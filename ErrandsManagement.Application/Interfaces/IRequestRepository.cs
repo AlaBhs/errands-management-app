@@ -1,13 +1,14 @@
-﻿using ErrandsManagement.Domain.Entities;
+﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Domain.Entities;
 
-namespace ErrandsManagement.Application.Common.Interfaces;
+namespace ErrandsManagement.Application.Interfaces;
 
 public interface IRequestRepository
 {
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task AddAsync(Request request, CancellationToken cancellationToken);
     Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task<List<Request>> GetAllAsync(CancellationToken cancellationToken);
+    Task<List<RequestListItemDto>> GetAllAsync(CancellationToken cancellationToken);
 
     // ============================ Temporary debug methods ============================
     //Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken);

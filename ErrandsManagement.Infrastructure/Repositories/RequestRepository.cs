@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.Common.Interfaces;
+﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -25,12 +26,23 @@ public sealed class RequestRepository : IRequestRepository
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Requests
+            .Include(r => r.Assignments)
+            .Include(r => r.AuditLogs)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
-    public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<List<RequestListItemDto>> GetAllAsync(
+        CancellationToken cancellationToken)
     {
         return await _context.Requests
-            .OrderByDescending(r => r.CreatedAt)
+            .AsNoTracking()
+            .Select(r => new RequestListItemDto(
+                r.Id,
+                r.Title,
+                r.Description,
+                r.Status.ToString(),
+                r.Priority.ToString(),
+                r.EstimatedCost,
+                r.Deadline))
             .ToListAsync(cancellationToken);
     }
 }
