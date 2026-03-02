@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ErrandsManagement.Infrastructure.Data;
 
@@ -18,5 +19,11 @@ public sealed class AppDbContext : DbContext
             typeof(AppDbContext).Assembly);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information)
+                      .EnableSensitiveDataLogging();
     }
 }
