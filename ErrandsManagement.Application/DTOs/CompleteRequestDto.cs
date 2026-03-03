@@ -1,6 +1,6 @@
 ﻿namespace ErrandsManagement.Application.DTOs
 {
-    public sealed record CompleteRequestRequest(
+    public sealed record CompleteRequestDto(
         decimal? ActualCost,
         string? Note);
 }

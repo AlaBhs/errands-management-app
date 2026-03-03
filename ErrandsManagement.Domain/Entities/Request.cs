@@ -121,14 +121,20 @@ public class Request : BaseEntity
     public void SubmitSurvey(int rating, string? comment)
     {
         if (Status != RequestStatus.Completed)
-            throw new SurveyNotAllowedException("Survey can only be submitted after completion.");
+            throw new SurveyNotAllowedException(
+                "Survey can only be submitted for completed requests.");
 
-        if (Survey != null)
-            throw new SurveyNotAllowedException("Survey already submitted.");
+        if (Survey is not null)
+            throw new SurveyNotAllowedException(
+                "Survey has already been submitted for this request.");
 
-        Survey = new Survey(Id, rating, comment);
+        if (rating < 1 || rating > 5)
+            throw new SurveyNotAllowedException(
+                "Rating must be between 1 and 5.");
 
-        AddAudit("SurveySubmitted", "Satisfaction survey submitted.");
+        Survey = new Survey(rating, comment);
+
+        AddAudit("SurveySubmitted", "Survey submitted by requester.");
     }
     private Assignment GetActiveAssignment()
     {

@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Domain.Common;
+using ErrandsManagement.Domain.Common.Exceptions;
 
 namespace ErrandsManagement.Domain.Entities;
 
@@ -12,9 +13,11 @@ public class Survey : BaseEntity
 
     private Survey() { }
 
-    public Survey(Guid requestId, int rating, string? comment)
+    public Survey(int rating, string? comment)
     {
-        RequestId = requestId;
+        if (rating < 1 || rating > 5)
+            throw new SurveyNotAllowedException("Rating must be between 1 and 5.");
+
         Rating = rating;
         Comment = comment;
         SubmittedAt = DateTime.UtcNow;
