@@ -1,7 +1,6 @@
-﻿namespace ErrandsManagement.Application.DTOs
+﻿namespace ErrandsManagement.Application.DTOs;
 
-{
-    public sealed record RequestDetailsDto(
+public sealed record RequestDetailsDto(
     Guid Id,
     string Title,
     string Description,
@@ -9,5 +8,8 @@
     string Priority,
     DateTime? Deadline,
     decimal? EstimatedCost,
-    Guid RequesterId);
-}
+    Guid RequesterId,
+    AddressDto DeliveryAddress,
+    AssignmentDto? CurrentAssignment,
+    IReadOnlyCollection<AuditLogDto> AuditLogs,
+    SurveyDto? Survey);

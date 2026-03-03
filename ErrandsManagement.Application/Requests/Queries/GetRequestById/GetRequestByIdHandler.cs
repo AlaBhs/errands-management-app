@@ -16,10 +16,15 @@ namespace ErrandsManagement.Application.Requests.Queries.GetRequestById
             GetRequestByIdQuery query,
             CancellationToken cancellationToken)
         {
-            var request = await _repository.GetByIdAsync(query.Id, cancellationToken);
+            var request = await _repository
+                .GetByIdAsync(query.Id, cancellationToken);
 
             if (request is null)
                 return null;
+
+            var currentAssignment = request.Assignments
+                .OrderByDescending(a => a.AssignedAt)
+                .FirstOrDefault(a => !a.IsCompleted);
 
             return new RequestDetailsDto(
                 request.Id,
@@ -29,7 +34,35 @@ namespace ErrandsManagement.Application.Requests.Queries.GetRequestById
                 request.Priority.ToString(),
                 request.Deadline,
                 request.EstimatedCost,
-                request.RequesterId);
+                request.RequesterId,
+                new AddressDto(
+                    request.DeliveryAddress.Street,
+                    request.DeliveryAddress.City,
+                    request.DeliveryAddress.PostalCode,
+                    request.DeliveryAddress.Country,
+                    request.DeliveryAddress.Note),
+                currentAssignment is null
+                    ? null
+                    : new AssignmentDto(
+                        currentAssignment.CourierId,
+                        currentAssignment.AssignedAt,
+                        currentAssignment.StartedAt,
+                        currentAssignment.CompletedAt,
+                        currentAssignment.ActualCost,
+                        currentAssignment.Note),
+                request.AuditLogs
+                    .OrderByDescending(a => a.OccurredAt)
+                    .Select(a => new AuditLogDto(
+                        a.EventType,
+                        a.Detail,
+                        a.OccurredAt))
+                    .ToList(),
+                request.Survey is null
+                    ? null
+                    : new SurveyDto(
+                        request.Survey.Rating,
+                        request.Survey.Comment)
+            );
         }
     }
 }

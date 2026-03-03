@@ -28,6 +28,7 @@ public sealed class RequestRepository : IRequestRepository
         return await _context.Requests
             .Include(r => r.Assignments)
             .Include(r => r.AuditLogs)
+            .Include(r => r.Survey)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
     public async Task<List<RequestListItemDto>> GetAllAsync(
