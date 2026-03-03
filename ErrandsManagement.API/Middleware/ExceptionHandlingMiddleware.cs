@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Domain.Common.Exceptions;
+﻿using ErrandsManagement.Application.Common.Exceptions;
+using ErrandsManagement.Domain.Common.Exceptions;
 using System.Net;
 using System.Text.Json;
 
@@ -23,9 +24,18 @@ public sealed class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Resource not found.");
+
+            await WriteResponse(
+                context,
+                HttpStatusCode.NotFound,
+                ex.Message);
+        }
         catch (DomainException ex)
         {
-            _logger.LogWarning(ex, "Domain exception occurred.");
+            _logger.LogWarning(ex, "Domain validation error.");
 
             await WriteResponse(
                 context,
@@ -34,7 +44,7 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception occurred.");
+            _logger.LogError(ex, "Unhandled exception.");
 
             await WriteResponse(
                 context,
@@ -54,7 +64,9 @@ public sealed class ExceptionHandlingMiddleware
         var response = new
         {
             success = false,
-            error = message
+            statusCode = (int)statusCode,
+            error = message,
+            traceId = context.TraceIdentifier
         };
 
         await context.Response.WriteAsync(

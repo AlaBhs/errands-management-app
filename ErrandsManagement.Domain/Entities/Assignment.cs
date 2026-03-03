@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Domain.Common;
+using ErrandsManagement.Domain.Common.Exceptions;
 
 namespace ErrandsManagement.Domain.Entities;
 
@@ -18,7 +19,7 @@ public class Assignment : BaseEntity
     public Assignment(Guid requestId, Guid courierId)
     {
         if (courierId == Guid.Empty)
-            throw new ArgumentException("CourierId cannot be empty.", nameof(courierId));
+            throw new InvalidRequestStateException("CourierId cannot be empty.");
 
         RequestId = requestId;
         CourierId = courierId;
@@ -32,10 +33,10 @@ public class Assignment : BaseEntity
     public void Start()
     {
         if (IsStarted)
-            throw new InvalidOperationException("Assignment already started.");
+            throw new InvalidRequestStateException("Assignment already started.");
 
         if (IsCompleted)
-            throw new InvalidOperationException("Completed assignment cannot be started.");
+            throw new InvalidRequestStateException("Completed assignment cannot be started.");
 
         StartedAt = DateTime.UtcNow;
     }
@@ -43,10 +44,10 @@ public class Assignment : BaseEntity
     public void Complete(decimal? actualCost, string? note = null)
     {
         if (!IsStarted)
-            throw new InvalidOperationException("Assignment must be started before completion.");
+            throw new InvalidRequestStateException("Assignment must be started before completion.");
 
         if (IsCompleted)
-            throw new InvalidOperationException("Assignment already completed.");
+            throw new InvalidRequestStateException("Assignment already completed.");
 
         CompletedAt = DateTime.UtcNow;
         ActualCost = actualCost;
