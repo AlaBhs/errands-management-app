@@ -4,6 +4,7 @@ using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CompleteRequest;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Application.Requests.Commands.StartRequest;
+using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
@@ -22,6 +23,7 @@ public sealed class RequestsController : ControllerBase
     private readonly StartRequestHandler _startRequestHandler;
     private readonly CompleteRequestHandler _completeRequestHandler;
     private readonly CancelRequestHandler _cancelRequestHandler;
+    private readonly SubmitSurveyHandler _submitSurveyhandler;
 
     public RequestsController(
         CreateRequestHandler handler,
@@ -30,8 +32,8 @@ public sealed class RequestsController : ControllerBase
         AssignRequestHandler assignHandler,
         StartRequestHandler startRequestHandler,
         CompleteRequestHandler completeRequestHandler,
-        CancelRequestHandler cancelRequestHandler
-        )
+        CancelRequestHandler cancelRequestHandler,
+        SubmitSurveyHandler submitSurveyhandler)
     {
         _handler = handler;
         _getHandler = getHandler;
@@ -40,6 +42,7 @@ public sealed class RequestsController : ControllerBase
         _startRequestHandler = startRequestHandler;
         _completeRequestHandler = completeRequestHandler;
         _cancelRequestHandler = cancelRequestHandler;
+        _submitSurveyhandler = submitSurveyhandler;
     }
 
     [HttpPost]
@@ -105,7 +108,7 @@ public sealed class RequestsController : ControllerBase
     [HttpPost("{id:guid}/complete")]
     public async Task<IActionResult> Complete(
     Guid id,
-    [FromBody] CompleteRequestRequest request,
+    [FromBody] CompleteRequestDto request,
     CancellationToken cancellationToken)
     {
         var command = new CompleteRequestCommand(
@@ -129,6 +132,24 @@ public sealed class RequestsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("{id:guid}/survey")]
+    public async Task<IActionResult> SubmitSurvey(
+    Guid id,
+    SubmitSurveyDto request,
+    CancellationToken cancellationToken)
+    {
+
+        var command = new SubmitSurveyCommand(
+            id,
+            request.Rating,
+            request.Comment);
+
+        await _submitSurveyhandler.Handle(command, cancellationToken);
+
+        return NoContent();
+    }
+
     // ============================= DEBUG =============================
     [HttpGet("ping")]
     public IActionResult Ping()
