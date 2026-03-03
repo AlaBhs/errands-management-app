@@ -1,3 +1,5 @@
-﻿namespace ErrandsManagement.Application.Requests.Commands.StartRequest;
+﻿using MediatR;
 
-public sealed record StartRequestCommand(Guid RequestId);
+namespace ErrandsManagement.Application.Requests.Commands.StartRequest;
+
+public sealed record StartRequestCommand(Guid RequestId) : IRequest;

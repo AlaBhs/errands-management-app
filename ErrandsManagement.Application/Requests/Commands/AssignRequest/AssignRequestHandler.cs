@@ -1,10 +1,12 @@
 ﻿
 using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Application.Interfaces;
+using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Commands.AssignRequest
 {
     public sealed class AssignRequestHandler
+    : IRequestHandler<AssignRequestCommand>
     {
         private readonly IRequestRepository _requestRepository;
 

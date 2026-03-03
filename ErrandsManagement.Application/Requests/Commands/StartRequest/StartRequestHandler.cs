@@ -1,9 +1,11 @@
 ﻿using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Application.Interfaces;
+using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Commands.StartRequest;
 
 public sealed class StartRequestHandler
+    : IRequestHandler<StartRequestCommand>
 {
     private readonly IRequestRepository _requestRepository;
 

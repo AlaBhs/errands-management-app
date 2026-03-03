@@ -8,6 +8,7 @@ using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ErrandsManagement.API.Controllers;
@@ -16,33 +17,36 @@ namespace ErrandsManagement.API.Controllers;
 [Route("api/[controller]")]
 public sealed class RequestsController : ControllerBase
 {
-    private readonly CreateRequestHandler _handler;
-    private readonly GetRequestByIdHandler _getHandler;
-    private readonly GetAllRequestsHandler _getAllRequestsHandler;
-    private readonly AssignRequestHandler _assignRequestHandler;
-    private readonly StartRequestHandler _startRequestHandler;
-    private readonly CompleteRequestHandler _completeRequestHandler;
-    private readonly CancelRequestHandler _cancelRequestHandler;
-    private readonly SubmitSurveyHandler _submitSurveyhandler;
+    //private readonly AssignRequestHandler _assignRequestHandler;
+    //private readonly StartRequestHandler _startRequestHandler;
+    //private readonly CompleteRequestHandler _completeRequestHandler;
+    //private readonly CancelRequestHandler _cancelRequestHandler;
+    //private readonly SubmitSurveyHandler _submitSurveyhandler;
 
-    public RequestsController(
-        CreateRequestHandler handler,
-        GetRequestByIdHandler getHandler, 
-        GetAllRequestsHandler getAllHandler,
-        AssignRequestHandler assignHandler,
-        StartRequestHandler startRequestHandler,
-        CompleteRequestHandler completeRequestHandler,
-        CancelRequestHandler cancelRequestHandler,
-        SubmitSurveyHandler submitSurveyhandler)
+    //public RequestsController(
+    //    CreateRequestHandler handler,
+    //    GetRequestByIdHandler getHandler,
+    //    AssignRequestHandler assignHandler,
+    //    StartRequestHandler startRequestHandler,
+    //    CompleteRequestHandler completeRequestHandler,
+    //    CancelRequestHandler cancelRequestHandler,
+    //    SubmitSurveyHandler submitSurveyhandler)
+    //{
+    //    _handler = handler;
+    //    _getHandler = getHandler;
+    //    _getAllRequestsHandler = getAllHandler;
+    //    _assignRequestHandler = assignHandler;
+    //    _startRequestHandler = startRequestHandler;
+    //    _completeRequestHandler = completeRequestHandler;
+    //    _cancelRequestHandler = cancelRequestHandler;
+    //    _submitSurveyhandler = submitSurveyhandler;
+    //}
+
+    private readonly IMediator _mediator;
+
+    public RequestsController(IMediator mediator, GetRequestByIdHandler getHandler)
     {
-        _handler = handler;
-        _getHandler = getHandler;
-        _getAllRequestsHandler = getAllHandler;
-        _assignRequestHandler = assignHandler;
-        _startRequestHandler = startRequestHandler;
-        _completeRequestHandler = completeRequestHandler;
-        _cancelRequestHandler = cancelRequestHandler;
-        _submitSurveyhandler = submitSurveyhandler;
+        _mediator = mediator;
     }
 
     [HttpPost]
@@ -50,12 +54,9 @@ public sealed class RequestsController : ControllerBase
         CreateRequestCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await _handler.Handle(command, cancellationToken);
+        var id = await _mediator.Send(command, cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id },
-            new { id });
+        return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
     [HttpGet("{id}")]
@@ -63,7 +64,7 @@ public sealed class RequestsController : ControllerBase
     Guid id,
     CancellationToken cancellationToken)
     {
-        var result = await _getHandler.Handle(
+        var result = await _mediator.Send(
             new GetRequestByIdQuery(id),
             cancellationToken);
 
@@ -76,9 +77,7 @@ public sealed class RequestsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var result = await _getAllRequestsHandler
-            .Handle(new GetAllRequestsQuery(), cancellationToken);
-
+        var result = await _mediator.Send(new GetAllRequestsQuery(), cancellationToken);
         return Ok(result);
     }
 
@@ -90,7 +89,7 @@ public sealed class RequestsController : ControllerBase
     {
         var command = new AssignRequestCommand(id, request.CourierId);
 
-        await _assignRequestHandler.Handle(command, cancellationToken);
+        await _mediator.Send(command, cancellationToken);
 
         return NoContent();
     }
@@ -100,7 +99,7 @@ public sealed class RequestsController : ControllerBase
     {
         var command = new StartRequestCommand(id);
 
-        await _startRequestHandler.Handle(command, cancellationToken);
+        await _mediator.Send(command, cancellationToken);
 
         return NoContent();
     }
@@ -116,7 +115,7 @@ public sealed class RequestsController : ControllerBase
             request.ActualCost,
             request.Note);
 
-        await _completeRequestHandler.Handle(command, cancellationToken);
+        await _mediator.Send(command, cancellationToken);
 
         return NoContent();
     }
@@ -128,7 +127,7 @@ public sealed class RequestsController : ControllerBase
     {
         var command = new CancelRequestCommand(id, request.Reason);
 
-        await _cancelRequestHandler.Handle(command, cancellationToken);
+        await _mediator.Send(command, cancellationToken);
 
         return NoContent();
     }
@@ -145,7 +144,7 @@ public sealed class RequestsController : ControllerBase
             request.Rating,
             request.Comment);
 
-        await _submitSurveyhandler.Handle(command, cancellationToken);
+        await _mediator.Send(command, cancellationToken);
 
         return NoContent();
     }
