@@ -128,10 +128,6 @@ public class Request : BaseEntity
             throw new SurveyNotAllowedException(
                 "Survey has already been submitted for this request.");
 
-        if (rating < 1 || rating > 5)
-            throw new SurveyNotAllowedException(
-                "Rating must be between 1 and 5.");
-
         Survey = new Survey(rating, comment);
 
         AddAudit("SurveySubmitted", "Survey submitted by requester.");
