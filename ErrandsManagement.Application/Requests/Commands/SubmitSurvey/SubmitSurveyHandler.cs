@@ -1,9 +1,10 @@
 ﻿using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Application.Interfaces;
+using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Commands.SubmitSurvey
 {
-    public sealed class SubmitSurveyHandler
+    public sealed class SubmitSurveyHandler : IRequestHandler<SubmitSurveyCommand>
     {
         private readonly IRequestRepository _repository;
 

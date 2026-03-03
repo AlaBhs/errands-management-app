@@ -1,5 +1,6 @@
 using ErrandsManagement.API.Middleware;
 using ErrandsManagement.Application;
+using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -11,6 +12,11 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(
+        typeof(CreateRequestCommand).Assembly));
+
 
 // Controller
 builder.Services.AddControllers();

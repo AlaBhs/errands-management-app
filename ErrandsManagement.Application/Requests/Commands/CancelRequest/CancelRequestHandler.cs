@@ -1,9 +1,10 @@
 ﻿using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Application.Interfaces;
+using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Commands.CancelRequest;
 
-public sealed class CancelRequestHandler
+public sealed class CancelRequestHandler : IRequestHandler<CancelRequestCommand>
 {
     private readonly IRequestRepository _requestRepository;
 

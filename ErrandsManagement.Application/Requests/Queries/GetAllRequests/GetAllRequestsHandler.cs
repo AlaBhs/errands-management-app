@@ -1,9 +1,10 @@
 ﻿using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
+using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 
-public sealed class GetAllRequestsHandler
+public sealed class GetAllRequestsHandler : IRequestHandler<GetAllRequestsQuery, List<RequestListItemDto>>
 {
     private readonly IRequestRepository _requestRepository;
 
