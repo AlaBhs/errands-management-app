@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CompleteRequest;
@@ -56,7 +57,13 @@ public sealed class RequestsController : ControllerBase
     {
         var id = await _mediator.Send(command, cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id },
+            ApiResponse<Guid>.SuccessResponse(
+                id,
+                StatusCodes.Status201Created,
+                HttpContext.TraceIdentifier));
     }
 
     [HttpGet("{id}")]
@@ -71,14 +78,21 @@ public sealed class RequestsController : ControllerBase
         if (result is null)
             return NotFound();
 
-        return Ok(result);
+        return Ok(ApiResponse<RequestDetailsDto>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetAllRequestsQuery(), cancellationToken);
-        return Ok(result);
+
+        return Ok(ApiResponse<List<RequestListItemDto>>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     [HttpPost("{id:guid}/assign")]
@@ -101,7 +115,10 @@ public sealed class RequestsController : ControllerBase
 
         await _mediator.Send(command, cancellationToken);
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     [HttpPost("{id:guid}/complete")]
@@ -117,7 +134,10 @@ public sealed class RequestsController : ControllerBase
 
         await _mediator.Send(command, cancellationToken);
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(
@@ -129,7 +149,10 @@ public sealed class RequestsController : ControllerBase
 
         await _mediator.Send(command, cancellationToken);
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     [HttpPost("{id:guid}/survey")]
@@ -146,7 +169,10 @@ public sealed class RequestsController : ControllerBase
 
         await _mediator.Send(command, cancellationToken);
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     // ============================= DEBUG =============================

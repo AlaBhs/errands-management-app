@@ -1,10 +1,10 @@
-﻿using ErrandsManagement.Application.Common.Exceptions;
+﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Domain.Common.Exceptions;
-using System.Net;
-using System.Text.Json;
 using FluentValidation;
+using System.Text.Json;
 
-namespace ErrandsManagement.API.Middleware;
+namespace ErrandsManagement.API.Common.Middleware;
 
 public sealed class ExceptionHandlingMiddleware
 {
@@ -36,70 +36,52 @@ public sealed class ExceptionHandlingMiddleware
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
 
-            await WriteValidationResponse(context, errors);
+            await WriteErrorResponse(
+                context,
+                errors,
+                StatusCodes.Status400BadRequest);
         }
         catch (NotFoundException ex)
         {
             _logger.LogWarning(ex, "Resource not found.");
 
-            await WriteResponse(
+            await WriteErrorResponse(
                 context,
-                HttpStatusCode.NotFound,
-                ex.Message);
+                new { message = ex.Message },
+                StatusCodes.Status404NotFound);
         }
         catch (DomainException ex)
         {
-            _logger.LogWarning(ex, "Domain validation error.");
+            _logger.LogWarning(ex, "Domain rule violation.");
 
-            await WriteResponse(
+            await WriteErrorResponse(
                 context,
-                HttpStatusCode.BadRequest,
-                ex.Message);
+                new { message = ex.Message },
+                StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception.");
 
-            await WriteResponse(
+            await WriteErrorResponse(
                 context,
-                HttpStatusCode.InternalServerError,
-                "An unexpected error occurred.");
+                new { message = "An unexpected error occurred." },
+                StatusCodes.Status500InternalServerError);
         }
     }
 
-    private static async Task WriteResponse(
+    private static async Task WriteErrorResponse(
         HttpContext context,
-        HttpStatusCode statusCode,
-        string message)
+        object errors,
+        int statusCode)
     {
-        context.Response.StatusCode = (int)statusCode;
+        context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        var response = new
-        {
-            success = false,
-            statusCode = (int)statusCode,
-            error = message,
-            traceId = context.TraceIdentifier
-        };
-
-        await context.Response.WriteAsync(
-            JsonSerializer.Serialize(response));
-    }
-    private static async Task WriteValidationResponse(
-    HttpContext context,
-    Dictionary<string, string[]> errors)
-    {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        context.Response.ContentType = "application/json";
-
-        var response = new
-        {
-            success = false,
-            statusCode = 400,
+        var response = ApiResponse<object>.FailureResponse(
             errors,
-            traceId = context.TraceIdentifier
-        };
+            statusCode,
+            context.TraceIdentifier);
 
         await context.Response.WriteAsync(
             JsonSerializer.Serialize(response));
