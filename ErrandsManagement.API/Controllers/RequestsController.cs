@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.Common.Pagination;
 using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Application.Requests.Commands.CancelRequest;
@@ -9,6 +10,7 @@ using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
+using ErrandsManagement.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -85,11 +87,15 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] RequestQueryParameters parameters,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetAllRequestsQuery(), cancellationToken);
+        var result = await _mediator.Send(
+            new GetAllRequestsQuery(parameters),
+            cancellationToken);
 
-        return Ok(ApiResponse<List<RequestListItemDto>>.SuccessResponse(
+        return Ok(ApiResponse<PagedResult<RequestListItemDto>>.SuccessResponse(
             result,
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));

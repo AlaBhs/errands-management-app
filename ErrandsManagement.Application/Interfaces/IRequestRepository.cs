@@ -1,5 +1,8 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.Enums;
 
 namespace ErrandsManagement.Application.Interfaces;
 
@@ -8,7 +11,9 @@ public interface IRequestRepository
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task AddAsync(Request request, CancellationToken cancellationToken);
     Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task<List<RequestListItemDto>> GetAllAsync(CancellationToken cancellationToken);
+    Task<PagedResult<RequestListItemDto>> GetPagedAsync(
+        RequestQueryParameters parameters,
+        CancellationToken cancellationToken);
 
     // ============================ Temporary debug methods ============================
     //Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken);

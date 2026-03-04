@@ -1,10 +1,12 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 
-public sealed class GetAllRequestsHandler : IRequestHandler<GetAllRequestsQuery, List<RequestListItemDto>>
+public sealed class GetAllRequestsHandler
+    : IRequestHandler<GetAllRequestsQuery, PagedResult<RequestListItemDto>>
 {
     private readonly IRequestRepository _requestRepository;
 
@@ -13,10 +15,12 @@ public sealed class GetAllRequestsHandler : IRequestHandler<GetAllRequestsQuery,
         _requestRepository = requestRepository;
     }
 
-    public async Task<List<RequestListItemDto>> Handle(
-        GetAllRequestsQuery query,
+    public async Task<PagedResult<RequestListItemDto>> Handle(
+        GetAllRequestsQuery request,
         CancellationToken cancellationToken)
     {
-        return await _requestRepository.GetAllAsync(cancellationToken);
+        return await _requestRepository.GetPagedAsync(
+            request.Parameters,
+            cancellationToken);
     }
 }

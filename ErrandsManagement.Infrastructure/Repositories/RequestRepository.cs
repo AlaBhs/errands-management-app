@@ -1,6 +1,9 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,11 +34,51 @@ public sealed class RequestRepository : IRequestRepository
             .Include(r => r.Survey)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
-    public async Task<List<RequestListItemDto>> GetAllAsync(
+    public async Task<PagedResult<RequestListItemDto>> GetPagedAsync(
+        RequestQueryParameters parameters,
         CancellationToken cancellationToken)
     {
-        return await _context.Requests
-            .AsNoTracking()
+        var query = _context.Requests
+            .AsNoTracking();
+
+        // Filtering
+        if (parameters.Status.HasValue)
+        {
+            query = query.Where(r =>
+                r.Status == parameters.Status.Value);
+        }
+
+        // Search (example: search in Title and Description)
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            var search = parameters.Search.Trim();
+
+            query = query.Where(r =>
+                r.Title.Contains(search) ||
+                r.Description.Contains(search));
+        }
+
+        // Sorting
+        query = parameters.SortBy?.ToLower() switch
+        {
+            "deadline" => parameters.Descending
+                ? query.OrderByDescending(r => r.Deadline)
+                : query.OrderBy(r => r.Deadline),
+
+            "estimatedcost" => parameters.Descending
+                ? query.OrderByDescending(r => r.EstimatedCost)
+                : query.OrderBy(r => r.EstimatedCost),
+
+            _ => parameters.Descending
+                ? query.OrderByDescending(r => r.CreatedAt)
+                : query.OrderBy(r => r.CreatedAt)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip((parameters.Page - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
             .Select(r => new RequestListItemDto(
                 r.Id,
                 r.Title,
@@ -43,7 +86,15 @@ public sealed class RequestRepository : IRequestRepository
                 r.Status.ToString(),
                 r.Priority.ToString(),
                 r.EstimatedCost,
-                r.Deadline))
+                r.Deadline
+            ))
             .ToListAsync(cancellationToken);
+
+        return PagedResult<RequestListItemDto>.Create(
+            items,
+            parameters.Page,
+            parameters.PageSize,
+            totalCount);
     }
+
 }
