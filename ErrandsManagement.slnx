@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/ErrandsManagement.Application.UnitTests/ErrandsManagement.Application.UnitTests.csproj" />
+    <Project Path="tests/ErrandsManagement.Domain.UnitTests/ErrandsManagement.Domain.UnitTests.csproj" />
+    <Project Path="tests/ErrandsManagement.Infrastructure.IntegrationTests/ErrandsManagement.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
   <Project Path="ErrandsManagement.API/ErrandsManagement.API.csproj" />
   <Project Path="ErrandsManagement.Application/ErrandsManagement.Application.csproj" />
   <Project Path="ErrandsManagement.Domain/ErrandsManagement.Domain.csproj" />
