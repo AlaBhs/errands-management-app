@@ -49,6 +49,16 @@ public class RequestTests
     }
 
     [Fact]
+    public void Start_Should_Throw_If_Not_Assigned()
+    {
+        var request = new RequestBuilder().Build();
+
+        Action act = () => request.Start();
+
+        act.Should().Throw<InvalidRequestStateException>();
+    }
+
+    [Fact]
     public void Complete_Should_Change_Status_To_Completed()
     {
         var request = new RequestBuilder().Build();
@@ -78,6 +88,18 @@ public class RequestTests
         request.Cancel(null);
 
         request.Status.Should().Be(RequestStatus.Cancelled);
+    }
+
+    [Fact]
+    public void Cancel_InProgress_Request_Should_Require_Reason()
+    {
+        var request = new RequestBuilder().Build();
+        request.Assign(Guid.NewGuid());
+        request.Start();
+
+        Action act = () => request.Cancel(null);
+
+        act.Should().Throw<InvalidRequestStateException>();
     }
 
     [Fact]
@@ -112,6 +134,21 @@ public class RequestTests
         var request = new RequestBuilder().Build();
 
         Action act = () => request.SubmitSurvey(5, "Test");
+
+        act.Should().Throw<SurveyNotAllowedException>();
+    }
+
+    [Fact]
+    public void Cannot_Submit_Survey_Twice()
+    {
+        var request = new RequestBuilder().Build();
+        request.Assign(Guid.NewGuid());
+        request.Start();
+        request.Complete();
+
+        request.SubmitSurvey(5, "Great");
+
+        Action act = () => request.SubmitSurvey(5, "Again");
 
         act.Should().Throw<SurveyNotAllowedException>();
     }

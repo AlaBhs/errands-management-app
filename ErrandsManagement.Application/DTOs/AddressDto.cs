@@ -6,5 +6,5 @@ namespace ErrandsManagement.Application.DTOs
         string City,
         string PostalCode,
         string Country,
-        string? Note);
+        string? Note = null);
 }
