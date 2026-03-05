@@ -1,7 +1,6 @@
 ﻿using ErrandsManagement.Domain.Common.Exceptions;
-using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
-using ErrandsManagement.Domain.ValueObjects;
+using ErrandsManagement.Domain.UnitTests.Builders;
 using FluentAssertions;
 using Xunit;
 
@@ -9,22 +8,10 @@ namespace ErrandsManagement.Domain.UnitTests.Requests;
 
 public class RequestTests
 {
-    private static Request CreateValidRequest()
-    {
-        return new Request(
-            title: "Buy laptop",
-            description: "Purchase a new laptop",
-            requesterId: Guid.NewGuid(),
-            deliveryAddress: new Address("Street", "City", "1000", "TN"),
-            priority: PriorityLevel.Normal,
-            deadline: DateTime.UtcNow.AddDays(2),
-            estimatedCost: 2000);
-    }
-
     [Fact]
     public void New_Request_Should_Start_As_Pending()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
 
         request.Status.Should().Be(RequestStatus.Pending);
     }
@@ -32,7 +19,7 @@ public class RequestTests
     [Fact]
     public void Assign_Should_Change_Status_To_Assigned()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
 
         request.Assign(Guid.NewGuid());
 
@@ -42,7 +29,7 @@ public class RequestTests
     [Fact]
     public void Assign_Should_Throw_If_Not_Pending()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
 
         Action act = () => request.Assign(Guid.NewGuid());
@@ -53,7 +40,7 @@ public class RequestTests
     [Fact]
     public void Start_Should_Change_Status_To_InProgress()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
 
         request.Start();
@@ -64,7 +51,7 @@ public class RequestTests
     [Fact]
     public void Complete_Should_Change_Status_To_Completed()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
         request.Start();
 
@@ -76,7 +63,7 @@ public class RequestTests
     [Fact]
     public void Cannot_Complete_If_Not_InProgress()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
 
         Action act = () => request.Complete();
 
@@ -86,7 +73,7 @@ public class RequestTests
     [Fact]
     public void Cancel_Should_Set_Status_To_Cancelled()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
 
         request.Cancel(null);
 
@@ -96,7 +83,7 @@ public class RequestTests
     [Fact]
     public void Cannot_Cancel_Completed_Request()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
         request.Start();
         request.Complete();
@@ -109,7 +96,7 @@ public class RequestTests
     [Fact]
     public void Survey_Should_Be_Allowed_Only_When_Completed()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
         request.Start();
         request.Complete();
@@ -122,7 +109,7 @@ public class RequestTests
     [Fact]
     public void Survey_Should_Fail_If_Not_Completed()
     {
-        var request = CreateValidRequest();
+        var request = new RequestBuilder().Build();
 
         Action act = () => request.SubmitSurvey(5, "Test");
 

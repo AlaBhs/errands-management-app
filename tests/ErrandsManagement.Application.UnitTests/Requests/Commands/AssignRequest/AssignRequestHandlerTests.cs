@@ -3,7 +3,7 @@ using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
-using ErrandsManagement.Domain.ValueObjects;
+using ErrandsManagement.Domain.UnitTests.Builders;
 using FluentAssertions;
 using Moq;
 using Xunit;
@@ -21,20 +21,10 @@ public class AssignRequestHandlerTests
         _handler = new AssignRequestHandler(_repositoryMock.Object);
     }
 
-    private static Request CreateRequest()
-    {
-        return new Request(
-            "Laptop purchase",
-            "Buy a laptop",
-            Guid.NewGuid(),
-            new Address("Street", "City", "1000", "TN"),
-            PriorityLevel.Normal);
-    }
-
     [Fact]
     public async Task Handle_Should_Assign_Request_When_Request_Exists()
     {
-        var request = CreateRequest();
+        var request = new RequestBuilder().Build();
 
         _repositoryMock
             .Setup(r => r.GetByIdAsync(request.Id, It.IsAny<CancellationToken>()))

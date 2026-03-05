@@ -25,7 +25,8 @@
   <ItemGroup>
 	<ProjectReference Include="..\..\ErrandsManagement.Domain\ErrandsManagement.Domain.csproj" />
 	<ProjectReference Include="..\..\ErrandsManagement.Application\ErrandsManagement.Application.csproj" />
-  </ItemGroup>
+	<ProjectReference Include="..\ErrandsManagement.Domain.UnitTests\ErrandsManagement.Domain.UnitTests.csproj" />
+</ItemGroup>
 
 
 	<ItemGroup>
