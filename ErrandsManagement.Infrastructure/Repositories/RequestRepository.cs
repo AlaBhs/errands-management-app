@@ -51,11 +51,10 @@ public sealed class RequestRepository : IRequestRepository
         // Search (example: search in Title and Description)
         if (!string.IsNullOrWhiteSpace(parameters.Search))
         {
-            var search = parameters.Search.Trim();
-
+            var searchLower = parameters.Search.Trim().ToLower();
             query = query.Where(r =>
-                r.Title.Contains(search) ||
-                r.Description.Contains(search));
+                r.Title.ToLower().Contains(searchLower) ||
+                r.Description.ToLower().Contains(searchLower));
         }
 
         // Sorting
