@@ -1,43 +1,29 @@
 #  Errands Management App
 
-This branch standardizes API responses and introduces reusable pagination, filtering, and sorting.
+This branch introduces a comprehensive test suite across all layers.
 
 ## Key Features
 
-- **Unified API Response Contract**  
-  Consistent `ApiResponse<T>` envelope for all endpoints
+- **Unit Tests**  
+  - Domain: Request aggregate business rules  
+  - Application: Handlers, validators, query parameters, pagination
 
-- **Pagination & Filtering Abstraction**  
-  Reusable query parameters for pagination, filtering, sorting, and validation  
-  Applies to all collection‑returning endpoints (e.g., `GET /api/requests`)
+- **Integration Tests**  
+  - Infrastructure: `RequestRepository` using in‑memory SQLite
 
-- **Improved Error Handling**  
-  Structured, machine‑readable error responses
+- **Test Utilities**  
+  - `RequestBuilder` for easy test data creation
 
-## How to Test with Docker
+- **Test Projects**  
+  - Separate projects for domain, application, and infrastructure layers
 
-1. Start the backend as usual:
-   ```bash
-   docker-compose up --build
-   ```
-2. The API will be available at `http://localhost:5000`. Use tools like Scalar to test at `http://localhost:5000/scalar`.
+## How to Run Tests
 
-3. Call `GET /api/requests` with query parameters like `?page=1&pageSize=10&sortBy=createdAt`. Observe the paginated response format.
-
-## Example Response 
+You can run tests locally with:
+```bash
+dotnet test
 ```
-{
-  "success": true,
-  "statusCode": 200,
-  "data": {
-    "items": [...],
-    "totalCount": 42,
-    "page": 1,
-    "pageSize": 10
-  },
-  "traceId": "..."
-}
-```
+
 ## Notes 
-  - This branch includes all features from previous branches (creation + status management).
-  - All previous endpoints now return responses in this unified format.
+  - This branch includes all previous features.
+  - Tests are designed to be fast and isolated.
