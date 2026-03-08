@@ -3,8 +3,10 @@ using ErrandsManagement.Application;
 using ErrandsManagement.Application.Common.Behaviors;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Infrastructure;
+using ErrandsManagement.Infrastructure.Data;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
