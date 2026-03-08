@@ -1,29 +1,31 @@
 #  Errands Management App
 
-This branch introduces a comprehensive test suite across all layers.
+This branch reorganizes the repository into a monorepo structure and initializes the frontend project.
 
-## Key Features
+## What’s Changed
 
-- **Unit Tests**  
-  - Domain: Request aggregate business rules  
-  - Application: Handlers, validators, query parameters, pagination
+- **Backend** – All backend code (API, Application, Domain, Infrastructure) moved into `backend/` folder.  
+  - Docker setup for backend + database remains inside `backend/` (for standalone testing).
+- **Frontend** – A new Vite + React + TypeScript project scaffold in `frontend/`.  
+  - Includes Tailwind CSS, shadcn/ui, React Query, Axios, and basic folder structure.
+  - Frontend is **not yet connected** to the backend – it’s just a foundation.
+- **Root Docker Compose** – A new `docker-compose.yml` at the root that starts both backend and frontend together, plus the database.
 
-- **Integration Tests**  
-  - Infrastructure: `RequestRepository` using in‑memory SQLite
+## How to Test the Full Stack
 
-- **Test Utilities**  
-  - `RequestBuilder` for easy test data creation
-
-- **Test Projects**  
-  - Separate projects for domain, application, and infrastructure layers
-
-## How to Run Tests
-
-You can run tests locally with:
-```bash
-dotnet test
-```
-
+1. Ensure Docker Desktop is running.
+2. From the repository root, run:
+   ```bash
+   docker-compose up --build
+   ```
+3. Access 
+  - **Backend API**: `http://localhost:5000`
+  - **Frontend app**: `http://localhost:3000`
+4. The frontend is a placeholder – no actual features yet.
+   
 ## Notes 
-  - This branch includes all previous features.
-  - Tests are designed to be fast and isolated.
+- This branch does not add any new backend functionality; it only moves existing code and adds the frontend scaffold.
+
+- All backend features from previous branches are preserved.
+
+- The frontend is not yet integrated with the API – that will come in future PRs.
