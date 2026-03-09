@@ -4,6 +4,7 @@ using ErrandsManagement.Application.Common.Behaviors;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Infrastructure;
 using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.Data.Seed;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +53,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Apply migrations
     db.Database.Migrate();
+
+    // Seed data (only if empty)
+    DbInitializer.Seed(db);
 }
 
 // Configure the HTTP request pipeline.
