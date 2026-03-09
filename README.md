@@ -1,31 +1,47 @@
 #  Errands Management App
 
-This branch reorganizes the repository into a monorepo structure and initializes the frontend project.
+This branch connects the frontend to the backend, providing a complete user interface for managing requests. It builds on all previous backend features and adds the following frontend functionality.
 
-## What’s Changed
+## Key Features
 
-- **Backend** – All backend code (API, Application, Domain, Infrastructure) moved into `backend/` folder.  
-  - Docker setup for backend + database remains inside `backend/` (for standalone testing).
-- **Frontend** – A new Vite + React + TypeScript project scaffold in `frontend/`.  
-  - Includes Tailwind CSS, shadcn/ui, React Query, Axios, and basic folder structure.
-  - Frontend is **not yet connected** to the backend – it’s just a foundation.
-- **Root Docker Compose** – A new `docker-compose.yml` at the root that starts both backend and frontend together, plus the database.
+- **Backend**
+  - Added CORS policy with configurable allowed origins (to allow frontend access).
+  - (All previous backend features remain intact.)
 
-## How to Test the Full Stack
+- **Frontend**
+  - **Layout**: Main layout with sidebar (navigation), topbar, and placeholder pages for Dashboard, Courier, Analytics, Admin.
+  - **Requests Pages**:
+    - List page with sorting, filtering (by status), and pagination.
+    - Details page showing request information and related data.
+    - Create page matching backend `CreateRequestCommand`.
+  - **Request Actions**: Buttons to assign, start, cancel, complete, and submit survey (with conditional rendering based on status).
+  - **API Integration**:
+    - React Query hooks for fetching and mutating requests.
+    - Axios client with error handling and type guards (`isApiError`).
+    - Vite proxy configured for local API development (`/api` → `http://localhost:5000`).
+  - **Type Safety**: All frontend types aligned with backend API contracts.
+
+## How to Test with Docker (Full Stack)
 
 1. Ensure Docker Desktop is running.
-2. From the repository root, run:
+2. From the repository root, start all services:
    ```bash
    docker-compose up --build
    ```
-3. Access 
-  - **Backend API**: `http://localhost:5000`
-  - **Frontend app**: `http://localhost:3000`
-4. The frontend is a placeholder – no actual features yet.
-   
-## Notes 
-- This branch does not add any new backend functionality; it only moves existing code and adds the frontend scaffold.
+3. Access the application:
+- **Frontend**: `http://localhost:3000`
 
-- All backend features from previous branches are preserved.
+- **Backend API**: `http://localhost:5000` (or via proxy at /api)
 
-- The frontend is not yet integrated with the API – that will come in future PRs.
+4. The frontend will communicate with the backend through the proxy, so no additional CORS issues.
+
+## Notes
+- Pages like Dashboard, Courier, Analytics and Admin are all placeholders for now.
+
+- The frontend is now integrated and ready for user testing. Please verify the main flows:
+
+    - Create a request
+
+    - View list and details
+
+    - Perform lifecycle actions (assign, start, etc.)
