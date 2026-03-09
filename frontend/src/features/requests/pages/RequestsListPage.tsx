@@ -4,6 +4,7 @@ import { useRequests } from "../hooks/useRequests";
 import { StatusBadge } from "../components/StatusBadge";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { isApiError } from "@/shared/api/client";
 
 export function RequestsListPage() {
   const [page, setPage] = useState(1);
@@ -42,7 +43,11 @@ export function RequestsListPage() {
 
       {/* States */}
       {isLoading && <PageSpinner />}
-      {isError && <ErrorMessage message={(error as any)?.message} />}
+      {isError && (
+        <ErrorMessage
+          message={isApiError(error) ? error.message : "Something went wrong."}
+        />
+      )}
 
       {/* Table */}
       {data && (

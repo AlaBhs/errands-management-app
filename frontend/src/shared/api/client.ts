@@ -44,3 +44,11 @@ export interface NormalizedApiError {
   message: string;
 }
 
+export function isApiError(error: unknown): error is NormalizedApiError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    "message" in error
+  );
+}

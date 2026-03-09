@@ -3,13 +3,14 @@ import { useRequest } from "../hooks/useRequests";
 import { StatusBadge } from "../components/StatusBadge";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { isApiError } from "@/shared/api/client";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading, isError, error } = useRequest(id!);
 
   if (isLoading) return <PageSpinner />;
-  if (isError) return <ErrorMessage message={(error as any)?.message} />;
+  if (isError) return  <ErrorMessage message={isApiError(error) ? error.message : "Something went wrong."} />;
   if (!request) return null;
 
   return (
