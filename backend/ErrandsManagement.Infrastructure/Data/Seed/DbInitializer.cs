@@ -1,7 +1,6 @@
 ﻿using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore;
 
 namespace ErrandsManagement.Infrastructure.Data.Seed
 {
@@ -19,7 +18,6 @@ namespace ErrandsManagement.Infrastructure.Data.Seed
             // Seed addresses
             var address1 = new Address("123 Main St", "Springfield", "12345", "USA", "Apt 4B");
             var address2 = new Address("456 Oak Ave", "Shelbyville", "67890", "USA");
-            var address3 = new Address("789 Pine Rd", "Capital City", "13579", "USA");
 
             // Create requests in different statuses
             var requests = new List<Request>();
