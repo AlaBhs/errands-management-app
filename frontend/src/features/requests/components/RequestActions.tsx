@@ -6,7 +6,7 @@ import {
   useCompleteRequest,
   useStartRequest,
   useSubmitSurvey,
-} from "../hooks/useRequests";
+} from "../hooks";
 import { isApiError } from "@/shared/api/client";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 

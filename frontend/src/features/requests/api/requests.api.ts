@@ -12,7 +12,8 @@ import type {
   CancelRequestPayload,
   CompleteRequestPayload,
   SubmitSurveyPayload,
-} from "../types/request.types";
+} from "@/features/requests/types";
+
 
 export const requestsApi = {
   getAll: (params?: PaginationParams) =>
