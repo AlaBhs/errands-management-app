@@ -1,4 +1,4 @@
-import type { RequestStatus } from "../types/request.types";
+import type { RequestStatus } from "../types";
 
 const statusStyles: Record<RequestStatus, string> = {
   Pending:    "bg-yellow-100 text-yellow-800",
