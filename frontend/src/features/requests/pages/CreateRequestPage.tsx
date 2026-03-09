@@ -11,8 +11,8 @@ const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
 const schema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().min(1, "Description is required").max(500),
-  requesterId: z.string().uuid("Requester ID must be a valid UUID"),
-  priority: z.enum(priorityLevels),
+  requesterId: z.uuid("Requester ID must be a valid UUID"),
+  priority: z.number().min(0).max(3),
   deadline: z.string().optional(),
   estimatedCost: z
     .string()
@@ -43,7 +43,7 @@ export function CreateRequestPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      priority: "Normal",
+      priority: 1, // Default to "Normal"
     },
   });
 
@@ -133,8 +133,8 @@ export function CreateRequestPage() {
             {...register("priority")}
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {priorityLevels.map((p) => (
-              <option key={p} value={p}>
+            {priorityLevels.map((p, index) => (
+              <option key={p} value={index}>
                 {p}
               </option>
             ))}

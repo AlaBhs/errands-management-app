@@ -4,13 +4,19 @@ import { StatusBadge } from "../components/StatusBadge";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
+import { RequestActions } from "../components/RequestActions";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading, isError, error } = useRequest(id!);
 
   if (isLoading) return <PageSpinner />;
-  if (isError) return  <ErrorMessage message={isApiError(error) ? error.message : "Something went wrong."} />;
+  if (isError)
+    return (
+      <ErrorMessage
+        message={isApiError(error) ? error.message : "Something went wrong."}
+      />
+    );
   if (!request) return null;
 
   return (
@@ -39,7 +45,7 @@ export function RequestDetailsPage() {
         <h2 className="mb-2 text-sm font-medium text-gray-700">Description</h2>
         <p className="text-sm text-gray-600">{request.description}</p>
       </div>
-
+      <RequestActions request={request} />
       {/* Delivery Address */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-2 text-sm font-medium text-gray-700">
