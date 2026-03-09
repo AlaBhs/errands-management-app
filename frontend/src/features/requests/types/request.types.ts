@@ -73,7 +73,26 @@ export interface CreateRequestPayload {
   description: string;
   requesterId: string;
   deliveryAddress: AddressDto;
-  priority: PriorityLevel;
+  priority: number;
   deadline?: string;
   estimatedCost?: number;
+}
+// --- Lifecycle Command Payloads ---
+
+export interface AssignRequestPayload {
+  courierId: string;
+}
+
+export interface CancelRequestPayload {
+  reason: string;
+}
+
+export interface CompleteRequestPayload {
+  actualCost?: number;
+  note?: string;
+}
+
+export interface SubmitSurveyPayload {
+  rating: number;
+  comment?: string;
 }

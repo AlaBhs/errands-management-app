@@ -90,7 +90,7 @@ export function RequestsListPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {req.estimatedCost != null
-                        ? `$${req.estimatedCost}`
+                        ? `${req.estimatedCost} dt`
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
