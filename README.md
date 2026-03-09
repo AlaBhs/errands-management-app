@@ -20,6 +20,7 @@ This branch connects the frontend to the backend, providing a complete user inte
     - Axios client with error handling and type guards (`isApiError`).
     - Vite proxy configured for local API development (`/api` → `http://localhost:5000`).
   - **Type Safety**: All frontend types aligned with backend API contracts.
+  - **Database Seeding** – On first run, the database is automatically seeded with sample users and requests in various statuses (Pending, Assigned, InProgress, Completed, Cancelled, Surveyed). This allows immediate testing of all features.
 
 ## How to Test with Docker (Full Stack)
 
