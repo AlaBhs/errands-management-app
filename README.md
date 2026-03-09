@@ -45,3 +45,4 @@ This branch connects the frontend to the backend, providing a complete user inte
     - View list and details
 
     - Perform lifecycle actions (assign, start, etc.)
+- Added DB Initializer for Seeding dummy data for testing.
