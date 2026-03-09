@@ -31,4 +31,5 @@ export interface PaginationParams {
   pageSize?: number;
   search?: string;
   sortBy?: string;
+  descending?: boolean;
 }

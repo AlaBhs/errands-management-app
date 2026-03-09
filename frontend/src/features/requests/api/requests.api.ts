@@ -2,7 +2,6 @@ import { apiClient } from "@/shared/api/client";
 import type {
   ApiResponse,
   PaginatedResponse,
-  PaginationParams,
 } from "@/shared/api/types";
 import type {
   RequestListItemDto,
@@ -12,11 +11,12 @@ import type {
   CancelRequestPayload,
   CompleteRequestPayload,
   SubmitSurveyPayload,
+  RequestQueryParams,
 } from "@/features/requests/types";
 
 
 export const requestsApi = {
-  getAll: (params?: PaginationParams) =>
+  getAll: (params?: RequestQueryParams) =>
     apiClient
       .get<PaginatedResponse<RequestListItemDto>>("/requests", { params })
       .then((res) => res.data),

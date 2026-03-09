@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { requestsApi } from "../api/requests.api";
-import type { PaginationParams } from "@/shared/api/types";
 import { requestKeys } from "./requestKeys";
+import type { RequestQueryParams } from "../types";
 
-export function useRequests(params?: PaginationParams) {
+export function useRequests(params?: RequestQueryParams) {
   return useQuery({
     queryKey: requestKeys.list(params),
     queryFn: () => requestsApi.getAll(params),
