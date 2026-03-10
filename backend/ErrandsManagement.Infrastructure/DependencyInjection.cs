@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.Identity;
 using ErrandsManagement.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,8 @@ public static class DependencyInjection
                 configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IRequestRepository, RequestRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }
