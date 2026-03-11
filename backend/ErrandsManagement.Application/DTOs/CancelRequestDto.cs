@@ -1,4 +1,4 @@
 ﻿namespace ErrandsManagement.Application.DTOs
 {
-    public sealed record CancelRequestDto(string Reason);
+    public sealed record CancelRequestDto(string? Reason);
 }

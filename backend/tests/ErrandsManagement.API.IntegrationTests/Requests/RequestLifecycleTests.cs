@@ -249,7 +249,7 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
         var adminClient = _factory.CreateAuthenticatedClient("Admin");
         var response = await adminClient.PostAsJsonAsync(
             $"/api/requests/{requestId}/cancel",
-            new { reason = (string?)null },
+            new { reason = "" },
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -280,7 +280,7 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
         // InProgress + no reason → domain throws
         var response = await adminClient.PostAsJsonAsync(
             $"/api/requests/{requestId}/cancel",
-            new { reason = (string?)null },
+            new { reason = "" },
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

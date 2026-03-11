@@ -33,6 +33,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         // Override JWT configuration so the app validates tokens we mint in tests.
         // UseSetting populates IConfiguration before any binding happens.
+        builder.UseEnvironment("Test");
         builder.UseSetting("JwtSettings:Secret", TestJwtSecret);
         builder.UseSetting("JwtSettings:Issuer", TestJwtIssuer);
         builder.UseSetting("JwtSettings:Audience", TestJwtAudience);
@@ -57,7 +58,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             _connection.Open();
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(_connection));
+                options
+                    .UseSqlite(_connection)
+                    .ConfigureWarnings(w =>
+                        w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
         });
     }
 
