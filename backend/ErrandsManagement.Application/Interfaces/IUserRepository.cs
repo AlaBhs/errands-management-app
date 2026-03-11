@@ -12,8 +12,6 @@ public interface IUserRepository
 
     Task<bool> CheckPasswordAsync(Guid userId, string password, CancellationToken ct = default);
 
-    Task<string?> GetActiveRefreshTokenAsync(Guid userId, string token, CancellationToken ct = default);
-
     Task AddRefreshTokenAsync(Guid userId, string token, DateTime expiresAt, CancellationToken ct = default);
 
     Task RevokeAllActiveRefreshTokensAsync(Guid userId, CancellationToken ct = default);

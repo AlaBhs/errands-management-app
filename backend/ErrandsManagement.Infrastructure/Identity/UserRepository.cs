@@ -136,8 +136,4 @@ public sealed class UserRepository : IUserRepository
     private static UserDto ToDto(ApplicationUser user, IEnumerable<string> roles)
         => new(user.Id, user.Email!, user.FullName, roles);
 
-    public Task<string?> GetActiveRefreshTokenAsync(Guid userId, string token, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
 }
