@@ -7,9 +7,9 @@ using MediatR;
 public sealed record CreateRequestCommand(
     string Title,
     string Description,
-    Guid RequesterId,
     AddressDto DeliveryAddress,
     PriorityLevel Priority,
     DateTime? Deadline,
-    decimal? EstimatedCost)
+    decimal? EstimatedCost,
+    Guid RequesterId)
     : IRequest<Guid>;

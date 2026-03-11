@@ -13,6 +13,7 @@ using ErrandsManagement.Domain.Common.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ErrandsManagement.API.Controllers;
 
@@ -22,9 +23,9 @@ namespace ErrandsManagement.API.Controllers;
 public sealed class RequestsController : ControllerBase
 {
 
-    private readonly IMediator _mediator;
+    private readonly ISender _mediator;
 
-    public RequestsController(IMediator mediator)
+    public RequestsController(ISender mediator)
     {
         _mediator = mediator;
     }
@@ -32,18 +33,27 @@ public sealed class RequestsController : ControllerBase
     [HttpPost]
     [Authorize(Roles = "Collaborator")]
     public async Task<IActionResult> Create(
-        CreateRequestCommand command,
-        CancellationToken cancellationToken)
+          [FromBody] CreateRequestDto body,
+          CancellationToken cancellationToken)
     {
+        var requesterId = GetCurrentUserId();
+
+        var command = new CreateRequestCommand(
+            body.Title,
+            body.Description,
+            body.DeliveryAddress,
+            body.Priority,
+            body.Deadline,
+            body.EstimatedCost,
+            requesterId);      
+
         var id = await _mediator.Send(command, cancellationToken);
 
         return CreatedAtAction(
             nameof(GetById),
             new { id },
             ApiResponse<Guid>.SuccessResponse(
-                id,
-                StatusCodes.Status201Created,
-                HttpContext.TraceIdentifier));
+                id, StatusCodes.Status201Created, HttpContext.TraceIdentifier));
     }
 
     [HttpGet("{id}")]
@@ -164,6 +174,17 @@ public sealed class RequestsController : ControllerBase
             null,
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
+    }
+
+    // ── Private helpers ────────────────────────────────────────────────────
+
+    private Guid GetCurrentUserId()
+    {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException(
+                "User identity not found in token.");
+
+        return Guid.Parse(value);
     }
 
     // ============================= DEBUG =============================
