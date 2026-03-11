@@ -15,11 +15,11 @@ public class CreateRequestValidatorTests
         return new CreateRequestCommand(
             "Buy groceries",
             "Milk, bread and eggs",
-            Guid.NewGuid(),
             new AddressDto("Street", "City", "12345", "Country"),
             PriorityLevel.Normal,
             DateTime.UtcNow.AddDays(1),
-            50);
+            50,
+            Guid.NewGuid());
     }
 
     [Fact]
