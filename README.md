@@ -1,172 +1,51 @@
 # Errands Management App
 
-This branch implements secure authentication and authorization using 
-ASP.NET Identity, JWT access tokens, and refresh tokens. It builds on 
-all previous features and secures every endpoint with role-based access control.
+This branch fixes and completes the test suite following the JWT authentication
+merge. All 122 tests pass with 0 failures.
 
 ## What's New in This Branch
 
-### Backend
-- **ASP.NET Identity** integrated into the existing database — 
-  `AspNetUsers`, `AspNetRoles`, and related tables added via migration.
-- **JWT Authentication** — access tokens (15 min) signed with HMAC-SHA256, 
-  containing user ID, email, and role claims.
-- **Refresh Tokens** — 7-day tokens stored in a `RefreshTokens` table, 
-  with rotation on every refresh and revocation on logout.
-- **Role-Based Authorization** — three roles enforced across all endpoints:
+### Tests Added
 
-  | Role | Permissions |
-  |---|---|
-  | Admin | Register users, assign requests, view all |
-  | Collaborator | Create requests, cancel, submit survey, view own |
-  | Courier | Start, complete requests, view assigned |
+- **Application Unit Tests** — handler tests for `CreateRequest` and
+  `GetRequestById`, validator tests for `RegisterUser`, and auth handler
+  tests for login, refresh, logout, and register.
 
-- **Auth Endpoints**:
-  - `POST /api/auth/login` — returns access token + refresh token
-  - `POST /api/auth/refresh` — rotates refresh token, returns new pair
-  - `POST /api/auth/logout` — revokes refresh token
-  - `POST /api/auth/register` — Admin only, creates user accounts
+- **Infrastructure Integration Tests** — full `UserRepository` coverage
+  including refresh token lifecycle (add, revoke, revoke all, expiry).
 
-- **Security Fix** — `RequesterId` is now extracted from the JWT claims 
-  server-side. Clients can no longer supply or spoof their own user ID.
+- **API Integration Tests** — auth endpoints end-to-end, and a full request
+  lifecycle suite covering all endpoints from assign through survey with
+  happy path and error cases.
 
-- **Identity Seeder** — roles and a default admin account are created 
-  automatically on first startup.
+### Why Some Tests Were Deliberately Not Written
 
-- **Clean Architecture** — `IJwtTokenGenerator` and `IUserRepository` 
-  interfaces defined in Application layer, implemented in Infrastructure. 
-  No layer violations.
+- **`CancelRequestHandler`, `CompleteRequestHandler`, `StartRequestHandler`,
+  `SubmitSurveyHandler`** — same pattern as the already-tested
+  `AssignRequestHandler`. Domain logic covered by `RequestTests.cs`,
+  persistence by `RequestRepositoryTests.cs`.
 
-- **Docker** — JWT secret and settings injected via environment variables. 
-  SQL Server healthcheck added to prevent backend startup race condition.
+- **`GetAllRequestsHandler`** — single-line delegation to the repository,
+  already covered by `RequestRepositoryTests.cs`.
 
-## Default Credentials (Dev Only)
+- **`LoginUserValidator`, `RefreshTokenValidator`, `LogoutValidator`** —
+  four trivial rules total, already exercised by the auth integration tests.
 
-| Email | Password | Role |
-|---|---|---|
-| admin@errands.local | Admin123! | Admin |
+## How to Run the Tests
 
-> The admin account is seeded automatically on first run.
-> Use it to create Collaborator and Courier accounts via `/api/auth/register`.
+From the `backend` directory:
 
-## How to Test with Docker (Full Stack)
-
-1. Ensure Docker Desktop is running.
-
-2. Copy the example env file and set your JWT secret:
 ```bash
-   cp .env.example .env
+dotnet test
 ```
 
-3. Start all services:
-```bash
-   docker-compose up --build
+Expected output:
+
+```
+Test summary: total: 122, failed: 0, succeeded: 122, skipped: 0
 ```
 
-4. Access the application:
-   - **Frontend**: `http://localhost:3000`
-   - **Backend API**: `http://localhost:5000`
-   - **API Docs (Scalar)**: `http://localhost:5000/scalar`
+## Previous Branch
 
-## Testing the Auth Flow (Step by Step)
-
-### 1. Login as Admin
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@errands.local",
-  "password": "Admin123!"
-}
-```
-Copy the `accessToken` and `refreshToken` from the response.
-
-### 2. Create a Collaborator account
-```http
-POST /api/auth/register
-Authorization: Bearer {accessToken}
-Content-Type: application/json
-
-{
-  "fullName": "Alice Dupont",
-  "email": "alice@errands.local",
-  "password": "Alice123!",
-  "role": "Collaborator"
-}
-```
-
-### 3. Create a Courier account
-```http
-POST /api/auth/register
-Authorization: Bearer {accessToken}
-Content-Type: application/json
-
-{
-  "fullName": "Bob Martin",
-  "email": "bob@errands.local",
-  "password": "Bob12345!",
-  "role": "Courier"
-}
-```
-
-### 4. Login as Collaborator and create a request
-Login with Alice's credentials, then:
-```http
-POST /api/requests
-Authorization: Bearer {alice_accessToken}
-Content-Type: application/json
-
-{
-  "title": "Deliver package",
-  "description": "Urgent document delivery to client office",
-  "deliveryAddress": {
-    "street": "45 Avenue Habib Bourguiba",
-    "city": "Sousse",
-    "postalCode": "4000",
-    "country": "Tunisia",
-    "note": "Call upon arrival"
-  },
-  "priority": 2,
-  "deadline": "2026-20-10T14:00:00Z",
-  "estimatedCost": 35.50
-}
-```
-
-### 5. Verify role enforcement
-Try hitting an Admin-only endpoint with Alice's token — expect `403 Forbidden`:
-```http
-POST /api/requests/{id}/assign
-Authorization: Bearer {alice_accessToken}
-```
-
-### 6. Test token refresh
-```http
-POST /api/auth/refresh
-Content-Type: application/json
-
-{
-  "token": "{refreshToken}"
-}
-```
-Returns a new access token and a new refresh token. The old refresh 
-token is now invalid.
-
-### 7. Logout
-```http
-POST /api/auth/logout
-Authorization: Bearer {accessToken}
-Content-Type: application/json
-
-{
-  "refreshToken": "{refreshToken}"
-}
-```
-Attempting to refresh after logout returns `401 Unauthorized`.
-
-## Notes
-- The frontend does not yet have login UI — auth testing is via 
-  Scalar (`/scalar`) or any HTTP client (Postman, curl).
-- Existing seeded data from previous branches remains available.
-- All previous request lifecycle features remain intact and are now 
-  protected by role-based authorization.
+See the previous README for the full JWT authentication feature description,
+Docker setup, default credentials, and manual testing steps with Scalar.
