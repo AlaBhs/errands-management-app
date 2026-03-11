@@ -74,9 +74,10 @@ public sealed class UserRepository : IUserRepository
             Token = token,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = expiresAt,
+            UserId = userId,
         });
 
-        await _userManager.UpdateAsync(user);
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task RevokeAllActiveRefreshTokensAsync(Guid userId, CancellationToken ct = default)
@@ -89,7 +90,7 @@ public sealed class UserRepository : IUserRepository
         foreach (var t in user.RefreshTokens.Where(t => t.IsActive))
             t.Revoked = true;
 
-        await _userManager.UpdateAsync(user);
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task RevokeRefreshTokenAsync(Guid userId, string token, CancellationToken ct = default)
@@ -103,7 +104,7 @@ public sealed class UserRepository : IUserRepository
         if (refreshToken is { IsActive: true })
             refreshToken.Revoked = true;
 
-        await _userManager.UpdateAsync(user);
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task<UserDto?> FindByRefreshTokenAsync(string token, CancellationToken ct = default)

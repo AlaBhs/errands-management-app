@@ -2,9 +2,11 @@
 using ErrandsManagement.Application.Auth.Commands.Logout;
 using ErrandsManagement.Application.Auth.Commands.RefreshToken;
 using ErrandsManagement.Application.Auth.Commands.RegisterUser;
+using ErrandsManagement.Infrastructure.Data;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ErrandsManagement.API.Controllers;
 
@@ -18,7 +20,7 @@ public sealed class AuthController : ControllerBase
 
     /// <summary>Register a new Collaborator or Courier account.</summary>
     [HttpPost("register")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -66,5 +68,42 @@ public sealed class AuthController : ControllerBase
     {
         await _mediator.Send(command, ct);
         return NoContent();
+    }
+
+    [HttpPost("debug/check-token")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CheckToken(
+    [FromBody] RefreshTokenCommand command,
+    [FromServices] AppDbContext db)
+    {
+        var tokenInDb = await db.RefreshTokens
+            .Where(t => t.Token == command.Token)
+            .Select(t => new
+            {
+                t.Token,
+                t.Revoked,
+                t.ExpiresAt,
+                t.UserId,
+                t.CreatedAt,
+                IsActive = !t.Revoked && t.ExpiresAt > DateTime.UtcNow
+            })
+            .FirstOrDefaultAsync();
+
+        var allTokens = await db.RefreshTokens
+            .Select(t => new
+            {
+                TokenPreview = t.Token.Substring(0, 10) + "...",
+                t.Revoked,
+                t.ExpiresAt,
+                t.UserId
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            searched = command.Token.Substring(0, 10) + "...",
+            exactMatch = tokenInDb,
+            allTokens
+        });
     }
 }

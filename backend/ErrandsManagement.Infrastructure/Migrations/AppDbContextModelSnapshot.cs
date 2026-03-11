@@ -62,7 +62,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("Assignment");
+                    b.ToTable("Assignment", (string)null);
                 });
 
             modelBuilder.Entity("ErrandsManagement.Domain.Entities.Attachment", b =>
@@ -102,7 +102,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("Attachment");
+                    b.ToTable("Attachment", (string)null);
                 });
 
             modelBuilder.Entity("ErrandsManagement.Domain.Entities.AuditLog", b =>
@@ -137,7 +137,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("AuditLog");
+                    b.ToTable("AuditLog", (string)null);
                 });
 
             modelBuilder.Entity("ErrandsManagement.Domain.Entities.Request", b =>
@@ -182,7 +182,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Requests");
+                    b.ToTable("Requests", (string)null);
                 });
 
             modelBuilder.Entity("ErrandsManagement.Domain.Entities.Survey", b =>
@@ -216,7 +216,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
                     b.HasIndex("RequestId")
                         .IsUnique();
 
-                    b.ToTable("Survey");
+                    b.ToTable("Survey", (string)null);
                 });
 
             modelBuilder.Entity("ErrandsManagement.Infrastructure.Identity.ApplicationUser", b =>
@@ -320,7 +320,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -514,7 +514,7 @@ namespace ErrandsManagement.Infrastructure.Migrations
 
                             b1.HasKey("RequestId");
 
-                            b1.ToTable("Requests");
+                            b1.ToTable("Requests", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("RequestId");

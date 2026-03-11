@@ -10,49 +10,27 @@ using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
-using ErrandsManagement.Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ErrandsManagement.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+//[Authorize] // Global authorization can be applied here, disabled for demonstration purposes. Enable in production.
 public sealed class RequestsController : ControllerBase
 {
-    //private readonly AssignRequestHandler _assignRequestHandler;
-    //private readonly StartRequestHandler _startRequestHandler;
-    //private readonly CompleteRequestHandler _completeRequestHandler;
-    //private readonly CancelRequestHandler _cancelRequestHandler;
-    //private readonly SubmitSurveyHandler _submitSurveyhandler;
-
-    //public RequestsController(
-    //    CreateRequestHandler handler,
-    //    GetRequestByIdHandler getHandler,
-    //    AssignRequestHandler assignHandler,
-    //    StartRequestHandler startRequestHandler,
-    //    CompleteRequestHandler completeRequestHandler,
-    //    CancelRequestHandler cancelRequestHandler,
-    //    SubmitSurveyHandler submitSurveyhandler)
-    //{
-    //    _handler = handler;
-    //    _getHandler = getHandler;
-    //    _getAllRequestsHandler = getAllHandler;
-    //    _assignRequestHandler = assignHandler;
-    //    _startRequestHandler = startRequestHandler;
-    //    _completeRequestHandler = completeRequestHandler;
-    //    _cancelRequestHandler = cancelRequestHandler;
-    //    _submitSurveyhandler = submitSurveyhandler;
-    //}
 
     private readonly IMediator _mediator;
 
-    public RequestsController(IMediator mediator, GetRequestByIdHandler getHandler)
+    public RequestsController(IMediator mediator)
     {
         _mediator = mediator;
     }
 
     [HttpPost]
+    [Authorize(Roles = "Collaborator")]
     public async Task<IActionResult> Create(
         CreateRequestCommand command,
         CancellationToken cancellationToken)
@@ -69,6 +47,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Collaborator,Courier")]
     public async Task<IActionResult> GetById(
     Guid id,
     CancellationToken cancellationToken)
@@ -87,6 +66,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Collaborator,Courier")]
     public async Task<IActionResult> GetAll(
         [FromQuery] RequestQueryParameters parameters,
         CancellationToken cancellationToken)
@@ -102,6 +82,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/assign")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Assign(
         Guid id,
         [FromBody] AssignRequestDto request,
@@ -115,6 +96,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/start")]
+    [Authorize(Roles = "Courier")]
     public async Task<IActionResult> Start(Guid id, CancellationToken cancellationToken)
     {
         var command = new StartRequestCommand(id);
@@ -128,6 +110,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/complete")]
+    [Authorize(Roles = "Courier")]
     public async Task<IActionResult> Complete(
     Guid id,
     [FromBody] CompleteRequestDto request,
@@ -146,6 +129,7 @@ public sealed class RequestsController : ControllerBase
             HttpContext.TraceIdentifier));
     }
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "Admin,Collaborator,Courier")]
     public async Task<IActionResult> Cancel(
     Guid id,
     [FromBody] CancelRequestDto request,
@@ -162,6 +146,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/survey")]
+    [Authorize(Roles = "Collaborator")]
     public async Task<IActionResult> SubmitSurvey(
     Guid id,
     SubmitSurveyDto request,
