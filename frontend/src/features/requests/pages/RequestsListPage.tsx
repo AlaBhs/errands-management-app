@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useRequests } from "../hooks";
-import { StatusBadge } from "../components/StatusBadge";
+import { StatusBadge } from "@/features/requests";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
-import type { RequestStatus } from "../types";
-import type { SortField } from "../types";
+import type { RequestStatus , SortField } from "../types";
 
 const sortOptions: { label: string; value: SortField }[] = [
   { label: "Created At", value: "createdat" },
@@ -60,7 +59,10 @@ export function RequestsListPage() {
           type="text"
           placeholder="Search requests..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            resetPage();
+          }}
           className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
@@ -75,7 +77,9 @@ export function RequestsListPage() {
         >
           <option value="">All statuses</option>
           {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
 
@@ -90,14 +94,19 @@ export function RequestsListPage() {
         >
           <option value="">Sort by...</option>
           {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
 
         {/* Sort direction — only shown when a sort field is selected */}
         {sortBy && (
           <button
-            onClick={() => { setDescending((d) => !d); resetPage(); }}
+            onClick={() => {
+              setDescending((d) => !d);
+              resetPage();
+            }}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm hover:bg-gray-50"
             title={descending ? "Descending" : "Ascending"}
           >
@@ -121,8 +130,18 @@ export function RequestsListPage() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Title", "Priority", "Status", "Deadline", "Est. Cost", ""].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left font-medium text-gray-500">
+                  {[
+                    "Title",
+                    "Priority",
+                    "Status",
+                    "Deadline",
+                    "Est. Cost",
+                    "",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left font-medium text-gray-500"
+                    >
                       {h}
                     </th>
                   ))}
@@ -131,26 +150,40 @@ export function RequestsListPage() {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-gray-400"
+                    >
                       No requests found.
                     </td>
                   </tr>
                 ) : (
                   data.items.map((req) => (
                     <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900">{req.title}</td>
-                      <td className="px-4 py-3 text-gray-500">{req.priority}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {req.title}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {req.priority}
+                      </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={req.status} />
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {req.deadline ? new Date(req.deadline).toLocaleDateString() : "—"}
+                        {req.deadline
+                          ? new Date(req.deadline).toLocaleDateString()
+                          : "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {req.estimatedCost != null ? `$${req.estimatedCost}` : "—"}
+                        {req.estimatedCost != null
+                          ? `$${req.estimatedCost}`
+                          : "—"}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Link to={`/requests/${req.id}`} className="text-primary hover:underline">
+                        <Link
+                          to={`/requests/${req.id}`}
+                          className="text-primary hover:underline"
+                        >
                           View
                         </Link>
                       </td>

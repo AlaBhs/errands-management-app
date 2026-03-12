@@ -1,10 +1,8 @@
 import { useParams, Link } from "react-router-dom";
-import { useRequest } from "../hooks/useRequests";
-import { StatusBadge } from "../components/StatusBadge";
+import { useRequest, StatusBadge, RequestActions } from "@/features/requests";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
-import { RequestActions } from "../components/RequestActions";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();

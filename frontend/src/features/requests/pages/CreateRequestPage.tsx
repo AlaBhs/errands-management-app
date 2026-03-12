@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload } from "lucide-react"; // added for file upload icon
-import { useCreateRequest } from "../hooks";
+import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 
