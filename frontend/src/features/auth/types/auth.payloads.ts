@@ -1,7 +1,18 @@
-export interface JwtPayload {
-  sub: string;
+import type { UserRole } from "./auth.enums";
+
+export interface LoginPayload {
   email: string;
-  role: string;
-  exp?: number;
-  iat?: number;
+  password: string;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  role: UserRole;
 }

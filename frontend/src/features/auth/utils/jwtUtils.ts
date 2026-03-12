@@ -1,5 +1,13 @@
-import type { JwtPayload } from "../types/auth.payloads";
-import type { AuthUser } from "../types/auth.types";
+import type { AuthUser } from "../types";
+
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  exp?: number;
+  iat?: number;
+}
 
 /**
  * Decodes a JWT access token payload without verifying the signature.
