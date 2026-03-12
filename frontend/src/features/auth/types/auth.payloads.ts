@@ -1,5 +1,7 @@
 import type { UserRole } from "./auth.enums";
 
+// --- Payloads ---
+
 export interface LoginPayload {
   email: string;
   password: string;

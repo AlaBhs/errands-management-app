@@ -9,6 +9,9 @@ import {
 } from "../hooks";
 import { isApiError } from "@/shared/api/client";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { useAuthStore } from "@/features/auth/store/authStore";
+import { UserRole } from "@/features/auth/types";
+ 
 
 interface RequestActionsProps {
   request: RequestDetailsDto;
@@ -17,13 +20,14 @@ interface RequestActionsProps {
 export function RequestActions({ request }: RequestActionsProps) {
   const { id, status } = request;
 
+  const role = useAuthStore((s) => s.user?.role);
+
   const assign = useAssignRequest(id);
   const start = useStartRequest(id);
   const cancel = useCancelRequest(id);
   const complete = useCompleteRequest(id);
   const survey = useSubmitSurvey(id);
 
-  // Local form state — only one panel open at a time
   const [courierIdInput, setCourierIdInput] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [actualCost, setActualCost] = useState("");
@@ -51,8 +55,8 @@ export function RequestActions({ request }: RequestActionsProps) {
         />
       )}
 
-      {/* PENDING — can assign or cancel */}
-      {status === "Pending" && (
+      {/* PENDING — Admin: assign + cancel */}
+      {status === "Pending" && role === UserRole.Admin && (
         <div className="space-y-3">
           <div className="space-y-2">
             <label className="block text-xs font-medium text-gray-600">
@@ -83,8 +87,19 @@ export function RequestActions({ request }: RequestActionsProps) {
         </div>
       )}
 
-      {/* ASSIGNED — can start or cancel */}
-      {status === "Assigned" && (
+      {/* PENDING — Collaborator: cancel only */}
+      {status === "Pending" && role === UserRole.Collaborator && (
+        <CancelSection
+          value={cancelReason}
+          onChange={setCancelReason}
+          onConfirm={() => cancel.mutate({ reason: cancelReason })}
+          isPending={cancel.isPending}
+          disabled={anyPending}
+        />
+      )}
+
+      {/* ASSIGNED — Courier: start */}
+      {status === "Assigned" && role === UserRole.Courier && (
         <div className="space-y-3">
           <button
             onClick={() => start.mutate()}
@@ -93,7 +108,12 @@ export function RequestActions({ request }: RequestActionsProps) {
           >
             {start.isPending ? "Starting..." : "Start Request"}
           </button>
+        </div>
+      )}
 
+      {/* ASSIGNED — Admin + Collaborator: cancel only */}
+      {status === "Assigned" &&
+        (role === UserRole.Admin || role === UserRole.Collaborator) && (
           <CancelSection
             value={cancelReason}
             onChange={setCancelReason}
@@ -101,11 +121,10 @@ export function RequestActions({ request }: RequestActionsProps) {
             isPending={cancel.isPending}
             disabled={anyPending}
           />
-        </div>
-      )}
+        )}
 
-      {/* IN PROGRESS — can complete */}
-      {status === "InProgress" && (
+      {/* IN PROGRESS — Courier: complete */}
+      {status === "InProgress" && role === UserRole.Courier && (
         <div className="space-y-2">
           <input
             type="number"
@@ -135,49 +154,51 @@ export function RequestActions({ request }: RequestActionsProps) {
         </div>
       )}
 
-      {/* COMPLETED — can submit survey if not yet submitted */}
-      {status === "Completed" && !request.survey && (
-        <div className="space-y-2">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Rating (1–5)
-            </label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setRating(n)}
-                  className={`h-8 w-8 rounded-full text-sm font-medium border transition-colors ${
-                    rating === n
-                      ? "bg-primary text-white border-primary"
-                      : "border-gray-300 text-gray-600 hover:border-primary"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
+      {/* COMPLETED — Admin + Collaborator: survey */}
+      {status === "Completed" &&
+        !request.survey &&
+        (role === UserRole.Admin || role === UserRole.Collaborator) && (
+          <div className="space-y-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Rating (1–5)
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setRating(n)}
+                    className={`h-8 w-8 rounded-full text-sm font-medium border transition-colors ${
+                      rating === n
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 text-gray-600 hover:border-primary"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
             </div>
+            <input
+              value={surveyComment}
+              onChange={(e) => setSurveyComment(e.target.value)}
+              placeholder="Comment (optional)"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              onClick={() =>
+                survey.mutate({
+                  rating,
+                  comment: surveyComment || undefined,
+                })
+              }
+              disabled={anyPending}
+              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+            >
+              {survey.isPending ? "Submitting..." : "Submit Survey"}
+            </button>
           </div>
-          <input
-            value={surveyComment}
-            onChange={(e) => setSurveyComment(e.target.value)}
-            placeholder="Comment (optional)"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <button
-            onClick={() =>
-              survey.mutate({
-                rating,
-                comment: surveyComment || undefined,
-              })
-            }
-            disabled={anyPending}
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
-          >
-            {survey.isPending ? "Submitting..." : "Submit Survey"}
-          </button>
-        </div>
-      )}
+        )}
 
       {/* COMPLETED + survey done */}
       {status === "Completed" && request.survey && (
@@ -192,7 +213,6 @@ export function RequestActions({ request }: RequestActionsProps) {
   );
 }
 
-// Extracted — reused in Pending and Assigned
 interface CancelSectionProps {
   value: string;
   onChange: (v: string) => void;
