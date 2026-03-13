@@ -1,13 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\ErrandsManagement.Domain\ErrandsManagement.Domain.csproj" />
-    <ProjectReference Include="..\ErrandsManagement.Application\ErrandsManagement.Application.csproj" />
+    <Compile Remove="Authentication\**" />
+    <Compile Remove="Services\**" />
+    <EmbeddedResource Remove="Authentication\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <None Remove="Authentication\**" />
+    <None Remove="Services\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Authentication\" />
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\ErrandsManagement.Domain\ErrandsManagement.Domain.csproj" />
+    <ProjectReference Include="..\ErrandsManagement.Application\ErrandsManagement.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
