@@ -1,10 +1,12 @@
 ﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Users.Queries.GetAllUsers;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.Identity;
 using ErrandsManagement.Infrastructure.IntegrationTests.Data;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data;
 
 namespace ErrandsManagement.Infrastructure.IntegrationTests.Repositories;
 
@@ -44,14 +46,42 @@ public class UserRepositoryTests
         return (repo, userManager);
     }
 
-    private static UserDto NewUserDto() => new(
+    private static UserDto NewUserDto(string? fullName = null) => new(
         Id: Guid.NewGuid(),
         Email: $"user_{Guid.NewGuid():N}@test.local",
-        FullName: "Test User",
+        FullName: fullName ?? "Test User",
         Roles: [],
-        true);
+        IsActive: true);
 
     private CancellationToken CT => TestContext.Current.CancellationToken;
+
+    // ── Helper: seed a user with a role ───────────────────────────────────────
+
+    private static async Task<UserDto> SeedUserWithRole(
+        UserRepository repo,
+        UserManager<ApplicationUser> userManager,
+        AppDbContext context,
+        string role,
+        string? fullName = null,
+        CancellationToken ct = default)
+    {
+        // Ensure role exists
+        if (!context.Roles.Any(r => r.Name == role))
+        {
+            context.Roles.Add(new IdentityRole<Guid>
+            {
+                Id = Guid.NewGuid(),
+                Name = role,
+                NormalizedName = role.ToUpperInvariant()
+            });
+            await context.SaveChangesAsync(ct);
+        }
+
+        var dto = NewUserDto(fullName);
+        await repo.CreateAsync(dto, "pass", ct);
+        await repo.AssignRoleAsync(dto.Id, role, ct);
+        return dto;
+    }
 
     // ── FindByEmailAsync ───────────────────────────────────────────────────────
 
@@ -257,5 +287,183 @@ public class UserRepositoryTests
         result.Should().NotBeNull();
         result!.Id.Should().Be(dto.Id);
         result.Email.Should().Be(dto.Email);
+    }
+
+    // ── SetIsActiveAsync ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task SetIsActiveAsync_Should_Persist_False()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, _) = Build(context);
+        var dto = NewUserDto();
+        await repo.CreateAsync(dto, "pass", CT);
+
+        await repo.SetIsActiveAsync(dto.Id, false, CT);
+
+        var saved = await context.Users.FindAsync([dto.Id], CT);
+        saved!.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetIsActiveAsync_Should_Persist_True_After_Reactivation()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, _) = Build(context);
+        var dto = NewUserDto();
+        await repo.CreateAsync(dto, "pass", CT);
+
+        await repo.SetIsActiveAsync(dto.Id, false, CT);
+        await repo.SetIsActiveAsync(dto.Id, true, CT);
+
+        var saved = await context.Users.FindAsync([dto.Id], CT);
+        saved!.IsActive.Should().BeTrue();
+    }
+
+    // ── FindListItemByIdAsync ─────────────────────────────────────────────────
+
+    [Fact]
+    public async Task FindListItemByIdAsync_Should_Return_Null_When_User_Not_Found()
+    {
+        var (repo, _) = Build(TestDbContextFactory.Create());
+
+        var result = await repo.FindListItemByIdAsync(Guid.NewGuid(), CT);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task FindListItemByIdAsync_Should_Return_Correct_Fields()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+        var dto = await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice Smith", CT);
+
+        var result = await repo.FindListItemByIdAsync(dto.Id, CT);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(dto.Id);
+        result.FullName.Should().Be("Alice Smith");
+        result.Email.Should().Be(dto.Email);
+        result.Role.Should().Be("Collaborator");
+        result.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task FindListItemByIdAsync_Should_Return_Empty_Role_When_No_Role_Assigned()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, _) = Build(context);
+        var dto = NewUserDto();
+        await repo.CreateAsync(dto, "pass", CT);
+
+        var result = await repo.FindListItemByIdAsync(dto.Id, CT);
+
+        result.Should().NotBeNull();
+        result!.Role.Should().BeEmpty();
+    }
+
+    // ── GetPagedAsync ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Return_All_Users_With_No_Filters()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        await SeedUserWithRole(repo, userManager, context, "Courier", "Bob", CT);
+
+        var parameters = new UserQueryParameters { Page = 1, PageSize = 10 };
+        var result = await repo.GetPagedAsync(parameters, CT);
+
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Filter_By_Role()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        await SeedUserWithRole(repo, userManager, context, "Courier", "Bob", CT);
+
+        var parameters = new UserQueryParameters { Page = 1, PageSize = 10, Role = "Courier" };
+        var result = await repo.GetPagedAsync(parameters, CT);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(u => u.FullName == "Bob");
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Filter_By_Name_Search()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice Smith", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob Jones", CT);
+
+        var parameters = new UserQueryParameters { Page = 1, PageSize = 10, Search = "alice" };
+        var result = await repo.GetPagedAsync(parameters, CT);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(u => u.FullName == "Alice Smith");
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Filter_By_Email_Search()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        var dto = NewUserDto();
+        await repo.CreateAsync(dto, "pass", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob", CT);
+
+        var parameters = new UserQueryParameters { Page = 1, PageSize = 10, Search = dto.Email[..8] };
+        var result = await repo.GetPagedAsync(parameters, CT);
+
+        result.Items.Should().ContainSingle(u => u.Id == dto.Id);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Paginate_Correctly()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Charlie", CT);
+
+        var page1 = await repo.GetPagedAsync(
+            new UserQueryParameters { Page = 1, PageSize = 2 }, CT);
+        var page2 = await repo.GetPagedAsync(
+            new UserQueryParameters { Page = 2, PageSize = 2 }, CT);
+
+        page1.Items.Should().HaveCount(2);
+        page2.Items.Should().HaveCount(1);
+        page1.TotalCount.Should().Be(3);
+        page2.TotalCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Order_By_FullName()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Charlie", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob", CT);
+
+        var result = await repo.GetPagedAsync(
+            new UserQueryParameters { Page = 1, PageSize = 10 }, CT);
+
+        result.Items.Select(u => u.FullName)
+            .Should().BeInAscendingOrder();
     }
 }
