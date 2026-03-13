@@ -46,8 +46,18 @@ public static class IdentitySeeder
         const string adminEmail = "admin@errands.local";
         const string adminPassword = "Admin123!";
 
-        if (await userManager.FindByEmailAsync(adminEmail) is not null)
-            return; // Already seeded — idempotent
+        var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+        if (existingAdmin is not null)
+        {
+            // Ensure the seeded admin is always active after migrations
+            if (!existingAdmin.IsActive)
+            {
+                existingAdmin.IsActive = true;
+                await userManager.UpdateAsync(existingAdmin);
+                logger.LogInformation("Reactivated seeded admin: {Email}", adminEmail);
+            }
+            return;
+        }
 
         var admin = new ApplicationUser
         {
