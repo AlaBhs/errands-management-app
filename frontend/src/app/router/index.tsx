@@ -9,6 +9,9 @@ import { AdminPage } from "@/features/admin/pages/AdminPage";
 import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import LoginPage from "@/features/auth/pages/LoginPage";
+import { UserManagementPage } from "@/features/users/pages/UserManagementPage";
+import { UserRole } from "@/features/auth/types/auth.enums";
+import RoleGuard from "@/features/auth/components/RoleGuard";
 
 export function AppRouter() {
   return (
@@ -26,6 +29,10 @@ export function AppRouter() {
           <Route path="/courier/schedule" element={<CourierSchedulePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          {/* Admin-only routes */}
+          <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
+            <Route path="/admin/users" element={<UserManagementPage />} />
+          </Route>
         </Route>
       </Route>
 
