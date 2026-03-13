@@ -1,10 +1,17 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Users.DTOs;
+using ErrandsManagement.Application.Users.Queries.GetAllUsers;
 
 namespace ErrandsManagement.Application.Interfaces;
 
 public interface IUserRepository
 {
     Task<UserDto?> FindByEmailAsync(string email, CancellationToken ct = default);
+
+    Task<UserDto?> FindByIdAsync(Guid userId, CancellationToken ct = default);
+
+    Task<UserListItemDto?> FindListItemByIdAsync(Guid userId, CancellationToken ct = default);
 
     Task CreateAsync(UserDto user, string password, CancellationToken ct = default);
 
@@ -21,4 +28,8 @@ public interface IUserRepository
     Task<UserDto?> FindByRefreshTokenAsync(string token, CancellationToken ct = default);
 
     Task<bool> RefreshTokenIsActiveAsync(string token, CancellationToken ct = default);
+
+    Task<PagedResult<UserListItemDto>> GetPagedAsync(UserQueryParameters parameters, CancellationToken ct = default);
+
+    Task SetIsActiveAsync(Guid userId, bool isActive, CancellationToken ct = default);
 }

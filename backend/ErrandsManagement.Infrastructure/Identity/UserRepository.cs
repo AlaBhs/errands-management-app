@@ -1,8 +1,12 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Users.DTOs;
+using ErrandsManagement.Application.Users.Queries.GetAllUsers;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace ErrandsManagement.Infrastructure.Identity;
 
@@ -26,6 +30,37 @@ public sealed class UserRepository : IUserRepository
 
         var roles = await _userManager.GetRolesAsync(user);
         return ToDto(user, roles);
+    }
+
+    public async Task<UserDto?> FindByIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        if (user is null) return null;
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return ToDto(user, roles);
+    }
+
+    public async Task<UserListItemDto?> FindListItemByIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        return await (
+            from user in _context.Users
+            join userRole in _context.UserRoles on user.Id equals userRole.UserId into userRoles
+            from ur in userRoles.DefaultIfEmpty()
+            join role in _context.Roles on ur.RoleId equals role.Id into roles
+            from r in roles.DefaultIfEmpty()
+            where user.Id == userId
+            select new UserListItemDto(
+                user.Id,
+                user.FullName,
+                user.Email!,
+                r != null ? r.Name! : string.Empty,
+                user.IsActive,
+                user.CreatedAt
+            )
+        ).FirstOrDefaultAsync(ct);
     }
 
     public async Task CreateAsync(UserDto dto, string password, CancellationToken ct = default)
@@ -127,6 +162,53 @@ public sealed class UserRepository : IUserRepository
         return refreshToken?.IsActive ?? false;
     }
 
+    public async Task<PagedResult<UserListItemDto>> GetPagedAsync(
+        UserQueryParameters parameters, CancellationToken ct = default)
+    {
+        var query = from user in _context.Users
+                    join userRole in _context.UserRoles on user.Id equals userRole.UserId into userRoles
+                    from ur in userRoles.DefaultIfEmpty()
+                    join role in _context.Roles on ur.RoleId equals role.Id into roles
+                    from r in roles.DefaultIfEmpty()
+                    select new { user, roleName = r != null ? r.Name : null };
+
+        if (!string.IsNullOrWhiteSpace(parameters.Role))
+            query = query.Where(x => x.roleName == parameters.Role);
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            var search = parameters.Search.ToLower();
+            query = query.Where(x =>
+                x.user.FullName.ToLower().Contains(search) ||
+                (x.user.Email != null && x.user.Email.ToLower().Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(x => x.user.FullName)
+            .Skip((parameters.Page - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(x => new UserListItemDto(
+                x.user.Id,
+                x.user.FullName,
+                x.user.Email!,
+                x.roleName ?? string.Empty,
+                x.user.IsActive,
+                x.user.CreatedAt
+            ))
+            .ToListAsync(ct);
+
+        return PagedResult<UserListItemDto>.Create(items, parameters.Page, parameters.PageSize, totalCount);
+    }
+
+    public async Task SetIsActiveAsync(Guid userId, bool isActive, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        user.IsActive = isActive;
+        await _userManager.UpdateAsync(user);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindUserByIdAsync(Guid userId)
@@ -135,5 +217,4 @@ public sealed class UserRepository : IUserRepository
 
     private static UserDto ToDto(ApplicationUser user, IEnumerable<string> roles)
         => new(user.Id, user.Email!, user.FullName, roles, user.IsActive);
-
 }
