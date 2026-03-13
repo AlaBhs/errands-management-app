@@ -39,7 +39,7 @@ public class RefreshTokenHandlerTests
             .Setup(r => r.RefreshTokenIsActiveAsync("old-refresh", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _jwtGenMock
-            .Setup(g => g.GenerateAccessToken(userDto.Id, userDto.Email, userDto.Roles))
+            .Setup(g => g.GenerateAccessToken(userDto.Id, userDto.Email, userDto.FullName, userDto.Roles))
             .Returns("new-access-token");
         _jwtGenMock
             .Setup(g => g.GenerateRefreshToken())

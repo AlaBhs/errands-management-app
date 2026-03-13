@@ -35,7 +35,7 @@ public sealed class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthRes
 
         await _userRepository.RevokeAllActiveRefreshTokensAsync(user.Id, ct);
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user.Id, user.Email, user.Roles);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user.Id, user.Email, user.FullName, user.Roles);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
         await _userRepository.AddRefreshTokenAsync(

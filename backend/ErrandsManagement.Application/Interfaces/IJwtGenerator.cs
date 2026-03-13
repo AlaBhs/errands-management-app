@@ -6,6 +6,6 @@
 /// </summary>
 public interface IJwtTokenGenerator
 {
-    string GenerateAccessToken(Guid userId, string email, IEnumerable<string> roles);
+    string GenerateAccessToken(Guid userId, string email, string fullName, IEnumerable<string> roles);
     string GenerateRefreshToken();
 }

@@ -1,9 +1,9 @@
 import type { AuthUser } from "../types";
 
-
 export interface JwtPayload {
   sub: string;
   email: string;
+  name: string;
   role: string;
   exp?: number;
   iat?: number;
@@ -33,6 +33,7 @@ export function extractUserFromToken(token: string): AuthUser {
   return {
     id: payload.sub,
     email: payload.email,
+    fullName: payload.name ?? '',
     role: payload.role as AuthUser['role'],
   };
 }

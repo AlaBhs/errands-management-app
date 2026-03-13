@@ -41,7 +41,7 @@ public class LoginUserHandlerTests
             .Setup(r => r.CheckPasswordAsync(userDto.Id, "Password1!", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _jwtGenMock
-            .Setup(g => g.GenerateAccessToken(userDto.Id, userDto.Email, userDto.Roles))
+            .Setup(g => g.GenerateAccessToken(userDto.Id,  userDto.Email, userDto.FullName, userDto.Roles))
             .Returns("access-token");
         _jwtGenMock
             .Setup(g => g.GenerateRefreshToken())
@@ -144,7 +144,7 @@ public class LoginUserHandlerTests
 
         // Assert — token methods must never be called for an inactive user
         _jwtGenMock.Verify(g =>
-            g.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()),
+            g.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()),
             Times.Never);
         _userRepoMock.Verify(r =>
             r.AddRefreshTokenAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),

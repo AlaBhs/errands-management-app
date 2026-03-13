@@ -20,12 +20,13 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         _settings = settings.Value;
     }
 
-    public string GenerateAccessToken(Guid userId, string email, IEnumerable<string> roles)
+    public string GenerateAccessToken(Guid userId, string email, string fullName, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
+            new(JwtRegisteredClaimNames.Name, fullName),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
@@ -44,6 +45,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
 
     public string GenerateRefreshToken()
     {

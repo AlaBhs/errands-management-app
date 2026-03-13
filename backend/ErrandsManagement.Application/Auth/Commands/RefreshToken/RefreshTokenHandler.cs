@@ -35,7 +35,7 @@ public sealed class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, A
         // Rotate: revoke consumed token, issue fresh one
         await _userRepository.RevokeRefreshTokenAsync(user.Id, request.Token, ct);
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user.Id, user.Email, user.Roles);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user.Id, user.Email, user.FullName, user.Roles);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
         await _userRepository.AddRefreshTokenAsync(
