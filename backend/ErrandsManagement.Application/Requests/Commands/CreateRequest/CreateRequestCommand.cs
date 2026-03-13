@@ -1,7 +1,7 @@
 ﻿using ErrandsManagement.Domain.Enums;
 namespace ErrandsManagement.Application.Requests.Commands.CreateRequest;
 
-using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Requests.DTOs;
 using MediatR;
 
 public sealed record CreateRequestCommand(

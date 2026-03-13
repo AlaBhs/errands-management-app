@@ -1,6 +1,6 @@
 ﻿using ErrandsManagement.Domain.Enums;
 
-namespace ErrandsManagement.Application.DTOs
+namespace ErrandsManagement.Application.Requests.DTOs
 {
     public sealed record CreateRequestDto(
         string Title,

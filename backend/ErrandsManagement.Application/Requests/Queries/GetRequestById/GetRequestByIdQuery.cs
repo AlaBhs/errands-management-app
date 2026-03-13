@@ -1,5 +1,4 @@
-﻿
-using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Requests.DTOs;
 using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Queries.GetRequestById

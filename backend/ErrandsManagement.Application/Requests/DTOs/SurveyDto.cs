@@ -1,5 +1,4 @@
-﻿
-namespace ErrandsManagement.Application.DTOs
+﻿namespace ErrandsManagement.Application.Requests.DTOs
 {
     public sealed record SurveyDto(
         int Rating,
