@@ -3,6 +3,7 @@ using ErrandsManagement.Application.Common.Settings;
 using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -25,8 +26,8 @@ public class LoginUserHandlerTests
     private LoginUserHandler CreateHandler() =>
         new(_userRepoMock.Object, _jwtGenMock.Object, _jwtOptions);
 
-    private static UserDto MakeUserDto(string email = "user@test.local") =>
-        new(Guid.NewGuid(), email, "Test User", ["Collaborator"], true);
+    private static UserDto MakeUserDto(string email = "user@test.local", bool isActive = true) =>
+        new(Guid.NewGuid(), email, "Test User", ["Collaborator"], isActive);
 
     [Fact]
     public async Task Handle_With_Valid_Credentials_Should_Return_AuthResponse()
@@ -99,5 +100,54 @@ public class LoginUserHandlerTests
 
         await act.Should().ThrowAsync<UnauthorizedAccessException>()
             .WithMessage("*Invalid credentials*");
+    }
+
+    [Fact]
+    public async Task Handle_When_User_Is_Inactive_Should_Throw_UnauthorizedAccessException()
+    {
+        // Arrange
+        var userDto = MakeUserDto(isActive: false);
+        _userRepoMock
+            .Setup(r => r.FindByEmailAsync(userDto.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userDto);
+        _userRepoMock
+            .Setup(r => r.CheckPasswordAsync(userDto.Id, "Password1!", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var command = new LoginUserCommand(userDto.Email, "Password1!");
+
+        // Act
+        Func<Task> act = () => CreateHandler().Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedAccessException>()
+            .WithMessage("*deactivated*");
+    }
+
+    [Fact]
+    public async Task Handle_When_User_Is_Inactive_Should_Not_Issue_Tokens()
+    {
+        // Arrange
+        var userDto = MakeUserDto(isActive: false);
+        _userRepoMock
+            .Setup(r => r.FindByEmailAsync(userDto.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userDto);
+        _userRepoMock
+            .Setup(r => r.CheckPasswordAsync(userDto.Id, "Password1!", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var command = new LoginUserCommand(userDto.Email, "Password1!");
+
+        // Act
+        Func<Task> act = () => CreateHandler().Handle(command, CancellationToken.None);
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+
+        // Assert — token methods must never be called for an inactive user
+        _jwtGenMock.Verify(g =>
+            g.GenerateAccessToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()),
+            Times.Never);
+        _userRepoMock.Verify(r =>
+            r.AddRefreshTokenAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }
