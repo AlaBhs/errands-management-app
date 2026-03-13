@@ -4,5 +4,6 @@ public sealed record UserDto(
     Guid Id,
     string Email,
     string FullName,
-    IEnumerable<string> Roles
+    IEnumerable<string> Roles,
+    bool IsActive
 );

@@ -30,6 +30,9 @@ public sealed class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthRes
         if (user is null || !await _userRepository.CheckPasswordAsync(user.Id, request.Password, ct))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        if (!user.IsActive)
+            throw new UnauthorizedAccessException("This account has been deactivated.");
+
         await _userRepository.RevokeAllActiveRefreshTokensAsync(user.Id, ct);
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(user.Id, user.Email, user.Roles);

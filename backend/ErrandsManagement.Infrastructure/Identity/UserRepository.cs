@@ -134,6 +134,6 @@ public sealed class UserRepository : IUserRepository
            ?? throw new InvalidOperationException($"User {userId} not found.");
 
     private static UserDto ToDto(ApplicationUser user, IEnumerable<string> roles)
-        => new(user.Id, user.Email!, user.FullName, roles);
+        => new(user.Id, user.Email!, user.FullName, roles, user.IsActive);
 
 }
