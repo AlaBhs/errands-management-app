@@ -21,7 +21,7 @@ public sealed class RegisterUserHandler : IRequestHandler<RegisterUserCommand, A
             throw new InvalidOperationException("A user with this email already exists.");
 
         var userId = Guid.NewGuid();
-        var newUser = new UserDto(userId, request.Email, request.FullName, []);
+        var newUser = new UserDto(userId, request.Email, request.FullName, [], true);
 
         await _userRepository.CreateAsync(newUser, request.Password, ct);
         await _userRepository.AssignRoleAsync(userId, request.Role, ct);

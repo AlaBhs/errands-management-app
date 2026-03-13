@@ -1,4 +1,4 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Domain.Entities;

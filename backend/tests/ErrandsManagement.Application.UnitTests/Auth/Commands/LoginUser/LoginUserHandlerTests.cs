@@ -26,7 +26,7 @@ public class LoginUserHandlerTests
         new(_userRepoMock.Object, _jwtGenMock.Object, _jwtOptions);
 
     private static UserDto MakeUserDto(string email = "user@test.local") =>
-        new(Guid.NewGuid(), email, "Test User", ["Collaborator"]);
+        new(Guid.NewGuid(), email, "Test User", ["Collaborator"], true);
 
     [Fact]
     public async Task Handle_With_Valid_Credentials_Should_Return_AuthResponse()

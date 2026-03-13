@@ -13,7 +13,7 @@ public class LogoutHandlerTests
     private LogoutHandler CreateHandler() => new(_userRepoMock.Object);
 
     private static UserDto MakeUserDto() =>
-        new(Guid.NewGuid(), "user@test.local", "Test User", ["Collaborator"]);
+        new(Guid.NewGuid(), "user@test.local", "Test User", ["Collaborator"], true);
 
     [Fact]
     public async Task Handle_When_Token_Exists_Should_Revoke_It()

@@ -26,7 +26,7 @@ public class RefreshTokenHandlerTests
         new(_userRepoMock.Object, _jwtGenMock.Object, _jwtOptions);
 
     private static UserDto MakeUserDto() =>
-        new(Guid.NewGuid(), "user@test.local", "Test User", ["Collaborator"]);
+        new(Guid.NewGuid(), "user@test.local", "Test User", ["Collaborator"], true);
 
     [Fact]
     public async Task Handle_With_Active_Token_Should_Rotate_And_Return_New_Pair()

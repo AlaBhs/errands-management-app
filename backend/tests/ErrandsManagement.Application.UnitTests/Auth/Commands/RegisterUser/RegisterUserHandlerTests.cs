@@ -19,7 +19,7 @@ public class RegisterUserHandlerTests
             .Setup(r => r.FindByEmailAsync("new@test.local", It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserDto?)null);
 
-        var createdDto = new UserDto(Guid.NewGuid(), "new@test.local", "New User", ["Collaborator"]);
+        var createdDto = new UserDto(Guid.NewGuid(), "new@test.local", "New User", ["Collaborator"], true);
         _userRepoMock
             .SetupSequence(r => r.FindByEmailAsync("new@test.local", It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserDto?)null)        // first call: existence check
@@ -45,7 +45,7 @@ public class RegisterUserHandlerTests
     [Fact]
     public async Task Handle_When_Email_Already_Exists_Should_Throw_InvalidOperationException()
     {
-        var existingDto = new UserDto(Guid.NewGuid(), "dup@test.local", "Existing", ["Admin"]);
+        var existingDto = new UserDto(Guid.NewGuid(), "dup@test.local", "Existing", ["Admin"], true);
         _userRepoMock
             .Setup(r => r.FindByEmailAsync("dup@test.local", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingDto);

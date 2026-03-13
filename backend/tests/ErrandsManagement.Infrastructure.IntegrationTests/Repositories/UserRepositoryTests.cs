@@ -48,7 +48,8 @@ public class UserRepositoryTests
         Id: Guid.NewGuid(),
         Email: $"user_{Guid.NewGuid():N}@test.local",
         FullName: "Test User",
-        Roles: []);
+        Roles: [],
+        true);
 
     private CancellationToken CT => TestContext.Current.CancellationToken;
 
