@@ -150,4 +150,60 @@ public sealed class RequestRepository : IRequestRepository
             parameters.PageSize,
             totalCount);
     }
+    public async Task<PagedResult<RequestListItemDto>> GetMyAssignmentsAsync(
+    Guid courierId,
+    RequestQueryParameters parameters,
+    CancellationToken cancellationToken)
+    {
+        var query = _context.Requests
+            .AsNoTracking()
+            .Where(r => r.Assignments.Any(a => a.CourierId == courierId && !a.IsCompleted));
+
+        if (parameters.Status.HasValue)
+            query = query.Where(r => r.Status == parameters.Status.Value);
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            var searchLower = parameters.Search.Trim().ToLower();
+            query = query.Where(r =>
+                r.Title.ToLower().Contains(searchLower) ||
+                r.Description.ToLower().Contains(searchLower));
+        }
+
+        query = parameters.SortBy?.ToLower() switch
+        {
+            "deadline" => parameters.Descending
+                ? query.OrderByDescending(r => r.Deadline)
+                : query.OrderBy(r => r.Deadline),
+
+            "estimatedcost" => parameters.Descending
+                ? query.OrderByDescending(r => r.EstimatedCost)
+                : query.OrderBy(r => r.EstimatedCost),
+
+            _ => parameters.Descending
+                ? query.OrderByDescending(r => r.CreatedAt)
+                : query.OrderBy(r => r.CreatedAt)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip((parameters.Page - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
+            .Select(r => new RequestListItemDto(
+                r.Id,
+                r.Title,
+                r.Description,
+                r.Status.ToString(),
+                r.Priority.ToString(),
+                r.EstimatedCost,
+                r.Deadline))
+            .ToListAsync(cancellationToken);
+
+        return PagedResult<RequestListItemDto>.Create(
+            items,
+            parameters.Page,
+            parameters.PageSize,
+            totalCount);
+    }
 }

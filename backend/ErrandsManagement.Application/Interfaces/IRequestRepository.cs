@@ -18,4 +18,8 @@ public interface IRequestRepository
         Guid requesterId,
         RequestQueryParameters parameters,
         CancellationToken cancellationToken);
+    Task<PagedResult<RequestListItemDto>> GetMyAssignmentsAsync(
+    Guid courierId,
+    RequestQueryParameters parameters,
+    CancellationToken cancellationToken);
 }

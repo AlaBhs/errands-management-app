@@ -8,6 +8,7 @@ using ErrandsManagement.Application.Requests.Commands.StartRequest;
 using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
+using ErrandsManagement.Application.Requests.Queries.GetMyAssignments;
 using ErrandsManagement.Application.Requests.Queries.GetMyRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
@@ -108,6 +109,24 @@ public sealed class RequestsController : ControllerBase
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
     }
+    [HttpGet("assignments")]
+    [Authorize(Roles = "Courier")]
+    public async Task<IActionResult> GetMyAssignments(
+    [FromQuery] RequestQueryParameters parameters,
+    CancellationToken cancellationToken)
+    {
+        var courierId = GetCurrentUserId();
+
+        var result = await _mediator.Send(
+            new GetMyAssignmentsQuery(courierId, parameters),
+            cancellationToken);
+
+        return Ok(ApiResponse<PagedResult<RequestListItemDto>>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
+    }
+
     [HttpPost("{id:guid}/assign")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Assign(
