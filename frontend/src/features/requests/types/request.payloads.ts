@@ -8,7 +8,6 @@ import type { RequestStatus } from "./request.enums";
 export interface CreateRequestPayload {
   title: string;
   description: string;
-  requesterId: string;
   deliveryAddress: AddressDto;
   priority: number;
   deadline?: string;

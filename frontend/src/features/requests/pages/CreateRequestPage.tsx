@@ -1,32 +1,31 @@
-import { useNavigate } from "react-router"; // updated to "react-router" for consistency
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Upload } from "lucide-react"; // added for file upload icon
-import { useCreateRequest } from "@/features/requests";
-import { ErrorMessage } from "@/shared/components/ErrorMessage";
-import { isApiError } from "@/shared/api/client";
+import { useNavigate } from 'react-router';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Upload } from 'lucide-react';
+import { useCreateRequest } from '@/features/requests';
+import { ErrorMessage } from '@/shared/components/ErrorMessage';
+import { isApiError } from '@/shared/api/client';
 
-const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
+const priorityLevels = ['Low', 'Normal', 'High', 'Urgent'] as const;
 
 const schema = z.object({
-  title: z.string().min(1, "Title is required").max(100),
-  description: z.string().min(1, "Description is required").max(500),
-  requesterId: z.uuid("Requester ID must be a valid UUID"),
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().min(1, 'Description is required').max(500),
   priority: z.number().min(0).max(3),
   deadline: z.string().optional(),
   estimatedCost: z
     .string()
     .optional()
     .refine(
-      (val) => val === "" || val === undefined || !isNaN(parseFloat(val)),
-      "Estimated cost must be a valid number",
+      (val) => val === '' || val === undefined || !isNaN(parseFloat(val)),
+      'Estimated cost must be a valid number',
     ),
   deliveryAddress: z.object({
-    street: z.string().min(1, "Street is required"),
-    city: z.string().min(1, "City is required"),
-    postalCode: z.string().min(1, "Postal code is required"),
-    country: z.string().min(1, "Country is required"),
+    street: z.string().min(1, 'Street is required'),
+    city: z.string().min(1, 'City is required'),
+    postalCode: z.string().min(1, 'Postal code is required'),
+    country: z.string().min(1, 'Country is required'),
     note: z.string().optional(),
   }),
 });
@@ -44,21 +43,24 @@ export function CreateRequestPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      priority: 1, // "Normal"
+      priority: 1,
     },
   });
 
   const onSubmit = (values: FormValues) => {
     mutate(
       {
-        ...values,
+        title: values.title,
+        description: values.description,
+        priority: values.priority,
         deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
           : undefined,
+        deliveryAddress: values.deliveryAddress,
       },
       {
-        onSuccess: () => navigate("/requests"),
+        onSuccess: () => navigate('/requests/mine'),
       },
     );
   };
@@ -73,7 +75,7 @@ export function CreateRequestPage() {
 
       {isError && (
         <ErrorMessage
-          message={isApiError(error) ? error.message : "Something went wrong."}
+          message={isApiError(error) ? error.message : 'Something went wrong.'}
         />
       )}
 
@@ -88,7 +90,7 @@ export function CreateRequestPage() {
             <input
               id="title"
               type="text"
-              {...register("title")}
+              {...register('title')}
               placeholder="Enter a descriptive title"
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
             />
@@ -104,7 +106,7 @@ export function CreateRequestPage() {
             </label>
             <textarea
               id="description"
-              {...register("description")}
+              {...register('description')}
               placeholder="Provide detailed information about your request"
               rows={5}
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38] resize-none"
@@ -117,60 +119,35 @@ export function CreateRequestPage() {
             </p>
           </div>
 
-          {/* Two‑column row: Requester ID (temporary) and Deadline */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Requester ID (temporary) */}
-            <div>
-              <label htmlFor="requesterId" className="block text-sm font-medium text-[#2E2E38] mb-2">
-                Requester ID *
-                <span className="ml-1 text-xs text-gray-400">
-                  (temporary — replaced by auth in Phase 5)
-                </span>
-              </label>
-              <input
-                id="requesterId"
-                {...register("requesterId")}
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.requesterId && (
-                <p className="mt-1 text-xs text-red-500">{errors.requesterId.message}</p>
-              )}
-            </div>
-
-            {/* Due Date (previously deadline) */}
-            <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-[#2E2E38] mb-2">
-                Due Date *
-              </label>
-              <input
-                id="deadline"
-                type="date"
-                {...register("deadline")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deadline && (
-                <p className="mt-1 text-xs text-red-500">{errors.deadline.message}</p>
-              )}
-            </div>
+          {/* Deadline */}
+          <div>
+            <label htmlFor="deadline" className="block text-sm font-medium text-[#2E2E38] mb-2">
+              Due Date
+            </label>
+            <input
+              id="deadline"
+              type="date"
+              {...register('deadline')}
+              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+            />
+            {errors.deadline && (
+              <p className="mt-1 text-xs text-red-500">{errors.deadline.message}</p>
+            )}
           </div>
 
-          {/* Priority (radio buttons) */}
+          {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-3">
               Priority Level *
             </label>
             <div className="flex gap-4">
               {priorityLevels.map((priority, index) => (
-                <label
-                  key={priority}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
+                <label key={priority} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     value={index}
-                    {...register("priority")}
-                    defaultChecked={index === 1} // "Normal"
+                    {...register('priority')}
+                    defaultChecked={index === 1}
                     className="w-4 h-4 text-[#2E2E38] focus:ring-[#2E2E38]"
                   />
                   <span className="text-sm text-gray-700">{priority}</span>
@@ -190,7 +167,7 @@ export function CreateRequestPage() {
               type="number"
               step="0.01"
               min="0"
-              {...register("estimatedCost")}
+              {...register('estimatedCost')}
               placeholder="0.00"
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
             />
@@ -207,7 +184,7 @@ export function CreateRequestPage() {
 
             <div>
               <input
-                {...register("deliveryAddress.street")}
+                {...register('deliveryAddress.street')}
                 placeholder="Street *"
                 className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
               />
@@ -221,7 +198,7 @@ export function CreateRequestPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <input
-                  {...register("deliveryAddress.city")}
+                  {...register('deliveryAddress.city')}
                   placeholder="City *"
                   className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
                 />
@@ -233,7 +210,7 @@ export function CreateRequestPage() {
               </div>
               <div>
                 <input
-                  {...register("deliveryAddress.postalCode")}
+                  {...register('deliveryAddress.postalCode')}
                   placeholder="Postal Code *"
                   className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
                 />
@@ -247,7 +224,7 @@ export function CreateRequestPage() {
 
             <div>
               <input
-                {...register("deliveryAddress.country")}
+                {...register('deliveryAddress.country')}
                 placeholder="Country *"
                 className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
               />
@@ -260,14 +237,14 @@ export function CreateRequestPage() {
 
             <div>
               <input
-                {...register("deliveryAddress.note")}
+                {...register('deliveryAddress.note')}
                 placeholder="Note (optional)"
                 className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
               />
             </div>
           </fieldset>
 
-          {/* File Upload (visual placeholder) */}
+          {/* File Upload placeholder */}
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-2">
               Attachments
@@ -282,11 +259,11 @@ export function CreateRequestPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
-              onClick={() => navigate("/requests")}
+              onClick={() => navigate('/requests/mine')}
               className="px-6 py-2 border border-border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
@@ -296,7 +273,7 @@ export function CreateRequestPage() {
               disabled={isPending}
               className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg hover:bg-[#1a1a24] transition-colors flex items-center gap-2 disabled:opacity-50"
             >
-              {isPending ? "Submitting..." : "Submit Request"}
+              {isPending ? 'Submitting...' : 'Submit Request'}
             </button>
           </div>
         </form>
@@ -306,10 +283,10 @@ export function CreateRequestPage() {
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-900 mb-2">Need Help?</h3>
         <p className="text-sm text-blue-700">
-          For urgent requests, please contact the Facilities team at{" "}
+          For urgent requests, please contact the Facilities team at{' '}
           <a href="mailto:facilities@ey.com" className="underline">
             facilities@ey.com
-          </a>{" "}
+          </a>{' '}
           or call ext. 2345
         </p>
       </div>
