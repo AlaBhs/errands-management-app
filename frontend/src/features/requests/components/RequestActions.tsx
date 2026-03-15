@@ -7,6 +7,7 @@ import {
   useStartRequest,
   useSubmitSurvey,
 } from '@/features/requests';
+import { useUsers } from '@/features/users';
 import { isApiError } from '@/shared/api/client';
 import { ErrorMessage } from '@/shared/components/ErrorMessage';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -27,12 +28,21 @@ export function RequestActions({ request }: RequestActionsProps) {
   const complete = useCompleteRequest(id);
   const survey   = useSubmitSurvey(id);
 
-  const [courierIdInput, setCourierIdInput] = useState('');
-  const [cancelReason, setCancelReason]     = useState('');
-  const [actualCost, setActualCost]         = useState('');
-  const [completeNote, setCompleteNote]     = useState('');
-  const [rating, setRating]                 = useState<number>(5);
-  const [surveyComment, setSurveyComment]   = useState('');
+  // Fetch active couriers for the assign dropdown — only needed for Admin
+  const { data: couriersData } = useUsers({
+    page: 1,
+    pageSize: 100,
+    role: UserRole.Courier,
+    isActive: true,
+  });
+  const couriers = couriersData?.items ?? [];
+
+  const [selectedCourierId, setSelectedCourierId] = useState('');
+  const [cancelReason, setCancelReason]           = useState('');
+  const [actualCost, setActualCost]               = useState('');
+  const [completeNote, setCompleteNote]           = useState('');
+  const [rating, setRating]                       = useState<number>(5);
+  const [surveyComment, setSurveyComment]         = useState('');
 
   const anyPending =
     assign.isPending ||
@@ -43,7 +53,6 @@ export function RequestActions({ request }: RequestActionsProps) {
 
   const currentError =
     assign.error || start.error || cancel.error || complete.error || survey.error;
-
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -59,16 +68,28 @@ export function RequestActions({ request }: RequestActionsProps) {
       {status === 'Pending' && role === UserRole.Admin && (
         <div className="space-y-3">
           <div className="space-y-2">
-            <label className="block text-xs font-medium text-gray-600">Courier ID</label>
-            <input
-              value={courierIdInput}
-              onChange={(e) => setCourierIdInput(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <label className="block text-xs font-medium text-gray-600">
+              Assign to Courier
+            </label>
+            {couriers.length === 0 ? (
+              <p className="text-xs text-gray-400">No active couriers available.</p>
+            ) : (
+              <select
+                value={selectedCourierId}
+                onChange={(e) => setSelectedCourierId(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Select a courier...</option>
+                {couriers.map((courier) => (
+                  <option key={courier.id} value={courier.id}>
+                    {courier.fullName} — {courier.email}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
-              onClick={() => assign.mutate({ courierId: courierIdInput })}
-              disabled={anyPending || !courierIdInput}
+              onClick={() => assign.mutate({ courierId: selectedCourierId })}
+              disabled={anyPending || !selectedCourierId}
               className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {assign.isPending ? 'Assigning...' : 'Assign Courier'}
@@ -185,7 +206,7 @@ export function RequestActions({ request }: RequestActionsProps) {
           />
         )}
 
-      {/* COMPLETED — Collaborator: submit survey */}
+      {/* COMPLETED — Collaborator + Admin: submit survey */}
       {status === 'Completed' &&
         !request.survey &&
         (role === UserRole.Admin || role === UserRole.Collaborator) && (

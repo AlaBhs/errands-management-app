@@ -68,6 +68,7 @@ export function CourierSchedulePage() {
   ];
 
   const handleStatusUpdate = (errandId: string, newStatus: "In Progress" | "Completed") => {
+    console.log(`Updating ${errandId} to ${newStatus}`);
     if (newStatus === "Completed") {
       setProofModalOpen(true);
     }

@@ -3,11 +3,27 @@ import { useRequest, StatusBadge, RequestActions } from "@/features/requests";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
+import { UserRole } from "@/features/auth/types/auth.enums";
+import { useAuthStore } from "@/features/auth/store/authStore";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading, isError, error } = useRequest(id!);
+  const role = useAuthStore((s) => s.user?.role);
 
+  const backLink =
+    role === UserRole.Courier
+      ? "/assignments"
+      : role === UserRole.Collaborator
+        ? "/requests/mine"
+        : "/requests";
+
+  const backLabel =
+    role === UserRole.Courier
+      ? "← Back to My Assignments"
+      : role === UserRole.Collaborator
+        ? "← Back to My Requests"
+        : "← Back to All Requests";
   if (isLoading) return <PageSpinner />;
   if (isError)
     return (
@@ -20,8 +36,8 @@ export function RequestDetailsPage() {
   return (
     <div className="space-y-6">
       {/* Back */}
-      <Link to="/requests" className="text-sm text-primary hover:underline">
-        ← Back to Requests
+      <Link to={backLink} className="text-sm text-primary hover:underline">
+        {backLabel}
       </Link>
 
       {/* Header */}
