@@ -47,7 +47,7 @@ export function RequestDetailsPage() {
             {request.title}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Requested by {request.requesterId} ·{" "}
+            Requested by {request.requesterName} ·{" "}
           </p>
         </div>
         <StatusBadge status={request.status} />
@@ -84,7 +84,7 @@ export function RequestDetailsPage() {
             <p>
               Courier ID:{" "}
               <span className="font-medium">
-                {request.currentAssignment.courierId}
+                {request.currentAssignment.courierName} (ID: {request.currentAssignment.courierId})
               </span>
             </p>
             <p>

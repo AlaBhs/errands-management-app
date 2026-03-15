@@ -13,6 +13,7 @@ export interface AddressDto {
 
 export interface AssignmentDto {
   courierId: string;
+  courierName: string;
   assignedAt: string;
   startedAt?: string;
   completedAt?: string;
@@ -52,6 +53,7 @@ export interface RequestDetailsDto {
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;
+  requesterName: string;
   deliveryAddress: AddressDto;
   currentAssignment?: AssignmentDto;
   auditLogs: AuditLogDto[];

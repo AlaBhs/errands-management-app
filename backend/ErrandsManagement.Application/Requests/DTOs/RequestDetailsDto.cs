@@ -9,6 +9,7 @@ public sealed record RequestDetailsDto(
     DateTime? Deadline,
     decimal? EstimatedCost,
     Guid RequesterId,
+    string RequesterName,
     AddressDto DeliveryAddress,
     AssignmentDto? CurrentAssignment,
     IReadOnlyCollection<AuditLogDto> AuditLogs,
