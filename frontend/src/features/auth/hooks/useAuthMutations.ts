@@ -11,22 +11,21 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
-    onSuccess: ({ accessToken, refreshToken }) => {
+    onSuccess: ({ accessToken }) => {
       const user = extractUserFromToken(accessToken);
-      setAuth(user, accessToken, refreshToken);
+      setAuth(user, accessToken);
       navigate('/requests', { replace: true });
     },
   });
 }
 
 export function useLogout() {
-  const { refreshToken, clearAuth } = useAuthStore();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: () => authApi.logout(refreshToken ?? ''),
+    mutationFn: () => authApi.logout(),
     onSettled: () => {
-      // Always clear local state, even if the server call fails
       clearAuth();
       navigate('/login', { replace: true });
     },

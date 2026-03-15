@@ -2,11 +2,9 @@
 using ErrandsManagement.Application.Auth.Commands.Logout;
 using ErrandsManagement.Application.Auth.Commands.RefreshToken;
 using ErrandsManagement.Application.Auth.Commands.RegisterUser;
-using ErrandsManagement.Infrastructure.Data;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ErrandsManagement.API.Controllers;
 
@@ -15,15 +13,12 @@ namespace ErrandsManagement.API.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly ISender _mediator;
+    private const string RefreshTokenCookie = "refresh_token";
 
     public AuthController(ISender mediator) => _mediator = mediator;
 
-    /// <summary>Register a new Collaborator or Courier account.</summary>
     [HttpPost("register")]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register(
         [FromBody] RegisterUserCommand command,
         CancellationToken ct)
@@ -32,78 +27,72 @@ public sealed class AuthController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Authenticate with email and password, receive token pair.</summary>
     [HttpPost("login")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(
         [FromBody] LoginUserCommand command,
         CancellationToken ct)
     {
         var result = await _mediator.Send(command, ct);
-        return Ok(result);
+        SetRefreshTokenCookie(result.RefreshToken);
+        return Ok(new
+        {
+            result.AccessToken,
+            result.ExpiresAt,
+            result.Email,
+            result.FullName,
+            result.Roles
+        });
     }
 
-    /// <summary>Exchange a valid refresh token for a new access + refresh token pair.</summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Refresh(
-        [FromBody] RefreshTokenCommand command,
-        CancellationToken ct)
+    public async Task<IActionResult> Refresh(CancellationToken ct)
     {
-        var result = await _mediator.Send(command, ct);
-        return Ok(result);
-    }
+        var refreshToken = Request.Cookies[RefreshTokenCookie];
 
-    /// <summary>Revoke the current refresh token, ending the session.</summary>
-    [HttpPost("logout")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout(
-        [FromBody] LogoutCommand command,
-        CancellationToken ct)
-    {
-        await _mediator.Send(command, ct);
-        return NoContent();
-    }
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return Unauthorized("Refresh token cookie missing.");
 
-    [HttpPost("debug/check-token")]
-    [AllowAnonymous]
-    public async Task<IActionResult> CheckToken(
-    [FromBody] RefreshTokenCommand command,
-    [FromServices] AppDbContext db)
-    {
-        var tokenInDb = await db.RefreshTokens
-            .Where(t => t.Token == command.Token)
-            .Select(t => new
-            {
-                t.Token,
-                t.Revoked,
-                t.ExpiresAt,
-                t.UserId,
-                t.CreatedAt,
-                IsActive = !t.Revoked && t.ExpiresAt > DateTime.UtcNow
-            })
-            .FirstOrDefaultAsync();
-
-        var allTokens = await db.RefreshTokens
-            .Select(t => new
-            {
-                TokenPreview = t.Token.Substring(0, 10) + "...",
-                t.Revoked,
-                t.ExpiresAt,
-                t.UserId
-            })
-            .ToListAsync();
+        var result = await _mediator.Send(new RefreshTokenCommand(refreshToken), ct);
+        SetRefreshTokenCookie(result.RefreshToken);
 
         return Ok(new
         {
-            searched = command.Token.Substring(0, 10) + "...",
-            exactMatch = tokenInDb,
-            allTokens
+            result.AccessToken,
+            result.ExpiresAt,
+            result.Email,
+            result.FullName,
+            result.Roles
+        });
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(CancellationToken ct)
+    {
+        var refreshToken = Request.Cookies[RefreshTokenCookie];
+
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+            await _mediator.Send(new LogoutCommand(refreshToken), ct);
+
+        Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions
+        {
+            Path = "/"
+        });
+
+        return NoContent();
+    }
+
+    private void SetRefreshTokenCookie(string token)
+    {
+        Response.Cookies.Append(RefreshTokenCookie, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddDays(7),
+            Path = "/"
         });
     }
 }

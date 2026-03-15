@@ -1,44 +1,31 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useAuthStore } from "../store/authStore";
-import { authApi } from "../api/auth.api";
-import { extractUserFromToken } from "../utils/jwtUtils";
-import { PageSpinner } from "@/shared/components/PageSpinner";
+import { useEffect, type ReactNode } from 'react';
+import { useAuthStore } from '../store/authStore';
+import { authApi } from '../api/auth.api';
+import { extractUserFromToken } from '../utils/jwtUtils';
+import { PageSpinner } from '@/shared/components/PageSpinner';
 
-interface Props {
-  children: ReactNode;
-}
-
-/**
- * On app startup, this component checks if there's a refresh token in the store.
- */
-export default function AuthInitializer({ children }: Props) {
-  const [isInitializing, setIsInitializing] = useState(true);
-  const { refreshToken, setAuth, clearAuth } = useAuthStore();
+export default function AuthInitializer({ children }: { children: ReactNode }) {
+  const { setAuth, clearAuth, setInitializing, isInitializing } = useAuthStore();
 
   useEffect(() => {
-    if (!refreshToken) {
-      setIsInitializing(false);
-      return;
-    }
-
+    // No token argument — browser sends HttpOnly cookie automatically
+    // If no cookie exists, backend returns 401 and we fall through to clearAuth
     authApi
-      .refresh(refreshToken)
-      .then(({ accessToken, refreshToken: newRefreshToken }) => {
+      .refresh()
+      .then(({ accessToken }) => {
         const user = extractUserFromToken(accessToken);
-        setAuth(user, accessToken, newRefreshToken);
+        setAuth(user, accessToken);
       })
       .catch(() => {
         clearAuth();
       })
       .finally(() => {
-        setIsInitializing(false);
+        setInitializing(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount only
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (isInitializing) {
-    return <PageSpinner />;
-  }
+  if (isInitializing) return <PageSpinner />;
 
   return <>{children}</>;
 }
