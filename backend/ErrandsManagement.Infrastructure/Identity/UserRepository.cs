@@ -183,6 +183,9 @@ public sealed class UserRepository : IUserRepository
                 (x.user.Email != null && x.user.Email.ToLower().Contains(search)));
         }
 
+        if (parameters.IsActive.HasValue)
+            query = query.Where(x => x.user.IsActive == parameters.IsActive.Value);
+
         var totalCount = await query.CountAsync(ct);
 
         var items = await query
