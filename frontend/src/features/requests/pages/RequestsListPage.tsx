@@ -26,8 +26,8 @@ const statusOptions: { label: string; value: RequestStatus }[] = [
 export function RequestsListPage() {
   const [page, setPage]             = useState(1);
   const [search, setSearch]         = useState('');
-  const [sortBy, setSortBy]         = useState<SortField | undefined>(undefined);
-  const [descending, setDescending] = useState(false);
+  const [sortBy, setSortBy]         = useState<SortField | undefined>('createdat');
+  const [descending, setDescending] = useState(true);
   const [status, setStatus]         = useState<RequestStatus | undefined>(undefined);
 
   const { data, isLoading, isError, error } = useRequests({

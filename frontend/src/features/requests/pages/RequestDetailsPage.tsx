@@ -48,7 +48,6 @@ export function RequestDetailsPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Requested by {request.requesterId} ·{" "}
-            {/* {new Date(request.createdAt).toLocaleDateString()} */}
           </p>
         </div>
         <StatusBadge status={request.status} />
