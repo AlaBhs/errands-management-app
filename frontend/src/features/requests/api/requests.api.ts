@@ -22,6 +22,13 @@ export const requestsApi = {
       .get<PaginatedResponse<RequestListItemDto>>("/requests/mine", { params })
       .then((res) => res.data),
 
+  getMyAssignments: (params?: RequestQueryParams) =>
+    apiClient
+      .get<
+        PaginatedResponse<RequestListItemDto>
+      >("/requests/assignments", { params })
+      .then((res) => res.data),
+
   getById: (id: string) =>
     apiClient
       .get<ApiResponse<RequestDetailsDto>>(`/requests/${id}`)
