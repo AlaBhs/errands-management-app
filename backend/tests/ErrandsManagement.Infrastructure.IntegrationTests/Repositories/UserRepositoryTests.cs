@@ -466,4 +466,37 @@ public class UserRepositoryTests
         result.Items.Select(u => u.FullName)
             .Should().BeInAscendingOrder();
     }
+    [Fact]
+    public async Task GetPagedAsync_Should_Filter_Active_Only()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        var activeUser = await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        var inactiveUser = await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob", CT);
+        await repo.SetIsActiveAsync(inactiveUser.Id, false, CT);
+
+        var result = await repo.GetPagedAsync(
+            new UserQueryParameters { Page = 1, PageSize = 10, IsActive = true }, CT);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(u => u.Id == activeUser.Id);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_Should_Filter_Inactive_Only()
+    {
+        var context = TestDbContextFactory.Create();
+        var (repo, userManager) = Build(context);
+
+        var activeUser = await SeedUserWithRole(repo, userManager, context, "Collaborator", "Alice", CT);
+        var inactiveUser = await SeedUserWithRole(repo, userManager, context, "Collaborator", "Bob", CT);
+        await repo.SetIsActiveAsync(inactiveUser.Id, false, CT);
+
+        var result = await repo.GetPagedAsync(
+            new UserQueryParameters { Page = 1, PageSize = 10, IsActive = false }, CT);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(u => u.Id == inactiveUser.Id);
+    }
 }

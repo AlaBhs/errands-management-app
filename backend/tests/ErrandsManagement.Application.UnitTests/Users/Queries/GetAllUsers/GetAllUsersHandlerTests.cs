@@ -92,4 +92,25 @@ public class GetAllUsersHandlerTests
         result.Items.Should().BeEmpty();
         result.TotalCount.Should().Be(0);
     }
+    [Fact]
+    public async Task Handle_Should_Pass_IsActive_Filter_To_Repository()
+    {
+        // Arrange
+        var parameters = new UserQueryParameters { Page = 1, PageSize = 10, IsActive = false };
+        var paged = PagedResult<UserListItemDto>.Create([], 1, 10, 0);
+
+        _userRepoMock
+            .Setup(r => r.GetPagedAsync(parameters, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paged);
+
+        // Act
+        await _handler.Handle(new GetAllUsersQuery(parameters), CancellationToken.None);
+
+        // Assert
+        _userRepoMock.Verify(r =>
+            r.GetPagedAsync(
+                It.Is<UserQueryParameters>(p => p.IsActive == false),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
 }
