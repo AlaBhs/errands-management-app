@@ -1,7 +1,6 @@
 ﻿using ErrandsManagement.Application.Common.Exceptions;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Common.Exceptions;
-using ErrandsManagement.Domain.Entities;
 using MediatR;
 
 namespace ErrandsManagement.Application.Users.Commands.DeactivateUser;

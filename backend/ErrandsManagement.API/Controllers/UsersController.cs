@@ -1,16 +1,14 @@
 ﻿using ErrandsManagement.API.Common.Responses;
 using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.Users.Commands.ActivateUser;
 using ErrandsManagement.Application.Users.Commands.DeactivateUser;
 using ErrandsManagement.Application.Users.DTOs;
 using ErrandsManagement.Application.Users.Queries.GetAllUsers;
 using ErrandsManagement.Application.Users.Queries.GetUserById;
-using ErrandsManagement.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 
 namespace ErrandsManagement.API.Controllers;
 
@@ -69,6 +67,16 @@ public sealed class UsersController : ControllerBase
             new DeactivateUserCommand(id, requestingUserId),
             cancellationToken);
 
+        return NoContent();
+    }
+
+    [HttpPatch("{id:guid}/activate")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Activate(
+    Guid id,
+    CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new ActivateUserCommand(id), cancellationToken);
         return NoContent();
     }
 
