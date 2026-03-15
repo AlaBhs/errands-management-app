@@ -9,11 +9,16 @@ namespace ErrandsManagement.Application.UnitTests.Requests.Queries.GetRequestByI
 public class GetRequestByIdHandlerTests
 {
     private readonly Mock<IRequestRepository> _repositoryMock = new();
+    private readonly Mock<IUserRepository> _userRepoMock = new();
     private readonly GetRequestByIdHandler _handler;
 
     public GetRequestByIdHandlerTests()
     {
-        _handler = new GetRequestByIdHandler(_repositoryMock.Object);
+        _userRepoMock
+            .Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Application.DTOs.UserDto?)null);
+
+        _handler = new GetRequestByIdHandler(_repositoryMock.Object, _userRepoMock.Object);
     }
 
     [Fact]
@@ -87,8 +92,6 @@ public class GetRequestByIdHandlerTests
     [Fact]
     public async Task Handle_Should_Return_Null_CurrentAssignment_After_Request_Is_Completed()
     {
-        // After Complete(), the assignment IsCompleted = true, so IsActive = false.
-        // The handler picks LastOrDefault(a => !a.IsCompleted) — should be null.
         var request = new RequestBuilder().Build();
         request.Assign(Guid.NewGuid());
         request.Start();
@@ -107,7 +110,6 @@ public class GetRequestByIdHandlerTests
     [Fact]
     public async Task Handle_Should_Include_AuditLogs()
     {
-        // A new request always gets a "Created" audit log from the domain
         var request = new RequestBuilder().Build();
 
         _repositoryMock
