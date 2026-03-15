@@ -1,8 +1,5 @@
 import { apiClient } from "@/shared/api/client";
-import type {
-  ApiResponse,
-  PaginatedResponse,
-} from "@/shared/api/types";
+import type { ApiResponse, PaginatedResponse } from "@/shared/api/types";
 import type {
   RequestListItemDto,
   RequestDetailsDto,
@@ -14,11 +11,15 @@ import type {
   RequestQueryParams,
 } from "@/features/requests/types";
 
-
 export const requestsApi = {
   getAll: (params?: RequestQueryParams) =>
     apiClient
       .get<PaginatedResponse<RequestListItemDto>>("/requests", { params })
+      .then((res) => res.data),
+
+  getMine: (params?: RequestQueryParams) =>
+    apiClient
+      .get<PaginatedResponse<RequestListItemDto>>("/requests/mine", { params })
       .then((res) => res.data),
 
   getById: (id: string) =>
