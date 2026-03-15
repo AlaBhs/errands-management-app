@@ -10,7 +10,6 @@ interface RoleGuardProps {
 export default function RoleGuard({ allowed }: RoleGuardProps) {
   const role = useAuthStore((s) => s.user?.role);
   const isInitializing = useAuthStore((s) => s.isInitializing);
-    console.log('RoleGuard - user role:', role, 'allowed roles:', allowed);
   if (isInitializing) {
     return <PageSpinner />;
   }
