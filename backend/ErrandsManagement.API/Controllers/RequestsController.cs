@@ -177,11 +177,13 @@ public sealed class RequestsController : ControllerBase
     [HttpPost("{id:guid}/cancel")]
     [Authorize(Roles = "Admin,Collaborator,Courier")]
     public async Task<IActionResult> Cancel(
-    Guid id,
-    [FromBody] CancelRequestDto request,
-    CancellationToken cancellationToken)
+        Guid id,
+        [FromBody] CancelRequestDto request,
+        CancellationToken cancellationToken)
     {
-        var command = new CancelRequestCommand(id, request.Reason);
+        var callerRole = User.FindFirstValue("role") ?? string.Empty;
+
+        var command = new CancelRequestCommand(id, request.Reason, callerRole);
 
         await _mediator.Send(command, cancellationToken);
 
