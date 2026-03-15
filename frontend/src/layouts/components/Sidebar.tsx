@@ -1,27 +1,55 @@
-import { Link, useLocation } from "react-router";
-import { 
-  LayoutDashboard, 
-  FileText, 
+import { Link, useLocation } from 'react-router';
+import {
+  LayoutDashboard,
+  FileText,
   PlusCircle,
-  CalendarClock,
+  ClipboardList,
   BarChart3,
-  Settings 
-} from "lucide-react";
+  Settings,
+  Users,
+} from 'lucide-react';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { UserRole } from '@/features/auth';
+
+// ── Nav items per role ────────────────────────────────────────────────────────
+
+const adminNav = [
+  { path: '/',             label: 'Dashboard',       icon: LayoutDashboard },
+  { path: '/requests',     label: 'All Requests',    icon: FileText },
+  { path: '/analytics',    label: 'Analytics',       icon: BarChart3 },
+  { path: '/admin',        label: 'Admin Panel',     icon: Settings },
+  { path: '/admin/users',  label: 'User Management', icon: Users },
+];
+
+const collaboratorNav = [
+  { path: '/',              label: 'Dashboard',      icon: LayoutDashboard },
+  { path: '/requests/mine', label: 'My Requests',    icon: FileText },
+  { path: '/requests/new',  label: 'Create Request', icon: PlusCircle },
+];
+
+const courierNav = [
+  { path: '/',             label: 'Dashboard',       icon: LayoutDashboard },
+  { path: '/assignments',  label: 'My Assignments',  icon: ClipboardList },
+];
+
+function getNavItems(role?: UserRole) {
+  switch (role) {
+    case UserRole.Admin:        return adminNav;
+    case UserRole.Collaborator: return collaboratorNav;
+    case UserRole.Courier:      return courierNav;
+    default:                    return [];
+  }
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
   const location = useLocation();
-
-  const navItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/requests", label: "All Requests", icon: FileText },
-    { path: "/requests/new", label: "Create Request", icon: PlusCircle },
-    { path: "/courier/schedule", label: "Courier Schedule", icon: CalendarClock },
-    { path: "/analytics", label: "Analytics", icon: BarChart3 },
-    { path: "/admin", label: "Admin", icon: Settings },
-  ];
+  const role = useAuthStore((s) => s.user?.role);
+  const navItems = getNavItems(role);
 
   const isActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
+    if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
@@ -43,16 +71,16 @@ export function Sidebar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
-            
+
             return (
               <li key={item.path}>
                 <Link
                   to={item.path}
                   className={`
                     flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
-                    ${active 
-                      ? "bg-[#FFE600] text-[#2E2E38]" 
-                      : "text-gray-300 hover:bg-[#3a3a48] hover:text-white"
+                    ${active
+                      ? 'bg-[#FFE600] text-[#2E2E38]'
+                      : 'text-gray-300 hover:bg-[#3a3a48] hover:text-white'
                     }
                   `}
                 >
