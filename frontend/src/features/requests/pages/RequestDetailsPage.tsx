@@ -5,6 +5,7 @@ import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { UserRole } from "@/features/auth/types/auth.enums";
 import { useAuthStore } from "@/features/auth/store/authStore";
+import { formatDateTime } from "@/shared/utils/date";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +49,7 @@ export function RequestDetailsPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Requested by {request.requesterName} ·{" "}
+            {formatDateTime(request.createdAt)}
           </p>
         </div>
         <StatusBadge status={request.status} />
@@ -84,29 +86,22 @@ export function RequestDetailsPage() {
             <p>
               Courier ID:{" "}
               <span className="font-medium">
-                {request.currentAssignment.courierName} (ID: {request.currentAssignment.courierId})
+                {request.currentAssignment.courierName} (ID:{" "}
+                {request.currentAssignment.courierId})
               </span>
             </p>
             <p>
-              Assigned:{" "}
-              {new Date(
-                request.currentAssignment.assignedAt,
-              ).toLocaleDateString()}
+              Assigned: {formatDateTime(request.currentAssignment.assignedAt)}
             </p>
             {request.currentAssignment.startedAt && (
               <p>
-                Started:{" "}
-                {new Date(
-                  request.currentAssignment.startedAt,
-                ).toLocaleDateString()}
+                Started: {formatDateTime(request.currentAssignment.startedAt)}
               </p>
             )}
             {request.currentAssignment.completedAt && (
               <p>
                 Completed:{" "}
-                {new Date(
-                  request.currentAssignment.completedAt,
-                ).toLocaleDateString()}
+                {formatDateTime(request.currentAssignment.completedAt)}
               </p>
             )}
             {request.currentAssignment.actualCost != null && (
@@ -127,7 +122,7 @@ export function RequestDetailsPage() {
             {request.auditLogs.map((log, i) => (
               <li key={i} className="flex gap-3 text-sm">
                 <span className="text-gray-400">
-                  {new Date(log.occurredAt).toLocaleDateString()}
+                  {formatDateTime(log.occurredAt)}
                 </span>
                 <span className="text-gray-600">
                   <span className="font-medium">{log.eventType}</span> —{" "}

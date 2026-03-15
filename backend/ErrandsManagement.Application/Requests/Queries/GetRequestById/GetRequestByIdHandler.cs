@@ -62,6 +62,7 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
             request.EstimatedCost,
             request.RequesterId,
             requesterName,
+            request.CreatedAt,
             new AddressDto(
                 request.DeliveryAddress.Street,
                 request.DeliveryAddress.City,

@@ -1,34 +1,35 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useMyRequests } from '../hooks';
-import { StatusBadge } from '@/features/requests';
-import { PageSpinner } from '@/shared/components/PageSpinner';
-import { ErrorMessage } from '@/shared/components/ErrorMessage';
-import { isApiError } from '@/shared/api/client';
-import type { RequestStatus, SortField } from '../types';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useMyRequests } from "../hooks";
+import { StatusBadge } from "@/features/requests";
+import { PageSpinner } from "@/shared/components/PageSpinner";
+import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { isApiError } from "@/shared/api/client";
+import type { RequestStatus, SortField } from "../types";
+import { formatDate } from "@/shared/utils/date";
 
 const PAGE_SIZE = 10;
 
 const sortOptions: { label: string; value: SortField }[] = [
-  { label: 'Created At',    value: 'createdat' },
-  { label: 'Deadline',      value: 'deadline' },
-  { label: 'Estimated Cost', value: 'estimatedcost' },
+  { label: "Created At", value: "createdat" },
+  { label: "Deadline", value: "deadline" },
+  { label: "Estimated Cost", value: "estimatedcost" },
 ];
 
 const statusOptions: { label: string; value: RequestStatus }[] = [
-  { label: 'Pending',     value: 'Pending' },
-  { label: 'Assigned',    value: 'Assigned' },
-  { label: 'In Progress', value: 'InProgress' },
-  { label: 'Completed',   value: 'Completed' },
-  { label: 'Cancelled',   value: 'Cancelled' },
+  { label: "Pending", value: "Pending" },
+  { label: "Assigned", value: "Assigned" },
+  { label: "In Progress", value: "InProgress" },
+  { label: "Completed", value: "Completed" },
+  { label: "Cancelled", value: "Cancelled" },
 ];
 
 export function MyRequestsPage() {
-  const [page, setPage]           = useState(1);
-  const [search, setSearch]       = useState('');
-  const [sortBy, setSortBy]       = useState<SortField | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
   const [descending, setDescending] = useState(false);
-  const [status, setStatus]       = useState<RequestStatus | undefined>(undefined);
+  const [status, setStatus] = useState<RequestStatus | undefined>(undefined);
 
   const { data, isLoading, isError, error } = useMyRequests({
     page,
@@ -47,7 +48,9 @@ export function MyRequestsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">My Requests</h1>
-          <p className="text-sm text-gray-500 mt-1">Track all your submitted requests.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Track all your submitted requests.
+          </p>
         </div>
         <Link
           to="/requests/new"
@@ -63,38 +66,54 @@ export function MyRequestsPage() {
           type="text"
           placeholder="Search requests..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            resetPage();
+          }}
           className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <select
-          value={status ?? ''}
-          onChange={(e) => { setStatus((e.target.value as RequestStatus) || undefined); resetPage(); }}
+          value={status ?? ""}
+          onChange={(e) => {
+            setStatus((e.target.value as RequestStatus) || undefined);
+            resetPage();
+          }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All statuses</option>
           {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
 
         <select
-          value={sortBy ?? ''}
-          onChange={(e) => { setSortBy((e.target.value as SortField) || undefined); resetPage(); }}
+          value={sortBy ?? ""}
+          onChange={(e) => {
+            setSortBy((e.target.value as SortField) || undefined);
+            resetPage();
+          }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">Sort by...</option>
           {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
 
         {sortBy && (
           <button
-            onClick={() => { setDescending((d) => !d); resetPage(); }}
+            onClick={() => {
+              setDescending((d) => !d);
+              resetPage();
+            }}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm hover:bg-gray-50"
           >
-            {descending ? '↓ Desc' : '↑ Asc'}
+            {descending ? "↓ Desc" : "↑ Asc"}
           </button>
         )}
       </div>
@@ -102,7 +121,9 @@ export function MyRequestsPage() {
       {/* States */}
       {isLoading && <PageSpinner />}
       {isError && (
-        <ErrorMessage message={isApiError(error) ? error.message : 'Something went wrong.'} />
+        <ErrorMessage
+          message={isApiError(error) ? error.message : "Something went wrong."}
+        />
       )}
 
       {/* Table */}
@@ -112,8 +133,18 @@ export function MyRequestsPage() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Title', 'Priority', 'Status', 'Deadline', 'Est. Cost', ''].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left font-medium text-gray-500">
+                  {[
+                    "Title",
+                    "Priority",
+                    "Status",
+                    "Deadline",
+                    "Est. Cost",
+                    "",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left font-medium text-gray-500"
+                    >
                       {h}
                     </th>
                   ))}
@@ -122,9 +153,15 @@ export function MyRequestsPage() {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                      No requests found.{' '}
-                      <Link to="/requests/new" className="text-primary hover:underline">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-gray-400"
+                    >
+                      No requests found.{" "}
+                      <Link
+                        to="/requests/new"
+                        className="text-primary hover:underline"
+                      >
                         Create your first request.
                       </Link>
                     </td>
@@ -132,16 +169,22 @@ export function MyRequestsPage() {
                 ) : (
                   data.items.map((req) => (
                     <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900">{req.title}</td>
-                      <td className="px-4 py-3 text-gray-500">{req.priority}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {req.title}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {req.priority}
+                      </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={req.status} />
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {req.deadline ? new Date(req.deadline).toLocaleDateString() : '—'}
+                        {req.deadline ? formatDate(req.deadline) : "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {req.estimatedCost != null ? `$${req.estimatedCost}` : '—'}
+                        {req.estimatedCost != null
+                          ? `$${req.estimatedCost}`
+                          : "—"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link

@@ -53,6 +53,7 @@ export interface RequestDetailsDto {
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;
+  createdAt: string;
   requesterName: string;
   deliveryAddress: AddressDto;
   currentAssignment?: AssignmentDto;
