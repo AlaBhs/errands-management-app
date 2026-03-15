@@ -38,4 +38,6 @@ export type SortField = "createdat" | "deadline" | "estimatedcost";
 export interface RequestQueryParams extends PaginationParams {
   sortBy?: SortField;
   status?: RequestStatus;
+  search?: string;
+  descending?: boolean;
 }
