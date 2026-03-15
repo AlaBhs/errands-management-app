@@ -8,6 +8,7 @@ using ErrandsManagement.Application.Requests.Commands.StartRequest;
 using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
+using ErrandsManagement.Application.Requests.Queries.GetMyRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
 using ErrandsManagement.Domain.Common.Exceptions;
 using MediatR;
@@ -76,7 +77,7 @@ public sealed class RequestsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Collaborator,Courier")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll(
         [FromQuery] RequestQueryParameters parameters,
         CancellationToken cancellationToken)
@@ -90,7 +91,23 @@ public sealed class RequestsController : ControllerBase
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
     }
+    [HttpGet("mine")]
+    [Authorize(Roles = "Collaborator")]
+    public async Task<IActionResult> GetMine(
+    [FromQuery] RequestQueryParameters parameters,
+    CancellationToken cancellationToken)
+    {
+        var requesterId = GetCurrentUserId();
 
+        var result = await _mediator.Send(
+            new GetMyRequestsQuery(requesterId, parameters),
+            cancellationToken);
+
+        return Ok(ApiResponse<PagedResult<RequestListItemDto>>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
+    }
     [HttpPost("{id:guid}/assign")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Assign(
