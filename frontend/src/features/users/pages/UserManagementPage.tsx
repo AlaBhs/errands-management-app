@@ -3,136 +3,137 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useUsers, useUserMutations } from '../hooks';
-import { useAuthStore } from '@/features/auth/store/authStore';
-import { UserRole } from '@/features/auth/types/auth.enums';
+import { useUsers, useUserMutations } from '@/features/users';
+import { useAuthStore } from '@/features/auth';
+import { isApiError } from '@/shared/api/client';
 import { PageSpinner } from '@/shared/components/PageSpinner';
 import { ErrorMessage } from '@/shared/components/ErrorMessage';
-import { isApiError } from '@/shared/api/client';
+import { UserRole } from '@/features/auth';
 
-// ── Role badge ────────────────────────────────────────────────────────────────
-
-const roleBadgeStyles: Record<string, string> = {
-  Admin:        'bg-purple-100 text-purple-800',
-  Collaborator: 'bg-blue-100 text-blue-800',
-  Courier:      'bg-yellow-100 text-yellow-800',
-};
-
-function RoleBadge({ role }: { role: string }) {
-  const style = roleBadgeStyles[role] ?? 'bg-gray-100 text-gray-600';
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${style}`}>
-      {role || '—'}
-    </span>
-  );
-}
-
-// ── Create user form schema ───────────────────────────────────────────────────
+// ── Zod schema ───────────────────────────────────────────────────────────────
 
 const createUserSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required').max(50),
-  email: z.email('Invalid email address'),
+  fullName: z.string().min(1, 'Full name is required'),
+  email: z.string().email('Invalid email address'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[0-9]/, 'Password must contain at least one digit')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-  role: z.enum([UserRole.Collaborator, UserRole.Courier], {
-    message: 'Please select a role',
-  }),
+  role: z.enum([UserRole.Collaborator, UserRole.Courier]),
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 
-// ── Role filter options ───────────────────────────────────────────────────────
+// ── Status filter options ─────────────────────────────────────────────────────
 
-const roleOptions = [
-  { label: 'All roles', value: '' },
-  { label: 'Admin', value: UserRole.Admin },
-  { label: 'Collaborator', value: UserRole.Collaborator },
-  { label: 'Courier', value: UserRole.Courier },
+const statusOptions = [
+  { label: 'All users',    value: '' },
+  { label: 'Active only',  value: 'true' },
+  { label: 'Inactive only', value: 'false' },
 ];
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 10;
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export function UserManagementPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [page, setPage]             = useState(1);
+  const [search, setSearch]         = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const { create, deactivate } = useUserMutations();
+  const { create, deactivate, activate } = useUserMutations();
 
   const { data, isLoading, isError, error } = useUsers({
     page,
     pageSize: PAGE_SIZE,
-    search: search || undefined,
-    role: roleFilter || undefined,
+    search:   search || undefined,
+    role:     roleFilter || undefined,
+    isActive: statusFilter === '' ? undefined : statusFilter === 'true',
   });
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
+    defaultValues: { role: UserRole.Collaborator },
   });
 
   const resetPage = () => setPage(1);
 
-  const onCreateSubmit = (values: CreateUserFormValues) => {
-    create.mutate(values, {
-      onSuccess: () => {
-        toast.success(`User ${values.email} created successfully.`);
-        reset();
-      },
-      onError: (err) => {
-        toast.error(isApiError(err) ? err.message : 'Failed to create user.');
-      },
-    });
-  };
-
-  const handleDeactivate = (id: string, email: string) => {
+  const onDeactivate = (id: string, email: string) => {
     deactivate.mutate(id, {
       onSuccess: () => toast.success(`${email} has been deactivated.`),
-      onError: (err) => {
-        toast.error(isApiError(err) ? err.message : 'Failed to deactivate user.');
-      },
+      onError: (err) =>
+        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
     });
   };
 
+  const onActivate = (id: string, email: string) => {
+    activate.mutate(id, {
+      onSuccess: () => toast.success(`${email} has been activated.`),
+      onError: (err) =>
+        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
+    });
+  };
+
+  const onCreateUser = handleSubmit((values) => {
+    create.mutate(values, {
+      onSuccess: () => {
+        toast.success('User created successfully.');
+        reset();
+      },
+      onError: (err) =>
+        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
+    });
+  });
+
+  const isMutating = deactivate.isPending || activate.isPending;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-[#2E2E38]">User Management</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage users and their access roles.</p>
+        <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage system users and their access.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
 
-        {/* ── Left: user table ─────────────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* ── User list ───────────────────────────────────────────────────── */}
+        <div className="xl:col-span-2 space-y-4">
 
           {/* Filters */}
           <div className="flex flex-wrap gap-3">
             <input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Search by name or email…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
-              className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <select
               value={roleFilter}
               onChange={(e) => { setRoleFilter(e.target.value); resetPage(); }}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              {roleOptions.map((opt) => (
+              <option value="">All roles</option>
+              <option value={UserRole.Admin}>Admin</option>
+              <option value={UserRole.Collaborator}>Collaborator</option>
+              <option value={UserRole.Courier}>Courier</option>
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); resetPage(); }}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {statusOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
@@ -168,30 +169,43 @@ export function UserManagementPage() {
                     ) : (
                       data.items.map((user) => (
                         <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-900">{user.fullName}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            {user.fullName}
+                            {user.id === currentUserId && (
+                              <span className="ml-2 text-xs text-gray-400">(you)</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-gray-500">{user.email}</td>
-                          <td className="px-4 py-3"><RoleBadge role={user.role} /></td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            <RoleBadge role={user.role} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               user.isActive
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-100 text-green-700'
                                 : 'bg-gray-100 text-gray-500'
                             }`}>
                               {user.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={() => handleDeactivate(user.id, user.email)}
-                              disabled={
-                                !user.isActive ||
-                                user.id === currentUserId ||
-                                deactivate.isPending
-                              }
-                              className="text-xs text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              Deactivate
-                            </button>
+                            {user.isActive ? (
+                              <button
+                                onClick={() => onDeactivate(user.id, user.email)}
+                                disabled={user.id === currentUserId || isMutating}
+                                className="text-xs text-red-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => onActivate(user.id, user.email)}
+                                disabled={isMutating}
+                                className="text-xs text-green-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Activate
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -227,73 +241,55 @@ export function UserManagementPage() {
           )}
         </div>
 
-        {/* ── Right: create user form ───────────────────────────────────────── */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 space-y-5">
-          <div>
-            <h2 className="text-base font-semibold text-[#2E2E38]">Create User</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Admins cannot be created from here.</p>
-          </div>
+        {/* ── Create user form ─────────────────────────────────────────────── */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-medium text-gray-900">Create User</h2>
+          <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm space-y-4">
 
-          <form onSubmit={handleSubmit(onCreateSubmit)} className="space-y-4">
-
-            {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-[#2E2E38] mb-1">
-                Full Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
               <input
-                type="text"
                 {...register('fullName')}
                 placeholder="Jane Doe"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               {errors.fullName && (
                 <p className="mt-1 text-xs text-red-500">{errors.fullName.message}</p>
               )}
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[#2E2E38] mb-1">
-                Email *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
-                type="email"
                 {...register('email')}
-                placeholder="jane@company.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                type="email"
+                placeholder="jane@example.com"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-[#2E2E38] mb-1">
-                Password *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <input
-                type="password"
                 {...register('password')}
-                placeholder="Min. 8 chars, uppercase, digit, special"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                type="password"
+                placeholder="Min 8 chars, 1 uppercase, 1 digit, 1 special"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
               )}
             </div>
 
-            {/* Role */}
             <div>
-              <label className="block text-sm font-medium text-[#2E2E38] mb-1">
-                Role *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
               <select
                 {...register('role')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="">Select a role...</option>
                 <option value={UserRole.Collaborator}>Collaborator</option>
                 <option value={UserRole.Courier}>Courier</option>
               </select>
@@ -303,17 +299,33 @@ export function UserManagementPage() {
             </div>
 
             <button
-              type="submit"
-              disabled={create.isPending}
-              className="w-full px-4 py-2 bg-[#2E2E38] text-white rounded-md text-sm font-medium hover:bg-[#1a1a24] transition-colors disabled:opacity-50"
+              onClick={onCreateUser}
+              disabled={isSubmitting || create.isPending}
+              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
             >
-              {create.isPending ? 'Creating...' : 'Create User'}
+              {create.isPending ? 'Creating…' : 'Create User'}
             </button>
-
-          </form>
+          </div>
         </div>
 
       </div>
     </div>
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function RoleBadge({ role }: { role: string }) {
+  const colors: Record<string, string> = {
+    Admin:        'bg-purple-100 text-purple-700',
+    Collaborator: 'bg-blue-100 text-blue-700',
+    Courier:      'bg-yellow-100 text-yellow-700',
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+      colors[role] ?? 'bg-gray-100 text-gray-600'
+    }`}>
+      {role}
+    </span>
   );
 }

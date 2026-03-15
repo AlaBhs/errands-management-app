@@ -1,4 +1,4 @@
-import type { PaginationParams } from '@/shared/api/types';
+import type { PaginationParams } from "@/shared/api/types";
 
 // --- Command Payloads ---
 
@@ -13,4 +13,5 @@ export interface CreateUserPayload {
 
 export interface UserQueryParameters extends PaginationParams {
   role?: string;
+  isActive?: boolean;
 }

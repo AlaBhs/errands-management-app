@@ -17,4 +17,9 @@ export const usersApi = {
     apiClient
       .patch<void>(`/users/${id}/deactivate`)
       .then(() => undefined),
+
+  activate: (id: string) =>
+    apiClient
+      .patch<void>(`/users/${id}/activate`)
+      .then(() => undefined),
 };

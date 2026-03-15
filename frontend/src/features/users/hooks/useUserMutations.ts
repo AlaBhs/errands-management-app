@@ -27,5 +27,10 @@ export function useUserMutations() {
     onSuccess: invalidateUsers,
   });
 
-  return { create, deactivate };
+  const activate = useMutation({
+    mutationFn: (id: string) => usersApi.activate(id),
+    onSuccess: invalidateUsers,
+  });
+
+  return { create, deactivate, activate };
 }
