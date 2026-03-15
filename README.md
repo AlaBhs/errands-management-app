@@ -1,51 +1,56 @@
 # Errands Management App
 
-This branch fixes and completes the test suite following the JWT authentication
-merge. All 122 tests pass with 0 failures.
+This branch implements full user management and hardens the authentication layer.
 
-## What's New in This Branch
+## Key Features
 
-### Tests Added
+### User Management
+- New `IsActive` and `CreatedAt` fields on users with EF Core migration
+- Deactivated users are blocked at login with a clear error message
+- Admins can deactivate and reactivate any user except their own account
+- User list supports filtering by role, search, and active/inactive status
+- Admin-only create user form with password strength validation
 
-- **Application Unit Tests** — handler tests for `CreateRequest` and
-  `GetRequestById`, validator tests for `RegisterUser`, and auth handler
-  tests for login, refresh, logout, and register.
+### Authentication Hardening
+- Refresh token moved to an **HttpOnly cookie** — no tokens ever stored in
+  `localStorage` or `sessionStorage`
+- Access token lives in memory only, silently refreshed on app load
+- JWT now carries `fullName` and a short `role` claim
+- Role-based route protection via `RoleGuard` component
 
-- **Infrastructure Integration Tests** — full `UserRepository` coverage
-  including refresh token lifecycle (add, revoke, revoke all, expiry).
+### API Endpoints
+- `GET /api/users` — paginated user list with role, search, and status filters
+- `GET /api/users/{id}` — user details
+- `PATCH /api/users/{id}/deactivate` — deactivate a user
+- `PATCH /api/users/{id}/activate` — reactivate a user
+- `POST /api/auth/login` — now sets refresh token as HttpOnly cookie
+- `POST /api/auth/refresh` — reads token from cookie, no body required
+- `POST /api/auth/logout` — clears the cookie server-side
 
-- **API Integration Tests** — auth endpoints end-to-end, and a full request
-  lifecycle suite covering all endpoints from assign through survey with
-  happy path and error cases.
+All `/api/users` endpoints require the `Admin` role.
 
-### Why Some Tests Were Deliberately Not Written
+### Frontend
+- `/admin/users` — full user management page with table, filters, and create form
+- `/admin` — admin overview page wired to real user data
+- Topbar shows real user name and role badge with a logout dropdown
+- Sidebar shows User Management link for Admin users only
 
-- **`CancelRequestHandler`, `CompleteRequestHandler`, `StartRequestHandler`,
-  `SubmitSurveyHandler`** — same pattern as the already-tested
-  `AssignRequestHandler`. Domain logic covered by `RequestTests.cs`,
-  persistence by `RequestRepositoryTests.cs`.
+## How to Test with Docker
 
-- **`GetAllRequestsHandler`** — single-line delegation to the repository,
-  already covered by `RequestRepositoryTests.cs`.
-
-- **`LoginUserValidator`, `RefreshTokenValidator`, `LogoutValidator`** —
-  four trivial rules total, already exercised by the auth integration tests.
-
-## How to Run the Tests
-
-From the `backend` directory:
-
+1. Ensure Docker Desktop is running.
+2. From the repository root:
 ```bash
-dotnet test
+docker-compose up --build
 ```
 
-Expected output:
+3. The API will be available at `http://localhost:5000`. Use Scalar at
+   `http://localhost:5000/scalar` to test the endpoints.
+4. Default admin credentials:
+   - Email: `admin@errands.local`
+   - Password: `Admin123!`
 
-```
-Test summary: total: 122, failed: 0, succeeded: 122, skipped: 0
-```
+## Notes
 
-## Previous Branch
-
-See the previous README for the full JWT authentication feature description,
-Docker setup, default credentials, and manual testing steps with Scalar.
+- The frontend dev server proxies `/api` to `http://localhost:5000`.
+- All 154 tests pass with 0 failures (`dotnet test` from the `backend` directory).
+- This branch includes all features from previous branches.
