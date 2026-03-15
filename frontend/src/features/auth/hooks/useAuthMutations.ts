@@ -4,6 +4,16 @@ import { authApi } from '../api/auth.api';
 import type { LoginPayload, RegisterPayload } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { extractUserFromToken } from '../utils/jwtUtils';
+import { UserRole } from '../types/auth.enums';
+
+function getHomeRoute(role?: UserRole): string {
+  switch (role) {
+    case UserRole.Admin:        return '/requests';
+    case UserRole.Collaborator: return '/requests/mine';
+    case UserRole.Courier:      return '/assignments';
+    default:                    return '/';
+  }
+}
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -14,7 +24,7 @@ export function useLogin() {
     onSuccess: ({ accessToken }) => {
       const user = extractUserFromToken(accessToken);
       setAuth(user, accessToken);
-      navigate('/requests', { replace: true });
+      navigate(getHomeRoute(user.role), { replace: true });
     },
   });
 }
