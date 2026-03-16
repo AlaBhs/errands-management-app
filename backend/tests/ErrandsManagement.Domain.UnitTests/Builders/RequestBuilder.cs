@@ -16,6 +16,7 @@ public class RequestBuilder
         "Country"
     );
     private PriorityLevel _priority = PriorityLevel.Normal;
+    private RequestCategory _category = RequestCategory.Other;
     private DateTime? _deadline = DateTime.UtcNow.AddDays(1);
     private decimal? _estimatedCost = 10;
 
@@ -37,6 +38,11 @@ public class RequestBuilder
         return this;
     }
 
+    public RequestBuilder WithCategory(RequestCategory category)
+    {
+        _category = category;
+        return this;
+    }
     public RequestBuilder WithEstimatedCost(decimal? cost)
     {
         _estimatedCost = cost;
@@ -51,6 +57,7 @@ public class RequestBuilder
             _requesterId,
             _address,
             _priority,
+            _category,
             _deadline,
             _estimatedCost
         );

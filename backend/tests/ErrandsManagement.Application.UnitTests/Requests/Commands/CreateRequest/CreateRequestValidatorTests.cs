@@ -17,6 +17,7 @@ public class CreateRequestValidatorTests
             "Milk, bread and eggs",
             new AddressDto("Street", "City", "12345", "Country"),
             PriorityLevel.Normal,
+            RequestCategory.Other,
             DateTime.UtcNow.AddDays(1),
             50,
             Guid.NewGuid());

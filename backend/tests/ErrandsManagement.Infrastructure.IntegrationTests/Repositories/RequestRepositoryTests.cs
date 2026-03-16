@@ -25,6 +25,7 @@ public class RequestRepositoryTests
                 "Country"
             ),
             PriorityLevel.Normal,
+            RequestCategory.Other,
             deadline);
     }
 

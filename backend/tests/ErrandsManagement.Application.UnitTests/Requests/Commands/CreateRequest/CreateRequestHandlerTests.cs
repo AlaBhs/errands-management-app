@@ -24,6 +24,7 @@ public class CreateRequestHandlerTests
             Description: "Milk, bread and eggs",
             DeliveryAddress: new AddressDto("Main Street", "City", "12345", "Country"),
             Priority: PriorityLevel.Normal,
+            Category: RequestCategory.Other,
             Deadline: DateTime.UtcNow.AddDays(1),
             EstimatedCost: 50,
             RequesterId: requesterId ?? Guid.NewGuid());
