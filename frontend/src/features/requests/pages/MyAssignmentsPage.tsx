@@ -127,6 +127,7 @@ export function MyAssignmentsPage() {
                 <tr>
                   {[
                     "Title",
+                    "Category",
                     "Priority",
                     "Status",
                     "Deadline",
@@ -157,6 +158,9 @@ export function MyAssignmentsPage() {
                     <tr key={req.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">
                         {req.title}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {req.category}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
                         {req.priority}
