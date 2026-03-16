@@ -10,7 +10,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddCorsPolicy(builder.Configuration);
 builder.Services.AddOpenApiDocumentation();
-builder.Services.AddControllers();
+builder.Services.AddApiServices();
 
 var app = builder.Build();
 
