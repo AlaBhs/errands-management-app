@@ -1,4 +1,4 @@
-import type { PriorityLevel, RequestStatus } from "./request.enums";
+import type { PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
 
 
 // --- Nested DTOs ---
@@ -40,6 +40,7 @@ export interface RequestListItemDto {
   description: string;
   status: RequestStatus;
   priority: PriorityLevel;
+  category: RequestCategory;
   estimatedCost?: number;
   deadline?: string;
 }
@@ -50,6 +51,7 @@ export interface RequestDetailsDto {
   description: string;
   status: RequestStatus;
   priority: PriorityLevel;
+  category: RequestCategory;
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;

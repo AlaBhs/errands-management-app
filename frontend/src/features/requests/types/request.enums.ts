@@ -18,3 +18,13 @@ export const PriorityLevel = {
 } as const;
 
 export type PriorityLevel = typeof PriorityLevel[keyof typeof PriorityLevel];
+
+export const RequestCategory = {
+  OfficeSupplies: 'OfficeSupplies',
+  ITEquipment:    'ITEquipment',
+  Travel:         'Travel',
+  Facilities:     'Facilities',
+  Other:          'Other',
+} as const;
+
+export type RequestCategory = typeof RequestCategory[keyof typeof RequestCategory];

@@ -1,6 +1,6 @@
 import type { PaginationParams } from "@/shared/api/types";
 import type { AddressDto } from "./request.types";
-import type { RequestStatus } from "./request.enums";
+import type { RequestCategory, RequestStatus } from "./request.enums";
 
 
 // --- Command Payloads ---
@@ -10,6 +10,7 @@ export interface CreateRequestPayload {
   description: string;
   deliveryAddress: AddressDto;
   priority: number;
+  category: RequestCategory;
   deadline?: string;
   estimatedCost?: number;
 }

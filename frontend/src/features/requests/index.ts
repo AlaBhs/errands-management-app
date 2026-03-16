@@ -27,4 +27,6 @@ export * from "./hooks/useRequestMutations";
 
 // Components
 export { default as StatusBadge } from "./components/StatusBadge";
+export { default as PriorityBadge } from "./components/PriorityBadge";
+export { default as CategoryBadge } from "./components/CategoryBadge";
 export { RequestActions } from "./components/RequestActions";
