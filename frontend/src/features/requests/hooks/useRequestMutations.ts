@@ -16,6 +16,7 @@ export function useCreateRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.all });
     },
+    onError: (err) => console.log('API Error:', err),
   });
 }
 

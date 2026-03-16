@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router";
-import { Controller, useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload } from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
+import { RequestCategory } from "@/features/requests/types/request.enums";
 
 const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
 
@@ -13,6 +14,16 @@ const schema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().min(1, "Description is required").max(500),
   priority: z.number().min(0).max(3),
+  category: z.enum(
+    [
+      RequestCategory.OfficeSupplies,
+      RequestCategory.ITEquipment,
+      RequestCategory.Travel,
+      RequestCategory.Facilities,
+      RequestCategory.Other,
+    ],
+    { message: "Category is required" },
+  ),
   deadline: z.string().optional(),
   estimatedCost: z
     .string()
@@ -43,16 +54,16 @@ export function CreateRequestPage() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      priority: 1,
-    },
+    defaultValues: { priority: 1 },
   });
+
   const onSubmit = (values: FormValues) => {
     mutate(
       {
         title: values.title,
         description: values.description,
         priority: values.priority,
+        category: values.category,
         deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
@@ -126,31 +137,57 @@ export function CreateRequestPage() {
                 {errors.description.message}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
-              Be as detailed as possible to help us process your request
-              efficiently
-            </p>
           </div>
 
-          {/* Deadline */}
-          <div>
-            <label
-              htmlFor="deadline"
-              className="block text-sm font-medium text-[#2E2E38] mb-2"
-            >
-              Due Date
-            </label>
-            <input
-              id="deadline"
-              type="date"
-              {...register("deadline")}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-            />
-            {errors.deadline && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.deadline.message}
-              </p>
-            )}
+          {/* Category + Deadline row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-[#2E2E38] mb-2">
+                Category *
+              </label>
+              <select
+                {...register("category")}
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              >
+                <option value="">Select a category...</option>
+                <option value={RequestCategory.OfficeSupplies}>
+                  Office Supplies
+                </option>
+                <option value={RequestCategory.ITEquipment}>
+                  IT Equipment
+                </option>
+                <option value={RequestCategory.Travel}>Travel</option>
+                <option value={RequestCategory.Facilities}>Facilities</option>
+                <option value={RequestCategory.Other}>Other</option>
+              </select>
+              {errors.category && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.category.message}
+                </p>
+              )}
+            </div>
+
+            {/* Deadline */}
+            <div>
+              <label
+                htmlFor="deadline"
+                className="block text-sm font-medium text-[#2E2E38] mb-2"
+              >
+                Due Date
+              </label>
+              <input
+                id="deadline"
+                type="date"
+                {...register("deadline")}
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              />
+              {errors.deadline && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.deadline.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Priority */}
