@@ -17,6 +17,7 @@ public class Request : BaseEntity
     public decimal? EstimatedCost { get; private set; }
 
     public PriorityLevel Priority { get; private set; }
+    public RequestCategory Category { get; private set; }
     public RequestStatus Status { get; private set; }
 
     public Guid RequesterId { get; private set; }
@@ -39,6 +40,7 @@ public class Request : BaseEntity
         Guid requesterId,
         Address deliveryAddress,
         PriorityLevel priority,
+        RequestCategory category,
         DateTime? deadline = null,
         decimal? estimatedCost = null)
     {
@@ -47,6 +49,7 @@ public class Request : BaseEntity
         RequesterId = requesterId;
         DeliveryAddress = deliveryAddress;
         Priority = priority;
+        Category = category;
         Deadline = deadline;
         EstimatedCost = estimatedCost;
 

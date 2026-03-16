@@ -31,6 +31,9 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
 
         builder.Property(r => r.Deadline);
 
+        builder.Property(r => r.Category)
+            .IsRequired();
+
         // Owned Value Object
         builder.OwnsOne(r => r.DeliveryAddress, address =>
         {
