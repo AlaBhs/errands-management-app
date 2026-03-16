@@ -5,7 +5,7 @@ import { StatusBadge } from "@/features/requests";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
-import type { RequestStatus, SortField } from "../types";
+import { RequestCategory, type RequestStatus, type SortField } from "../types";
 import { formatDate } from "@/shared/utils/date";
 
 const PAGE_SIZE = 10;
@@ -29,6 +29,9 @@ export function MyAssignmentsPage() {
   const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
   const [descending, setDescending] = useState(false);
   const [status, setStatus] = useState<RequestStatus | undefined>(undefined);
+  const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "">(
+    "",
+  );
 
   const { data, isLoading, isError, error } = useMyAssignments({
     page,
@@ -37,6 +40,7 @@ export function MyAssignmentsPage() {
     sortBy,
     descending,
     status,
+    category: categoryFilter || undefined,
   });
 
   const resetPage = () => setPage(1);
@@ -80,7 +84,23 @@ export function MyAssignmentsPage() {
             </option>
           ))}
         </select>
-
+        <select
+          value={categoryFilter}
+          onChange={(e) => {
+            setCategoryFilter(e.target.value as RequestCategory | "");
+            resetPage();
+          }}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">All categories</option>
+          <option value={RequestCategory.OfficeSupplies}>
+            Office Supplies
+          </option>
+          <option value={RequestCategory.ITEquipment}>IT Equipment</option>
+          <option value={RequestCategory.Travel}>Travel</option>
+          <option value={RequestCategory.Facilities}>Facilities</option>
+          <option value={RequestCategory.Other}>Other</option>
+        </select>
         <select
           value={sortBy ?? ""}
           onChange={(e) => {

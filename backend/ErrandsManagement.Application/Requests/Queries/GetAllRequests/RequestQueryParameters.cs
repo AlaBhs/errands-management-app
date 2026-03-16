@@ -8,6 +8,8 @@ namespace ErrandsManagement.Application.Requests.Queries.GetAllRequests
     {
         public RequestStatus? Status { get; init; }
 
+        public RequestCategory? Category { get; init; }
+
         public string? Search { get; init; }
 
         public string? SortBy { get; init; }

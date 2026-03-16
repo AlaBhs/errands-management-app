@@ -47,6 +47,9 @@ public sealed class RequestRepository : IRequestRepository
                 r.Status == parameters.Status.Value);
         }
 
+        if (parameters.Category.HasValue)
+            query = query.Where(r => r.Category == parameters.Category.Value);
+
         // Search (example: search in Title and Description)
         if (!string.IsNullOrWhiteSpace(parameters.Search))
         {
@@ -107,6 +110,9 @@ public sealed class RequestRepository : IRequestRepository
         if (parameters.Status.HasValue)
             query = query.Where(r => r.Status == parameters.Status.Value);
 
+        if (parameters.Category.HasValue)
+            query = query.Where(r => r.Category == parameters.Category.Value);
+
         if (!string.IsNullOrWhiteSpace(parameters.Search))
         {
             var searchLower = parameters.Search.Trim().ToLower();
@@ -163,6 +169,9 @@ public sealed class RequestRepository : IRequestRepository
 
         if (parameters.Status.HasValue)
             query = query.Where(r => r.Status == parameters.Status.Value);
+
+        if (parameters.Category.HasValue)
+            query = query.Where(r => r.Category == parameters.Category.Value);
 
         if (!string.IsNullOrWhiteSpace(parameters.Search))
         {
