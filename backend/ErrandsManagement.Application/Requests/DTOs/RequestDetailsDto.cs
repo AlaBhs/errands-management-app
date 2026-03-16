@@ -6,6 +6,7 @@ public sealed record RequestDetailsDto(
     string Description,
     string Status,
     string Priority,
+    string Category,
     DateTime? Deadline,
     decimal? EstimatedCost,
     Guid RequesterId,

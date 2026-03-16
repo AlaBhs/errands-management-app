@@ -33,6 +33,7 @@ public sealed class CreateRequestHandler
             command.RequesterId,
             address,
             command.Priority,
+            command.Category,
             command.Deadline,
             command.EstimatedCost);
 

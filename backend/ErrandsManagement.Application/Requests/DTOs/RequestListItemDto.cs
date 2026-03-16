@@ -6,6 +6,7 @@
         string Description,
         string Status,
         string Priority,
+        string Category,
         decimal? EstimatedCost,
         DateTime? Deadline);
 }

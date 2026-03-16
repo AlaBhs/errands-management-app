@@ -10,7 +10,7 @@ namespace ErrandsManagement.Infrastructure.Data.Seed;
 
 public static class DbInitializer
 {
-    private const string DefaultPassword = "Dev123!";
+    private const string DefaultPassword = "Dev1234!";
 
     public static async Task SeedAsync(
         AppDbContext context,
@@ -41,18 +41,21 @@ public static class DbInitializer
             "Office supplies procurement",
             "Need printer paper A4 x10 reams and ballpoint pens x50.",
             sarah.Id, tunis, PriorityLevel.Normal,
+            RequestCategory.OfficeSupplies,
             DateTime.UtcNow.AddDays(2), 45m);
 
         var p2 = new Request(
             "IT equipment pickup",
             "Pick up laptop from HP service center and deliver to IT department.",
             sarah.Id, lac, PriorityLevel.High,
+            RequestCategory.ITEquipment,
             DateTime.UtcNow.AddDays(1), null);
 
         var p3 = new Request(
             "Document delivery to notary",
             "Urgent delivery of signed contracts to Maître Ben Ali office.",
             michael.Id, tunis, PriorityLevel.Urgent,
+            RequestCategory.Other,
             DateTime.UtcNow.AddHours(18), 30m);
 
         // ── Assigned ───────────────────────────────────────────────────────────
@@ -60,6 +63,7 @@ public static class DbInitializer
             "Bank document collection",
             "Collect certified bank statements from STB Lac branch.",
             michael.Id, lac, PriorityLevel.High,
+            RequestCategory.Other,
             DateTime.UtcNow.AddDays(1), 20m);
         a1.Assign(courier1.Id);
 
@@ -67,6 +71,7 @@ public static class DbInitializer
             "Stationery restocking",
             "Purchase and deliver stationery items from Papeterie Centrale.",
             sarah.Id, tunis, PriorityLevel.Normal,
+            RequestCategory.OfficeSupplies,
             DateTime.UtcNow.AddDays(3), 80m);
         a2.Assign(courier1.Id);
 
@@ -75,6 +80,7 @@ public static class DbInitializer
             "Customs clearance documents",
             "Deliver customs clearance paperwork to port authority office.",
             michael.Id, tunis, PriorityLevel.Urgent,
+            RequestCategory.Other,
             DateTime.UtcNow.AddHours(6), null);
         ip1.Assign(courier2.Id);
         ip1.Start();
@@ -83,6 +89,7 @@ public static class DbInitializer
             "Courier to Ministry of Finance",
             "Deliver official correspondence to Ministry of Finance.",
             sarah.Id, tunis, PriorityLevel.High,
+            RequestCategory.Facilities,
             DateTime.UtcNow.AddHours(12), 15m);
         ip2.Assign(courier2.Id);
         ip2.Start();
@@ -92,6 +99,7 @@ public static class DbInitializer
             "Monthly invoice collection",
             "Collect invoices from 3 suppliers in La Marsa.",
             sarah.Id, lac, PriorityLevel.Normal,
+            RequestCategory.Other,
             DateTime.UtcNow.AddDays(-1), 35m);
         c1.Assign(courier1.Id);
         c1.Start();
@@ -101,6 +109,7 @@ public static class DbInitializer
             "Legal documents notarization",
             "Take company documents to notary for official certification.",
             michael.Id, tunis, PriorityLevel.High,
+            RequestCategory.Other,
             DateTime.UtcNow.AddDays(-2), 50m);
         c2.Assign(courier2.Id);
         c2.Start();
@@ -112,12 +121,17 @@ public static class DbInitializer
             "Conference catering order",
             "Pick up catering order for client meeting at Lac office.",
             sarah.Id, lac, PriorityLevel.Normal,
+            RequestCategory.Other,
             DateTime.UtcNow.AddDays(-1), 120m);
         cn1.Cancel("Meeting was postponed by the client.");
 
         // ── Persist ────────────────────────────────────────────────────────────
-        context.Requests.AddRange(p1, p2, p3, a1, a2, ip1, ip2, c1, c2, cn1);
-        await context.SaveChangesAsync();
+        foreach (var request in new[] { p1, p2, p3, a1, a2, ip1, ip2, c1, c2, cn1 })
+        {
+            context.ChangeTracker.Clear();
+            await context.Requests.AddAsync(request);
+            await context.SaveChangesAsync();
+        }
 
         logger.LogInformation(
             "DbInitializer: seeded 10 requests and 4 demo users successfully.");

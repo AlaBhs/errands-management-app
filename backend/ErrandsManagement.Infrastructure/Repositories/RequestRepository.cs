@@ -83,6 +83,7 @@ public sealed class RequestRepository : IRequestRepository
                 r.Description,
                 r.Status.ToString(),
                 r.Priority.ToString(),
+                r.Category.ToString(),
                 r.EstimatedCost,
                 r.Deadline
             ))
@@ -140,6 +141,7 @@ public sealed class RequestRepository : IRequestRepository
                 r.Description,
                 r.Status.ToString(),
                 r.Priority.ToString(),
+                r.Category.ToString(),
                 r.EstimatedCost,
                 r.Deadline))
             .ToListAsync(cancellationToken);
@@ -196,6 +198,7 @@ public sealed class RequestRepository : IRequestRepository
                 r.Description,
                 r.Status.ToString(),
                 r.Priority.ToString(),
+                r.Category.ToString(),
                 r.EstimatedCost,
                 r.Deadline))
             .ToListAsync(cancellationToken);
