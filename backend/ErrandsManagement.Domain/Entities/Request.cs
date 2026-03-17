@@ -22,6 +22,9 @@ public class Request : BaseEntity
 
     public Guid RequesterId { get; private set; }
 
+    public string? ContactPerson { get; private set; }
+    public string? ContactPhone { get; private set; }
+
     public Address DeliveryAddress { get; private set; }
 
     public Survey? Survey { get; private set; }
@@ -41,6 +44,8 @@ public class Request : BaseEntity
         Address deliveryAddress,
         PriorityLevel priority,
         RequestCategory category,
+        string? contactPerson = null,
+        string? contactPhone = null,
         DateTime? deadline = null,
         decimal? estimatedCost = null)
     {
@@ -50,6 +55,8 @@ public class Request : BaseEntity
         DeliveryAddress = deliveryAddress;
         Priority = priority;
         Category = category;
+        ContactPerson = contactPerson;
+        ContactPhone = contactPhone;
         Deadline = deadline;
         EstimatedCost = estimatedCost;
 

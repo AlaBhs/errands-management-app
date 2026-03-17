@@ -24,6 +24,8 @@ const schema = z.object({
     ],
     { message: "Category is required" },
   ),
+  contactPerson: z.string().max(100).optional(),
+  contactPhone: z.string().max(20).optional(),
   deadline: z.string().optional(),
   estimatedCost: z
     .string()
@@ -64,6 +66,8 @@ export function CreateRequestPage() {
         description: values.description,
         priority: values.priority,
         category: values.category,
+        contactPerson: values.contactPerson || undefined,
+        contactPhone: values.contactPhone || undefined,
         deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
@@ -167,7 +171,51 @@ export function CreateRequestPage() {
                 </p>
               )}
             </div>
-
+            {/* Contact Person + Phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  htmlFor="contactPerson"
+                  className="block text-sm font-medium text-[#2E2E38] mb-2"
+                >
+                  Contact Person (Vis-à-vis)
+                  <span className="ml-1 text-xs text-gray-400">(optional)</span>
+                </label>
+                <input
+                  id="contactPerson"
+                  type="text"
+                  {...register("contactPerson")}
+                  placeholder="Name of person to meet"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                />
+                {errors.contactPerson && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.contactPerson.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="contactPhone"
+                  className="block text-sm font-medium text-[#2E2E38] mb-2"
+                >
+                  Contact Phone
+                  <span className="ml-1 text-xs text-gray-400">(optional)</span>
+                </label>
+                <input
+                  id="contactPhone"
+                  type="tel"
+                  {...register("contactPhone")}
+                  placeholder="+216 XX XXX XXX"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                />
+                {errors.contactPhone && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.contactPhone.message}
+                  </p>
+                )}
+              </div>
+            </div>
             {/* Deadline */}
             <div>
               <label

@@ -10,6 +10,8 @@ public sealed record CreateRequestCommand(
     AddressDto DeliveryAddress,
     PriorityLevel Priority,
     RequestCategory Category,
+    string? ContactPerson,
+    string? ContactPhone,
     DateTime? Deadline,
     decimal? EstimatedCost,
     Guid RequesterId)

@@ -42,6 +42,8 @@ public static class DbInitializer
             "Need printer paper A4 x10 reams and ballpoint pens x50.",
             sarah.Id, tunis, PriorityLevel.Normal,
             RequestCategory.OfficeSupplies,
+            "Ahmed Ben Ali",
+            "+216 71 234 567",
             DateTime.UtcNow.AddDays(2), 45m);
 
         var p2 = new Request(
@@ -49,6 +51,8 @@ public static class DbInitializer
             "Pick up laptop from HP service center and deliver to IT department.",
             sarah.Id, lac, PriorityLevel.High,
             RequestCategory.ITEquipment,
+            "Ahmed Ben Ali",
+            "+216 71 234 567",
             DateTime.UtcNow.AddDays(1), null);
 
         var p3 = new Request(
@@ -56,6 +60,8 @@ public static class DbInitializer
             "Urgent delivery of signed contracts to Maître Ben Ali office.",
             michael.Id, tunis, PriorityLevel.Urgent,
             RequestCategory.Other,
+            "Sonia Mejri",         
+            "+216 71 890 123",
             DateTime.UtcNow.AddHours(18), 30m);
 
         // ── Assigned ───────────────────────────────────────────────────────────
@@ -64,6 +70,8 @@ public static class DbInitializer
             "Collect certified bank statements from STB Lac branch.",
             michael.Id, lac, PriorityLevel.High,
             RequestCategory.Other,
+            "Sonia Mejri",
+            "+216 71 890 123",
             DateTime.UtcNow.AddDays(1), 20m);
         a1.Assign(courier1.Id);
 
@@ -72,6 +80,8 @@ public static class DbInitializer
             "Purchase and deliver stationery items from Papeterie Centrale.",
             sarah.Id, tunis, PriorityLevel.Normal,
             RequestCategory.OfficeSupplies,
+            "Sonia Mejri",
+            "+216 71 890 123",
             DateTime.UtcNow.AddDays(3), 80m);
         a2.Assign(courier1.Id);
 
@@ -81,6 +91,8 @@ public static class DbInitializer
             "Deliver customs clearance paperwork to port authority office.",
             michael.Id, tunis, PriorityLevel.Urgent,
             RequestCategory.Other,
+            "Ahmed Mohamed",
+            "+216 77 777 777",
             DateTime.UtcNow.AddHours(6), null);
         ip1.Assign(courier2.Id);
         ip1.Start();
@@ -90,6 +102,8 @@ public static class DbInitializer
             "Deliver official correspondence to Ministry of Finance.",
             sarah.Id, tunis, PriorityLevel.High,
             RequestCategory.Facilities,
+            "Ahmed Mohamed",
+            "+216 77 777 777",
             DateTime.UtcNow.AddHours(12), 15m);
         ip2.Assign(courier2.Id);
         ip2.Start();
@@ -100,6 +114,8 @@ public static class DbInitializer
             "Collect invoices from 3 suppliers in La Marsa.",
             sarah.Id, lac, PriorityLevel.Normal,
             RequestCategory.Other,
+            "Ahmed Mohamed",
+            "+216 77 777 777",
             DateTime.UtcNow.AddDays(-1), 35m);
         c1.Assign(courier1.Id);
         c1.Start();
@@ -110,6 +126,8 @@ public static class DbInitializer
             "Take company documents to notary for official certification.",
             michael.Id, tunis, PriorityLevel.High,
             RequestCategory.Other,
+            "Ahmed Mohamed",
+            "+216 77 777 777",
             DateTime.UtcNow.AddDays(-2), 50m);
         c2.Assign(courier2.Id);
         c2.Start();
@@ -122,6 +140,8 @@ public static class DbInitializer
             "Pick up catering order for client meeting at Lac office.",
             sarah.Id, lac, PriorityLevel.Normal,
             RequestCategory.Other,
+            "Ahmed Mohamed",
+            "+216 77 777 777",
             DateTime.UtcNow.AddDays(-1), 120m);
         cn1.Cancel("Meeting was postponed by the client.");
 

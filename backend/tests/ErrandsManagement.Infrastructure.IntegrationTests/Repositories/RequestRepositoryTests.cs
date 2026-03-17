@@ -26,6 +26,8 @@ public class RequestRepositoryTests
             ),
             PriorityLevel.Normal,
             RequestCategory.Other,
+            "Contact Person", 
+            "123456789",
             deadline);
     }
 

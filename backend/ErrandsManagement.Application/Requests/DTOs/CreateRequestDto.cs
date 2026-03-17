@@ -8,6 +8,8 @@ namespace ErrandsManagement.Application.Requests.DTOs
         AddressDto DeliveryAddress,
         PriorityLevel Priority,
         RequestCategory Category,
+        string? ContactPerson,
+        string? ContactPhone,
         DateTime? Deadline,
         decimal? EstimatedCost
     );

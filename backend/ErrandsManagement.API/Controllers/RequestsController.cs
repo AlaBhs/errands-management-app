@@ -46,6 +46,8 @@ public sealed class RequestsController : ControllerBase
             body.DeliveryAddress,
             body.Priority,
             body.Category,
+            body.ContactPerson,
+            body.ContactPhone,
             body.Deadline,
             body.EstimatedCost,
             requesterId);      

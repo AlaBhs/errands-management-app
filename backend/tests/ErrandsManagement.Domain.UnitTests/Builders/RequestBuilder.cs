@@ -17,6 +17,8 @@ public class RequestBuilder
     );
     private PriorityLevel _priority = PriorityLevel.Normal;
     private RequestCategory _category = RequestCategory.Other;
+    private string _contactPerson = "Test Contact";
+    private string _contactPhone = "+216 55 555 555";
     private DateTime? _deadline = DateTime.UtcNow.AddDays(1);
     private decimal? _estimatedCost = 10;
 
@@ -43,6 +45,19 @@ public class RequestBuilder
         _category = category;
         return this;
     }
+
+    public RequestBuilder WithContactPerson(string contactPerson)
+    {
+        _contactPerson = contactPerson;
+        return this;
+    }
+
+    public RequestBuilder WithContactPhone(string contactPhone)
+    {
+        _contactPhone = contactPhone;
+        return this;
+    }
+
     public RequestBuilder WithEstimatedCost(decimal? cost)
     {
         _estimatedCost = cost;
@@ -58,6 +73,8 @@ public class RequestBuilder
             _address,
             _priority,
             _category,
+            _contactPerson,
+            _contactPhone,
             _deadline,
             _estimatedCost
         );

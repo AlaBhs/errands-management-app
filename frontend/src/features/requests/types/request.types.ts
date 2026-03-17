@@ -52,6 +52,8 @@ export interface RequestDetailsDto {
   status: RequestStatus;
   priority: PriorityLevel;
   category: RequestCategory;
+  contactPerson?: string;
+  contactPhone?: string;
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;

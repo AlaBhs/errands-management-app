@@ -1,5 +1,11 @@
 import { useParams, Link } from "react-router-dom";
-import { useRequest, StatusBadge, RequestActions, PriorityBadge, CategoryBadge } from "@/features/requests";
+import {
+  useRequest,
+  StatusBadge,
+  RequestActions,
+  PriorityBadge,
+  CategoryBadge,
+} from "@/features/requests";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
@@ -7,27 +13,30 @@ import { UserRole } from "@/features/auth/types/auth.enums";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { formatDateTime, formatDate } from "@/shared/utils/date";
 
-
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading, isError, error } = useRequest(id!);
   const role = useAuthStore((s) => s.user?.role);
 
   const backLink =
-    role === UserRole.Courier ? '/assignments' :
-    role === UserRole.Collaborator ? '/requests/mine' :
-    '/requests';
+    role === UserRole.Courier
+      ? "/assignments"
+      : role === UserRole.Collaborator
+        ? "/requests/mine"
+        : "/requests";
 
   const backLabel =
-    role === UserRole.Courier ? '← Back to My Assignments' :
-    role === UserRole.Collaborator ? '← Back to My Requests' :
-    '← Back to All Requests';
+    role === UserRole.Courier
+      ? "← Back to My Assignments"
+      : role === UserRole.Collaborator
+        ? "← Back to My Requests"
+        : "← Back to All Requests";
 
   if (isLoading) return <PageSpinner />;
   if (isError)
     return (
       <ErrorMessage
-        message={isApiError(error) ? error.message : 'Something went wrong.'}
+        message={isApiError(error) ? error.message : "Something went wrong."}
       />
     );
   if (!request) return null;
@@ -47,11 +56,11 @@ export function RequestDetailsPage() {
               {request.title}
             </h1>
             <p className="text-sm text-gray-500">
-              Requested by{' '}
+              Requested by{" "}
               <span className="font-medium text-gray-700">
                 {request.requesterName}
               </span>
-              {' · '}
+              {" · "}
               {formatDateTime(request.createdAt)}
             </p>
             {/* Badges row */}
@@ -89,8 +98,8 @@ export function RequestDetailsPage() {
           Delivery Address
         </h2>
         <p className="text-sm text-gray-600">
-          {request.deliveryAddress.street}, {request.deliveryAddress.city},{' '}
-          {request.deliveryAddress.postalCode},{' '}
+          {request.deliveryAddress.street}, {request.deliveryAddress.city},{" "}
+          {request.deliveryAddress.postalCode},{" "}
           {request.deliveryAddress.country}
         </p>
         {request.deliveryAddress.note && (
@@ -98,6 +107,19 @@ export function RequestDetailsPage() {
             {request.deliveryAddress.note}
           </p>
         )}
+              {(request.contactPerson || request.contactPhone) && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-0.5">Contact (Vis-à-vis)</p>
+          <p className="text-sm text-gray-700 font-medium">
+            {request.contactPerson}
+            {request.contactPhone && (
+              <span className="ml-2 font-normal text-gray-500">
+                · {request.contactPhone}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
       </div>
 
       {/* Assignment */}
@@ -144,7 +166,9 @@ export function RequestDetailsPage() {
             {request.currentAssignment.note && (
               <div className="col-span-2">
                 <p className="text-xs text-gray-400 mb-0.5">Note</p>
-                <p className="text-gray-600">{request.currentAssignment.note}</p>
+                <p className="text-gray-600">
+                  {request.currentAssignment.note}
+                </p>
               </div>
             )}
           </div>
@@ -163,7 +187,7 @@ export function RequestDetailsPage() {
                 </span>
                 <span className="text-gray-600">
                   <span className="font-medium">{log.eventType}</span>
-                  {' — '}
+                  {" — "}
                   {log.detail}
                 </span>
               </li>
@@ -183,8 +207,8 @@ export function RequestDetailsPage() {
                   key={n}
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
                     n <= request.survey!.rating
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-400'
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-400"
                   }`}
                 >
                   {n}

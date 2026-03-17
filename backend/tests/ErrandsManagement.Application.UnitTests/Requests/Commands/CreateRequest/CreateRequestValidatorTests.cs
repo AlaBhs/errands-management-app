@@ -18,6 +18,8 @@ public class CreateRequestValidatorTests
             new AddressDto("Street", "City", "12345", "Country"),
             PriorityLevel.Normal,
             RequestCategory.Other,
+            "John Doe",
+            "555-1234",
             DateTime.UtcNow.AddDays(1),
             50,
             Guid.NewGuid());

@@ -25,6 +25,8 @@ public class CreateRequestHandlerTests
             DeliveryAddress: new AddressDto("Main Street", "City", "12345", "Country"),
             Priority: PriorityLevel.Normal,
             Category: RequestCategory.Other,
+            ContactPerson: "John Doe",
+            ContactPhone: "123456789",
             Deadline: DateTime.UtcNow.AddDays(1),
             EstimatedCost: 50,
             RequesterId: requesterId ?? Guid.NewGuid());

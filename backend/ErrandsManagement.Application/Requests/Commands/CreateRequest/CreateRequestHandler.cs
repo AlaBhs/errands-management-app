@@ -34,6 +34,8 @@ public sealed class CreateRequestHandler
             address,
             command.Priority,
             command.Category,
+            command.ContactPerson,  
+            command.ContactPhone,
             command.Deadline,
             command.EstimatedCost);
 
