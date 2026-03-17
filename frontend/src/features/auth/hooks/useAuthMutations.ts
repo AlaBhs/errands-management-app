@@ -5,6 +5,7 @@ import type { LoginPayload, RegisterPayload } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { extractUserFromToken } from '../utils/jwtUtils';
 import { UserRole } from '../types/auth.enums';
+import { toast } from 'sonner';
 
 function getHomeRoute(role?: UserRole): string {
   switch (role) {
@@ -35,6 +36,9 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: () => authApi.logout(),
+    onSuccess: () => {
+      toast.success('Signed out successfully.');
+    },
     onSettled: () => {
       clearAuth();
       navigate('/login', { replace: true });

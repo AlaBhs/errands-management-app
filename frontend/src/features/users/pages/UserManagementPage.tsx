@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { toast } from 'sonner';
 import { useUsers, useUserMutations } from '@/features/users';
 import { useAuthStore } from '@/features/auth';
 import { isApiError } from '@/shared/api/client';
@@ -14,7 +13,7 @@ import { UserRole } from '@/features/auth';
 
 const createUserSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
-  email: z.string().email('Invalid email address'),
+  email: z.email('Invalid email address'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -67,32 +66,11 @@ export function UserManagementPage() {
 
   const resetPage = () => setPage(1);
 
-  const onDeactivate = (id: string, email: string) => {
-    deactivate.mutate(id, {
-      onSuccess: () => toast.success(`${email} has been deactivated.`),
-      onError: (err) =>
-        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
-    });
-  };
-
-  const onActivate = (id: string, email: string) => {
-    activate.mutate(id, {
-      onSuccess: () => toast.success(`${email} has been activated.`),
-      onError: (err) =>
-        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
-    });
-  };
-
-  const onCreateUser = handleSubmit((values) => {
-    create.mutate(values, {
-      onSuccess: () => {
-        toast.success('User created successfully.');
-        reset();
-      },
-      onError: (err) =>
-        toast.error(isApiError(err) ? err.message : 'Something went wrong.'),
-    });
+const onCreateUser = handleSubmit((values) => {
+  create.mutate(values, {
+    onSuccess: () => reset(),
   });
+});
 
   const isMutating = deactivate.isPending || activate.isPending;
 
@@ -191,7 +169,7 @@ export function UserManagementPage() {
                           <td className="px-4 py-3 text-right">
                             {user.isActive ? (
                               <button
-                                onClick={() => onDeactivate(user.id, user.email)}
+                                onClick={() => deactivate.mutate({ id: user.id, email: user.email })}
                                 disabled={user.id === currentUserId || isMutating}
                                 className="text-xs text-red-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
                               >
@@ -199,7 +177,7 @@ export function UserManagementPage() {
                               </button>
                             ) : (
                               <button
-                                onClick={() => onActivate(user.id, user.email)}
+                                onClick={() => activate.mutate({ id: user.id, email: user.email })}
                                 disabled={isMutating}
                                 className="text-xs text-green-600 hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
                               >

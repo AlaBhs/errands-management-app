@@ -3,6 +3,7 @@ import type { ApiErrorResponse } from "@/shared/api/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
   if (typeof error !== "object" || error === null) return false;
@@ -48,6 +49,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInitializer>{children}</AuthInitializer>
+      <Toaster richColors position="top-right" />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
