@@ -25,6 +25,8 @@ public class Request : BaseEntity
     public string? ContactPerson { get; private set; }
     public string? ContactPhone { get; private set; }
 
+    public string? Comment { get; private set; }
+
     public Address DeliveryAddress { get; private set; }
 
     public Survey? Survey { get; private set; }
@@ -46,6 +48,7 @@ public class Request : BaseEntity
         RequestCategory category,
         string? contactPerson = null,
         string? contactPhone = null,
+        string? comment = null,
         DateTime? deadline = null,
         decimal? estimatedCost = null)
     {
@@ -57,6 +60,7 @@ public class Request : BaseEntity
         Category = category;
         ContactPerson = contactPerson;
         ContactPhone = contactPhone;
+        Comment = comment;
         Deadline = deadline;
         EstimatedCost = estimatedCost;
 

@@ -44,6 +44,10 @@ public sealed class CreateRequestValidator : AbstractValidator<CreateRequestComm
             .MaximumLength(20)
             .When(x => x.ContactPhone is not null);
 
+        RuleFor(x => x.Comment)
+            .MaximumLength(500)
+            .When(x => x.Comment is not null);
+
         RuleFor(x => x.Deadline)
             .Must(deadline => deadline!.Value >= DateTime.UtcNow.AddHours(24))
             .When(x => x.Deadline.HasValue)

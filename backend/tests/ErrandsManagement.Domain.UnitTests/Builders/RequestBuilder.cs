@@ -19,6 +19,7 @@ public class RequestBuilder
     private RequestCategory _category = RequestCategory.Other;
     private string _contactPerson = "Test Contact";
     private string _contactPhone = "+216 55 555 555";
+    private string _comment = "Leave at the door";
     private DateTime? _deadline = DateTime.UtcNow.AddDays(1);
     private decimal? _estimatedCost = 10;
 
@@ -58,6 +59,12 @@ public class RequestBuilder
         return this;
     }
 
+    public RequestBuilder WithComment(string comment)
+    {
+        _comment = comment;
+        return this;
+    }
+
     public RequestBuilder WithEstimatedCost(decimal? cost)
     {
         _estimatedCost = cost;
@@ -75,6 +82,7 @@ public class RequestBuilder
             _category,
             _contactPerson,
             _contactPhone,
+            _comment,
             _deadline,
             _estimatedCost
         );

@@ -36,6 +36,7 @@ public sealed class CreateRequestHandler
             command.Category,
             command.ContactPerson,  
             command.ContactPhone,
+            command.Comment,
             command.Deadline,
             command.EstimatedCost);
 

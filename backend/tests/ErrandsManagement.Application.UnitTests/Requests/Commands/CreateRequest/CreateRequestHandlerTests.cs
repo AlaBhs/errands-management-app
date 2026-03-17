@@ -27,6 +27,7 @@ public class CreateRequestHandlerTests
             Category: RequestCategory.Other,
             ContactPerson: "John Doe",
             ContactPhone: "123456789",
+            Comment: "Please deliver between 5-6 PM",
             Deadline: DateTime.UtcNow.AddDays(1),
             EstimatedCost: 50,
             RequesterId: requesterId ?? Guid.NewGuid());

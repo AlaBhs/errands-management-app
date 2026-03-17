@@ -10,6 +10,7 @@ namespace ErrandsManagement.Application.Requests.DTOs
         RequestCategory Category,
         string? ContactPerson,
         string? ContactPhone,
+        string? Comment,
         DateTime? Deadline,
         decimal? EstimatedCost
     );

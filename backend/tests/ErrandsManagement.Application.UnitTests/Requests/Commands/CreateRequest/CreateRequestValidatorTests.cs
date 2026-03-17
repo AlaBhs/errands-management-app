@@ -20,6 +20,7 @@ public class CreateRequestValidatorTests
             RequestCategory.Other,
             "John Doe",
             "555-1234",
+            "Please buy fresh products",
             DateTime.UtcNow.AddDays(2),
             50,
             Guid.NewGuid());

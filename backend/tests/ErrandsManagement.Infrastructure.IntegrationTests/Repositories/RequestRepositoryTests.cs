@@ -28,6 +28,7 @@ public class RequestRepositoryTests
             RequestCategory.Other,
             "Contact Person", 
             "123456789",
+            "Test comment",
             deadline);
     }
 

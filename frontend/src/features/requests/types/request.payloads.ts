@@ -12,6 +12,7 @@ export interface CreateRequestPayload {
   category: RequestCategory;
   contactPerson?: string;
   contactPhone?: string;
+  comment?: string;
   deadline?: string;
   estimatedCost?: number;
 }

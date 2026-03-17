@@ -54,6 +54,7 @@ export interface RequestDetailsDto {
   category: RequestCategory;
   contactPerson?: string;
   contactPhone?: string;
+  comment?: string;
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;

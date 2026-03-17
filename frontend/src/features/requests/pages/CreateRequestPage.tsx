@@ -26,6 +26,7 @@ const schema = z.object({
   ),
   contactPerson: z.string().max(100).optional(),
   contactPhone: z.string().max(20).optional(),
+  comment: z.string().max(500).optional(),
   deadline: z
     .string()
     .optional()
@@ -77,6 +78,7 @@ export function CreateRequestPage() {
         category: values.category,
         contactPerson: values.contactPerson || undefined,
         contactPhone: values.contactPhone || undefined,
+        comment: values.comment || undefined,
         deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
@@ -151,7 +153,28 @@ export function CreateRequestPage() {
               </p>
             )}
           </div>
-
+          {/* Comment */}
+          <div>
+            <label
+              htmlFor="comment"
+              className="block text-sm font-medium text-[#2E2E38] mb-2"
+            >
+              Additional Comments
+              <span className="ml-1 text-xs text-gray-400">(optional)</span>
+            </label>
+            <textarea
+              id="comment"
+              {...register("comment")}
+              rows={3}
+              placeholder="Any additional instructions for the courier — access codes, schedule constraints, special handling..."
+              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38] resize-none"
+            />
+            {errors.comment && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.comment.message}
+              </p>
+            )}
+          </div>
           {/* Category + Deadline row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
@@ -180,6 +203,33 @@ export function CreateRequestPage() {
                 </p>
               )}
             </div>
+
+            {/* Deadline */}
+            <div>
+              <label
+                htmlFor="deadline"
+                className="block text-sm font-medium text-[#2E2E38] mb-2"
+              >
+                Due Date
+              </label>
+              <input
+                id="deadline"
+                type="date"
+                min={(() => {
+                  const d = new Date();
+                  d.setHours(d.getHours() + 24);
+                  return d.toISOString().split("T")[0];
+                })()}
+                {...register("deadline")}
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              />
+              {errors.deadline && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.deadline.message}
+                </p>
+              )}
+            </div>
+          </div>
             {/* Contact Person + Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -225,33 +275,6 @@ export function CreateRequestPage() {
                 )}
               </div>
             </div>
-            {/* Deadline */}
-            <div>
-              <label
-                htmlFor="deadline"
-                className="block text-sm font-medium text-[#2E2E38] mb-2"
-              >
-                Due Date
-              </label>
-              <input
-                id="deadline"
-                type="date"
-                min={(() => {
-                  const d = new Date();
-                  d.setHours(d.getHours() + 24);
-                  return d.toISOString().split("T")[0];
-                })()}
-                {...register("deadline")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deadline && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deadline.message}
-                </p>
-              )}
-            </div>
-          </div>
-
           {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-3">

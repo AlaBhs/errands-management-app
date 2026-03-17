@@ -11,7 +11,11 @@ import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { UserRole } from "@/features/auth/types/auth.enums";
 import { useAuthStore } from "@/features/auth/store/authStore";
-import { formatDateTime, formatDate, formatDuration } from "@/shared/utils/date";
+import {
+  formatDateTime,
+  formatDate,
+  formatDuration,
+} from "@/shared/utils/date";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -88,6 +92,16 @@ export function RequestDetailsPage() {
         <h2 className="mb-2 text-sm font-medium text-gray-700">Description</h2>
         <p className="text-sm text-gray-600">{request.description}</p>
       </div>
+
+      {/* Comment */}
+      {request.comment && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-medium text-amber-800">
+            Additional Comments
+          </h2>
+          <p className="text-sm text-amber-700">{request.comment}</p>
+        </div>
+      )}
 
       {/* Actions */}
       <RequestActions request={request} />

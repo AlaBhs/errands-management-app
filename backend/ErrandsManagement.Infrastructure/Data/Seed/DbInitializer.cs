@@ -44,6 +44,7 @@ public static class DbInitializer
             RequestCategory.OfficeSupplies,
             "Ahmed Ben Ali",
             "+216 71 234 567",
+            "Please deliver between 5-6 PM",
             DateTime.UtcNow.AddDays(2), 45m);
 
         var p2 = new Request(
@@ -53,6 +54,7 @@ public static class DbInitializer
             RequestCategory.ITEquipment,
             "Ahmed Ben Ali",
             "+216 71 234 567",
+            null,
             DateTime.UtcNow.AddDays(1), null);
 
         var p3 = new Request(
@@ -61,7 +63,8 @@ public static class DbInitializer
             michael.Id, tunis, PriorityLevel.Urgent,
             RequestCategory.Other,
             "Sonia Mejri",         
-            "+216 71 890 123",
+            "+216 71 890 123", 
+            null,
             DateTime.UtcNow.AddHours(18), 30m);
 
         // ── Assigned ───────────────────────────────────────────────────────────
@@ -72,6 +75,7 @@ public static class DbInitializer
             RequestCategory.Other,
             "Sonia Mejri",
             "+216 71 890 123",
+            "Please deliver between 5-6 PM",
             DateTime.UtcNow.AddDays(1), 20m);
         a1.Assign(courier1.Id);
 
@@ -82,6 +86,7 @@ public static class DbInitializer
             RequestCategory.OfficeSupplies,
             "Sonia Mejri",
             "+216 71 890 123",
+            null,
             DateTime.UtcNow.AddDays(3), 80m);
         a2.Assign(courier1.Id);
 
@@ -93,6 +98,7 @@ public static class DbInitializer
             RequestCategory.Other,
             "Ahmed Mohamed",
             "+216 77 777 777",
+            null,
             DateTime.UtcNow.AddHours(6), null);
         ip1.Assign(courier2.Id);
         ip1.Start();
@@ -104,6 +110,7 @@ public static class DbInitializer
             RequestCategory.Facilities,
             "Ahmed Mohamed",
             "+216 77 777 777",
+            "Please deliver between 5-6 PM",
             DateTime.UtcNow.AddHours(12), 15m);
         ip2.Assign(courier2.Id);
         ip2.Start();
@@ -116,6 +123,7 @@ public static class DbInitializer
             RequestCategory.Other,
             "Ahmed Mohamed",
             "+216 77 777 777",
+            null,
             DateTime.UtcNow.AddDays(-1), 35m);
         c1.Assign(courier1.Id);
         c1.Start();
@@ -128,6 +136,7 @@ public static class DbInitializer
             RequestCategory.Other,
             "Ahmed Mohamed",
             "+216 77 777 777",
+            null,
             DateTime.UtcNow.AddDays(-2), 50m);
         c2.Assign(courier2.Id);
         c2.Start();
@@ -142,6 +151,7 @@ public static class DbInitializer
             RequestCategory.Other,
             "Ahmed Mohamed",
             "+216 77 777 777",
+            null,
             DateTime.UtcNow.AddDays(-1), 120m);
         cn1.Cancel("Meeting was postponed by the client.");
 

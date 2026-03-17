@@ -9,6 +9,7 @@ public sealed record RequestDetailsDto(
     string Category,
     string? ContactPerson,
     string? ContactPhone,
+    string? Comment,
     DateTime? Deadline,
     decimal? EstimatedCost,
     Guid RequesterId,
