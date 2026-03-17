@@ -11,7 +11,7 @@ import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { UserRole } from "@/features/auth/types/auth.enums";
 import { useAuthStore } from "@/features/auth/store/authStore";
-import { formatDateTime, formatDate } from "@/shared/utils/date";
+import { formatDateTime, formatDate, formatDuration } from "@/shared/utils/date";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -107,19 +107,19 @@ export function RequestDetailsPage() {
             {request.deliveryAddress.note}
           </p>
         )}
-              {(request.contactPerson || request.contactPhone) && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs text-gray-400 mb-0.5">Contact (Vis-à-vis)</p>
-          <p className="text-sm text-gray-700 font-medium">
-            {request.contactPerson}
-            {request.contactPhone && (
-              <span className="ml-2 font-normal text-gray-500">
-                · {request.contactPhone}
-              </span>
-            )}
-          </p>
-        </div>
-      )}
+        {(request.contactPerson || request.contactPhone) && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-0.5">Contact (Vis-à-vis)</p>
+            <p className="text-sm text-gray-700 font-medium">
+              {request.contactPerson}
+              {request.contactPhone && (
+                <span className="ml-2 font-normal text-gray-500">
+                  · {request.contactPhone}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Assignment */}
@@ -148,12 +148,25 @@ export function RequestDetailsPage() {
               </div>
             )}
             {request.currentAssignment.completedAt && (
-              <div>
-                <p className="text-xs text-gray-400 mb-0.5">Completed</p>
-                <p className="text-gray-600">
-                  {formatDateTime(request.currentAssignment.completedAt)}
-                </p>
-              </div>
+              <>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Completed</p>
+                  <p className="text-gray-600">
+                    {formatDateTime(request.currentAssignment.completedAt)}
+                  </p>
+                </div>
+                {request.currentAssignment.startedAt && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Duration</p>
+                    <p className="font-medium text-gray-800">
+                      {formatDuration(
+                        request.currentAssignment.startedAt,
+                        request.currentAssignment.completedAt,
+                      )}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             {request.currentAssignment.actualCost != null && (
               <div>
