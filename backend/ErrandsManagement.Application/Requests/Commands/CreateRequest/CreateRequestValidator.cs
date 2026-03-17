@@ -2,10 +2,7 @@
 
 namespace ErrandsManagement.Application.Requests.Commands.CreateRequest;
 
-
-
-public sealed class CreateRequestValidator
-    : AbstractValidator<CreateRequestCommand>
+public sealed class CreateRequestValidator : AbstractValidator<CreateRequestCommand>
 {
     public CreateRequestValidator()
     {
@@ -38,6 +35,18 @@ public sealed class CreateRequestValidator
         RuleFor(x => x.EstimatedCost)
             .GreaterThanOrEqualTo(0)
             .When(x => x.EstimatedCost.HasValue);
+
+        RuleFor(x => x.ContactPerson)
+            .MaximumLength(100)
+            .When(x => x.ContactPerson is not null);
+
+        RuleFor(x => x.ContactPhone)
+            .MaximumLength(20)
+            .When(x => x.ContactPhone is not null);
+
+        RuleFor(x => x.Deadline)
+            .Must(deadline => deadline!.Value >= DateTime.UtcNow.AddHours(24))
+            .When(x => x.Deadline.HasValue)
+            .WithMessage("Deadline must be at least 24 hours from now.");
     }
 }
-

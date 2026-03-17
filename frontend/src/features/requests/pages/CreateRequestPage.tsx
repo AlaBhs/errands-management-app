@@ -26,7 +26,18 @@ const schema = z.object({
   ),
   contactPerson: z.string().max(100).optional(),
   contactPhone: z.string().max(20).optional(),
-  deadline: z.string().optional(),
+  deadline: z.string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const selected = new Date(val);
+        const minDate = new Date();
+        minDate.setHours(minDate.getHours() + 24);
+        return selected >= minDate;
+      },
+      'Deadline must be at least 24 hours from now.'
+    ),
   estimatedCost: z
     .string()
     .optional()
@@ -224,12 +235,17 @@ export function CreateRequestPage() {
               >
                 Due Date
               </label>
-              <input
-                id="deadline"
-                type="date"
-                {...register("deadline")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
+             <input
+              id="deadline"
+              type="date"
+              min={(() => {
+                const d = new Date();
+                d.setHours(d.getHours() + 24);
+                return d.toISOString().split('T')[0];
+              })()}
+              {...register('deadline')}
+              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+            />
               {errors.deadline && (
                 <p className="mt-1 text-xs text-red-500">
                   {errors.deadline.message}

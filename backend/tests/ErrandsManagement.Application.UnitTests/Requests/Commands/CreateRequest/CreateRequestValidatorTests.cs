@@ -20,7 +20,7 @@ public class CreateRequestValidatorTests
             RequestCategory.Other,
             "John Doe",
             "555-1234",
-            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             50,
             Guid.NewGuid());
     }
@@ -77,5 +77,42 @@ public class CreateRequestValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "RequesterId");
+    }
+
+    [Fact]
+    public void Should_Fail_When_Deadline_Is_Less_Than_24Hours_From_Now()
+    {
+        var command = CreateValidCommand() with
+        {
+            Deadline = DateTime.UtcNow.AddHours(12)
+        };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Deadline");
+    }
+
+    [Fact]
+    public void Should_Pass_When_Deadline_Is_More_Than_24Hours_From_Now()
+    {
+        var command = CreateValidCommand() with
+        {
+            Deadline = DateTime.UtcNow.AddDays(3)
+        };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Should_Pass_When_Deadline_Is_Null()
+    {
+        var command = CreateValidCommand() with { Deadline = null };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeTrue();
     }
 }
