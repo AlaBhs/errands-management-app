@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IRequestRepository, RequestRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 
         return services;
     }
