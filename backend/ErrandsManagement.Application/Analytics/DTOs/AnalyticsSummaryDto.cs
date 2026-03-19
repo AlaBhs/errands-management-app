@@ -6,7 +6,8 @@ namespace ErrandsManagement.Application.Analytics.DTOs
         int TotalRequests,
         Dictionary<string, int> ByStatus,
         Dictionary<string, int> ByCategory,
-        double? AvgCompletionTimeMinutes,
+        double? AvgLifecycleMinutes,
+        double? AvgExecutionMinutes,
         double? AvgSurveyRating,
         decimal TotalEstimatedCost,
         decimal TotalActualCost

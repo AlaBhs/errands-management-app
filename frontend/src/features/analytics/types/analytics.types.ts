@@ -2,7 +2,8 @@ export interface AnalyticsSummary {
   totalRequests: number;
   byStatus: Record<string, number>;
   byCategory: Record<string, number>;
-  avgCompletionTimeMinutes: number | null;
+  avgLifecycleMinutes: number | null;
+  avgExecutionMinutes: number | null;
   avgSurveyRating: number | null;
   totalEstimatedCost: number;
   totalActualCost: number;

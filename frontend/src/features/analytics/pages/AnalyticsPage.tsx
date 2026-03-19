@@ -15,7 +15,8 @@ export const AnalyticsPage = () => {
   const trend = useAnalyticsTrend();
   const costBreakdown = useAnalyticsCostBreakdown();
 
-  const isLoading = summary.isLoading || trend.isLoading || costBreakdown.isLoading;
+  const isLoading =
+    summary.isLoading || trend.isLoading || costBreakdown.isLoading;
   const isError = summary.isError || trend.isError || costBreakdown.isError;
 
   if (isLoading) return <PageSpinner />;
@@ -25,17 +26,14 @@ export const AnalyticsPage = () => {
 
   const completedCount = s.byStatus["Completed"] ?? 0;
 
-  const avgTimeLabel =
-    s.avgCompletionTimeMinutes != null
-      ? s.avgCompletionTimeMinutes < 60
-        ? `${Math.round(s.avgCompletionTimeMinutes)} min`
-        : `${(s.avgCompletionTimeMinutes / 60).toFixed(1)} hrs`
-      : "—";
+  const fmtMinutes = (mins: number | null): string => {
+    if (mins == null) return "—";
+    if (mins < 60) return `${Math.round(mins)} min`;
+    return `${(mins / 60).toFixed(1)} hrs`;
+  };
 
   const avgRatingLabel =
-    s.avgSurveyRating != null
-      ? `${s.avgSurveyRating.toFixed(2)} / 5`
-      : "—";
+    s.avgSurveyRating != null ? `${s.avgSurveyRating.toFixed(2)} / 5` : "—";
 
   return (
     <div className="space-y-8 p-6">
@@ -47,7 +45,7 @@ export const AnalyticsPage = () => {
       </div>
 
       {/* KPI Cards */}
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <KpiCard label="Total Requests" value={s.totalRequests} />
         <KpiCard
           label="Completed"
@@ -58,16 +56,36 @@ export const AnalyticsPage = () => {
               : undefined
           }
         />
-        <KpiCard label="Avg Completion Time" value={avgTimeLabel} />
         <KpiCard label="Avg Survey Rating" value={avgRatingLabel} />
+        <KpiCard
+          label="Avg Turnaround (SLA)"
+          value={fmtMinutes(s.avgLifecycleMinutes)}
+          sub="Request created → completed"
+        />
+        <KpiCard
+          label="Avg Execution Time"
+          value={fmtMinutes(s.avgExecutionMinutes)}
+          sub="Courier started → completed"
+        />
+        <KpiCard
+          label="Cost Variance"
+          value={
+            s.totalEstimatedCost > 0
+              ? `${(((s.totalActualCost - s.totalEstimatedCost) / s.totalEstimatedCost) * 100).toFixed(1)}%`
+              : "—"
+          }
+          sub={
+            s.totalActualCost <= s.totalEstimatedCost
+              ? "Under budget"
+              : "Over budget"
+          }
+        />
       </section>
 
       {/* Category breakdown + Trend */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold">
-            Requests by Category
-          </h2>
+          <h2 className="mb-4 text-base font-semibold">Requests by Category</h2>
           <CategoryBarChart data={s.byCategory} />
         </div>
 
@@ -85,11 +103,15 @@ export const AnalyticsPage = () => {
 
       {/* Cost Breakdown */}
       <section className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="mb-4 text-base font-semibold">Cost Breakdown by Category</h2>
+        <h2 className="mb-4 text-base font-semibold">
+          Cost Breakdown by Category
+        </h2>
         {costBreakdown.data && costBreakdown.data.length > 0 ? (
           <CostBreakdownTable data={costBreakdown.data} />
         ) : (
-          <p className="text-sm text-muted-foreground">No cost data available.</p>
+          <p className="text-sm text-muted-foreground">
+            No cost data available.
+          </p>
         )}
       </section>
     </div>

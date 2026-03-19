@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Analytics.DTOs;
 using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,10 +45,31 @@ namespace ErrandsManagement.Infrastructure.Repositories
                 .SelectMany(r => r.Assignments)
                 .SumAsync(a => a.ActualCost ?? 0m, cancellationToken);
 
-            // --- avg completion time (minutes): StartedAt → CompletedAt ---
-            // Pull the nullable pairs into memory; EF can't translate
-            // DateDiff on a nullable DateTime subtraction universally.
-            var completionPairs = await _db.Requests
+            // --- avg lifecycle: CreatedAt (on Request) → CompletedAt (on Assignment) ---
+            // This is the end-to-end SLA: how long from submission to done.
+            var lifecyclePairs = await _db.Requests
+                .Where(r => r.Status == RequestStatus.Completed)
+                .Select(r => new
+                {
+                    CreatedAt = r.CreatedAt,
+                    CompletedAt = r.Assignments
+                                   .Where(a => a.CompletedAt != null)
+                                   .OrderByDescending(a => a.CompletedAt)
+                                   .Select(a => a.CompletedAt!.Value)
+                                   .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            double? avgLifecycleMinutes = lifecyclePairs.Count > 0
+                ? lifecyclePairs
+                    .Where(p => p.CompletedAt != default)
+                    .Select(p => (p.CompletedAt - p.CreatedAt).TotalMinutes)
+                    .DefaultIfEmpty()
+                    .Average() is double avg && avg > 0 ? avg : null
+                : null;
+
+            // --- avg execution: StartedAt → CompletedAt (courier speed metric) ---
+            var executionPairs = await _db.Requests
                 .SelectMany(r => r.Assignments)
                 .Where(a => a.StartedAt != null && a.CompletedAt != null)
                 .Select(a => new
@@ -57,9 +79,8 @@ namespace ErrandsManagement.Infrastructure.Repositories
                 })
                 .ToListAsync(cancellationToken);
 
-            double? avgCompletionTimeMinutes = completionPairs.Count > 0
-                ? completionPairs.Average(
-                    p => (p.CompletedAt - p.StartedAt).TotalMinutes)
+            double? avgExecutionMinutes = executionPairs.Count > 0
+                ? executionPairs.Average(p => (p.CompletedAt - p.StartedAt).TotalMinutes)
                 : null;
 
             // --- avg survey rating ---
@@ -69,13 +90,10 @@ namespace ErrandsManagement.Infrastructure.Repositories
 
             return new AnalyticsSummaryDto(
                 TotalRequests: totals?.Total ?? 0,
-                ByStatus: statusCounts.ToDictionary(
-                                              x => x.Status.ToString(),
-                                              x => x.Count),
-                ByCategory: categoryCounts.ToDictionary(
-                                              x => x.Category.ToString(),
-                                              x => x.Count),
-                AvgCompletionTimeMinutes: avgCompletionTimeMinutes,
+                ByStatus: statusCounts.ToDictionary(x => x.Status.ToString(), x => x.Count),
+                ByCategory: categoryCounts.ToDictionary(x => x.Category.ToString(), x => x.Count),
+                AvgLifecycleMinutes: avgLifecycleMinutes,
+                AvgExecutionMinutes: avgExecutionMinutes,
                 AvgSurveyRating: avgSurveyRating,
                 TotalEstimatedCost: totals?.TotalEstimated ?? 0m,
                 TotalActualCost: totalActualCost
