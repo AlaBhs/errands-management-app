@@ -3,8 +3,11 @@ export interface AnalyticsSummary {
   byStatus: Record<string, number>;
   byCategory: Record<string, number>;
   avgLifecycleMinutes: number | null;
-  avgExecutionMinutes: number | null;
+  avgExecutionMinutes: number | null; // Started → Completed
+  avgQueueWaitMinutes: number | null; // Created → Assigned
+  avgPickupDelayMinutes: number | null; // Assigned → Started
   avgSurveyRating: number | null;
+  deadlineComplianceRate: number | null;
   totalEstimatedCost: number;
   totalActualCost: number;
 }

@@ -86,6 +86,86 @@ namespace ErrandsManagement.Infrastructure.Repositories
                 ? executionPairs.Average(p => (p.CompletedAt - p.StartedAt).TotalMinutes)
                 : null;
 
+            // --- avg queue wait: Created → Assigned (admin responsiveness) ---
+            // Only requests that were ever assigned — excludes Pending and Cancelled
+            // requests that never reached Assigned state.
+            var queueWaitPairs = await _db.Requests
+                .Where(r => r.AuditLogs.Any(l => l.EventType == "Assigned"))
+                .Select(r => new
+                {
+                    CreatedAt = r.AuditLogs
+                                  .Where(l => l.EventType == "Created")
+                                  .OrderBy(l => l.OccurredAt)
+                                  .Select(l => l.OccurredAt)
+                                  .FirstOrDefault(),
+                    AssignedAt = r.AuditLogs
+                                  .Where(l => l.EventType == "Assigned")
+                                  .OrderBy(l => l.OccurredAt)
+                                  .Select(l => l.OccurredAt)
+                                  .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            double? avgQueueWaitMinutes = queueWaitPairs.Count > 0
+                ? queueWaitPairs
+                    .Where(p => p.CreatedAt != default && p.AssignedAt != default
+                                && p.AssignedAt > p.CreatedAt)
+                    .Select(p => (p.AssignedAt - p.CreatedAt).TotalMinutes)
+                    .DefaultIfEmpty()
+                    .Average() is double qAvg && qAvg > 0 ? qAvg : null
+                : null;
+
+            // --- avg pickup delay: Assigned → Started (courier responsiveness) ---
+            // Only requests that were ever started — excludes assigned-but-not-yet-started.
+            var pickupDelayPairs = await _db.Requests
+                .Where(r => r.AuditLogs.Any(l => l.EventType == "Started"))
+                .Select(r => new
+                {
+                    AssignedAt = r.AuditLogs
+                                  .Where(l => l.EventType == "Assigned")
+                                  .OrderBy(l => l.OccurredAt)
+                                  .Select(l => l.OccurredAt)
+                                  .FirstOrDefault(),
+                    StartedAt = r.AuditLogs
+                                  .Where(l => l.EventType == "Started")
+                                  .OrderBy(l => l.OccurredAt)
+                                  .Select(l => l.OccurredAt)
+                                  .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            double? avgPickupDelayMinutes = pickupDelayPairs.Count > 0
+                ? pickupDelayPairs
+                    .Where(p => p.AssignedAt != default && p.StartedAt != default
+                                && p.StartedAt > p.AssignedAt)
+                    .Select(p => (p.StartedAt - p.AssignedAt).TotalMinutes)
+                    .DefaultIfEmpty()
+                    .Average() is double pAvg && pAvg > 0 ? pAvg : null
+                : null;
+
+            // --- deadline compliance rate ---
+            // Only completed requests that had a deadline — same logic as courier on-time rate.
+            // Excludes requests with no deadline entirely (not counted as on-time or late).
+            var deadlineRows = await _db.Requests
+                .Where(r => r.Status == RequestStatus.Completed && r.Deadline.HasValue)
+                .Select(r => new
+                {
+                    Deadline = r.Deadline!.Value,
+                    CompletedAt = r.Assignments
+                                   .Where(a => a.CompletedAt != null)
+                                   .OrderByDescending(a => a.CompletedAt)
+                                   .Select(a => a.CompletedAt!.Value)
+                                   .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            double? deadlineComplianceRate = deadlineRows.Count > 0
+                ? Math.Round(
+                    (double)deadlineRows.Count(
+                        x => x.CompletedAt != default && x.CompletedAt <= x.Deadline)
+                    / deadlineRows.Count * 100,
+                    1)
+                : null;
             // --- avg survey rating ---
             var avgSurveyRating = await _db.Requests
                 .Where(r => r.Survey != null)
@@ -97,7 +177,10 @@ namespace ErrandsManagement.Infrastructure.Repositories
                 ByCategory: categoryCounts.ToDictionary(x => x.Category.ToString(), x => x.Count),
                 AvgLifecycleMinutes: avgLifecycleMinutes,
                 AvgExecutionMinutes: avgExecutionMinutes,
+                AvgQueueWaitMinutes: avgQueueWaitMinutes,
+                AvgPickupDelayMinutes: avgPickupDelayMinutes,
                 AvgSurveyRating: avgSurveyRating,
+                DeadlineComplianceRate: deadlineComplianceRate,
                 TotalEstimatedCost: totals?.TotalEstimated ?? 0m,
                 TotalActualCost: totalActualCost
             );

@@ -11,6 +11,7 @@ import {
   useAnalyticsTrend,
 } from "../hooks/useAnalytics";
 import { CourierPerformanceTable } from "../components/CourierPerformanceTable";
+import { PipelineTimingCard } from "../components/PipelineTimingCard";
 
 export const AnalyticsPage = () => {
   const summary = useAnalyticsSummary();
@@ -18,11 +19,16 @@ export const AnalyticsPage = () => {
   const costBreakdown = useAnalyticsCostBreakdown();
   const courierPerformance = useAnalyticsCourierPerformance();
 
-
-const isLoading = summary.isLoading    || trend.isLoading ||
-                  costBreakdown.isLoading || courierPerformance.isLoading;
-const isError   = summary.isError      || trend.isError   ||
-                  costBreakdown.isError  || courierPerformance.isError;
+  const isLoading =
+    summary.isLoading ||
+    trend.isLoading ||
+    costBreakdown.isLoading ||
+    courierPerformance.isLoading;
+  const isError =
+    summary.isError ||
+    trend.isError ||
+    costBreakdown.isError ||
+    courierPerformance.isError;
 
   if (isLoading) return <PageSpinner />;
   if (isError) return <ErrorMessage message="Failed to load analytics data." />;
@@ -30,12 +36,6 @@ const isError   = summary.isError      || trend.isError   ||
   const s = summary.data!;
 
   const completedCount = s.byStatus["Completed"] ?? 0;
-
-  const fmtMinutes = (mins: number | null): string => {
-    if (mins == null) return "—";
-    if (mins < 60) return `${Math.round(mins)} min`;
-    return `${(mins / 60).toFixed(1)} hrs`;
-  };
 
   const avgRatingLabel =
     s.avgSurveyRating != null ? `${s.avgSurveyRating.toFixed(2)} / 5` : "—";
@@ -61,16 +61,47 @@ const isError   = summary.isError      || trend.isError   ||
               : undefined
           }
         />
+          <KpiCard
+    label="Active Requests"
+    value={(s.byStatus["Assigned"] ?? 0) + (s.byStatus["InProgress"] ?? 0)}
+    sub={
+      (() => {
+        const assigned   = s.byStatus["Assigned"]   ?? 0;
+        const inProgress = s.byStatus["InProgress"] ?? 0;
+        if (assigned === 0 && inProgress === 0) return "None in flight";
+        if (assigned === 0)   return `${inProgress} in progress`;
+        if (inProgress === 0) return `${assigned} awaiting pickup`;
+        return `${inProgress} in progress · ${assigned} awaiting pickup`;
+      })()
+    }
+    subVariant="default"
+  />
         <KpiCard label="Avg Survey Rating" value={avgRatingLabel} />
         <KpiCard
-          label="Avg Turnaround (SLA)"
-          value={fmtMinutes(s.avgLifecycleMinutes)}
-          sub="Request created → completed"
-        />
-        <KpiCard
-          label="Avg Execution Time"
-          value={fmtMinutes(s.avgExecutionMinutes)}
-          sub="Courier started → completed"
+          label="Deadline Compliance"
+          value={
+            s.deadlineComplianceRate != null
+              ? `${s.deadlineComplianceRate.toFixed(1)}%`
+              : "—"
+          }
+          sub={
+            s.deadlineComplianceRate != null
+              ? s.deadlineComplianceRate >= 80
+                ? "On track"
+                : s.deadlineComplianceRate >= 50
+                  ? "Needs attention"
+                  : "Critical"
+              : "No deadlines set"
+          }
+          subVariant={
+            s.deadlineComplianceRate == null
+              ? "default"
+              : s.deadlineComplianceRate >= 80
+                ? "success"
+                : s.deadlineComplianceRate >= 50
+                  ? "warning"
+                  : "danger"
+          }
         />
         <KpiCard
           label="Cost Variance"
@@ -86,7 +117,13 @@ const isError   = summary.isError      || trend.isError   ||
           }
         />
       </section>
-
+      {/* Pipeline Timing */}
+      <PipelineTimingCard
+        avgQueueWaitMinutes={s.avgQueueWaitMinutes}
+        avgPickupDelayMinutes={s.avgPickupDelayMinutes}
+        avgExecutionMinutes={s.avgExecutionMinutes}
+        avgLifecycleMinutes={s.avgLifecycleMinutes}
+      />
       {/* Category breakdown + Trend */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -119,15 +156,15 @@ const isError   = summary.isError      || trend.isError   ||
           </p>
         )}
       </section>
-{/* Courier Performance */}
+      {/* Courier Performance */}
       <section className="rounded-xl border bg-card p-6 shadow-sm">
-  <h2 className="mb-1 text-base font-semibold">Courier Performance</h2>
-  <p className="mb-4 text-xs text-muted-foreground">
-    Execution time and ratings are calculated from completed assignments only.
-    On-time rate excludes requests with no deadline.
-  </p>
-  <CourierPerformanceTable data={courierPerformance.data ?? []} />
-</section>
+        <h2 className="mb-1 text-base font-semibold">Courier Performance</h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Execution time and ratings are calculated from completed assignments
+          only. On-time rate excludes requests with no deadline.
+        </p>
+        <CourierPerformanceTable data={courierPerformance.data ?? []} />
+      </section>
     </div>
   );
 };

@@ -8,7 +8,10 @@ namespace ErrandsManagement.Application.Analytics.DTOs
         Dictionary<string, int> ByCategory,
         double? AvgLifecycleMinutes,
         double? AvgExecutionMinutes,
+        double? AvgQueueWaitMinutes,
+        double? AvgPickupDelayMinutes,
         double? AvgSurveyRating,
+        double? DeadlineComplianceRate,
         decimal TotalEstimatedCost,
         decimal TotalActualCost
     );
