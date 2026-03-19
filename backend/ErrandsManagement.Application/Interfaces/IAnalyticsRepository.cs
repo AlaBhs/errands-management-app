@@ -7,5 +7,6 @@ namespace ErrandsManagement.Application.Interfaces
         Task<AnalyticsSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
         Task<IReadOnlyList<TrendPointDto>> GetTrendAsync(CancellationToken cancellationToken = default);
         Task<IReadOnlyList<CostBreakdownDto>> GetCostBreakdownAsync(CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<CourierPerformanceDto>> GetCourierPerformanceAsync(CancellationToken cancellationToken = default);
     }
 }

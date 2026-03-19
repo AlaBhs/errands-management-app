@@ -2,14 +2,14 @@ import { apiClient } from "@/shared/api/client";
 import type {
   AnalyticsSummary,
   CostBreakdown,
+  CourierPerformance,
   TrendPoint,
-} from "../types/analytics.types";
+} from "../types";
 
 export const analyticsApi = {
   getSummary: async (): Promise<AnalyticsSummary> => {
-    const { data } = await apiClient.get<AnalyticsSummary>(
-      "/analytics/summary"
-    );
+    const { data } =
+      await apiClient.get<AnalyticsSummary>("/analytics/summary");
     return data;
   },
 
@@ -20,7 +20,14 @@ export const analyticsApi = {
 
   getCostBreakdown: async (): Promise<CostBreakdown[]> => {
     const { data } = await apiClient.get<CostBreakdown[]>(
-      "/analytics/cost-breakdown"
+      "/analytics/cost-breakdown",
+    );
+    return data;
+  },
+
+  getCourierPerformance: async (): Promise<CourierPerformance[]> => {
+    const { data } = await apiClient.get<CourierPerformance[]>(
+      "/analytics/courier-performance",
     );
     return data;
   },

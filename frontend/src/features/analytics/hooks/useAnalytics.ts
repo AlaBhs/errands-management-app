@@ -6,6 +6,8 @@ const analyticsKeys = {
   summary: () => [...analyticsKeys.all, "summary"] as const,
   trend: () => [...analyticsKeys.all, "trend"] as const,
   costBreakdown: () => [...analyticsKeys.all, "cost-breakdown"] as const,
+  courierPerformance: () =>
+    [...analyticsKeys.all, "courier-performance"] as const,
 };
 
 export const useAnalyticsSummary = () =>
@@ -24,4 +26,10 @@ export const useAnalyticsCostBreakdown = () =>
   useQuery({
     queryKey: analyticsKeys.costBreakdown(),
     queryFn: analyticsApi.getCostBreakdown,
+  });
+
+export const useAnalyticsCourierPerformance = () =>
+  useQuery({
+    queryKey: analyticsKeys.courierPerformance(),
+    queryFn: analyticsApi.getCourierPerformance,
   });

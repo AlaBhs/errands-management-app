@@ -20,3 +20,14 @@ export interface CostBreakdown {
   estimatedCost: number;
   actualCost: number;
 }
+
+export interface CourierPerformance {
+  courierId: string;
+  courierName: string;
+  totalAssignments: number;
+  completed: number;
+  cancelled: number;
+  avgExecutionMinutes: number | null;
+  avgRating: number | null;
+  onTimeRate: number | null;
+}

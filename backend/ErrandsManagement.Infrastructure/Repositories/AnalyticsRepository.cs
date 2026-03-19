@@ -2,6 +2,7 @@
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace ErrandsManagement.Infrastructure.Repositories
@@ -9,10 +10,12 @@ namespace ErrandsManagement.Infrastructure.Repositories
     public sealed class AnalyticsRepository : IAnalyticsRepository
     {
         private readonly AppDbContext _db;
+        private readonly IUserRepository _userRepository;
 
-        public AnalyticsRepository(AppDbContext db)
+        public AnalyticsRepository(AppDbContext db, IUserRepository userRepository)
         {
             _db = db;
+            _userRepository = userRepository;
         }
 
         public async Task<AnalyticsSummaryDto> GetSummaryAsync(
@@ -171,6 +174,143 @@ namespace ErrandsManagement.Infrastructure.Repositories
                     EstimatedCost: e.EstimatedCost,
                     ActualCost: actualByCategory.GetValueOrDefault(e.Category, 0m)))
                 .OrderBy(x => x.Category)
+                .ToList();
+
+            return result;
+        }
+        public async Task<IReadOnlyList<CourierPerformanceDto>> GetCourierPerformanceAsync(
+    CancellationToken cancellationToken = default)
+        {
+            // ── Step 1: aggregate purely on the Requests/Assignments tables ──────────
+            // Group by CourierId — no join to AspNetUsers inside SQL.
+
+            // Per-courier assignment counts
+            var assignmentCounts = await _db.Requests
+                .SelectMany(r => r.Assignments)
+                .GroupBy(a => a.CourierId)
+                .Select(g => new
+                {
+                    CourierId = g.Key,
+                    TotalAssignments = g.Count(),
+                    // An assignment is completed when CompletedAt is set
+                    Completed = g.Count(a => a.CompletedAt != null),
+                })
+                .ToListAsync(cancellationToken);
+
+            // Per-courier avg execution time (StartedAt → CompletedAt), in memory
+            // because computed props (IsCompleted) can't be used in SQL
+            var executionPairs = await _db.Requests
+                .SelectMany(r => r.Assignments)
+                .Where(a => a.StartedAt != null && a.CompletedAt != null)
+                .Select(a => new
+                {
+                    CourierId = a.CourierId,
+                    StartedAt = a.StartedAt!.Value,
+                    CompletedAt = a.CompletedAt!.Value,
+                })
+                .ToListAsync(cancellationToken);
+
+            var avgExecutionByCourier = executionPairs
+                .GroupBy(x => x.CourierId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (double?)g.Average(
+                        x => (x.CompletedAt - x.StartedAt).TotalMinutes));
+
+            // Per-courier avg survey rating
+            // Survey lives on Request — join Request + its Survey + its last Assignment
+            var ratingPairs = await _db.Requests
+                .Where(r => r.Survey != null)
+                .Select(r => new
+                {
+                    Rating = r.Survey!.Rating,
+                    CourierId = r.Assignments
+                                 .Where(a => a.CompletedAt != null)
+                                 .OrderByDescending(a => a.CompletedAt)
+                                 .Select(a => a.CourierId)
+                                 .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            var avgRatingByCourier = ratingPairs
+                .Where(x => x.CourierId != Guid.Empty)
+                .GroupBy(x => x.CourierId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (double?)g.Average(x => x.Rating));
+
+            // Per-courier on-time rate:
+            // Only completed requests that had a deadline — exclude nulls entirely
+            var deadlineRows = await _db.Requests
+                .Where(r => r.Status == RequestStatus.Completed && r.Deadline.HasValue)
+                .Select(r => new
+                {
+                    Deadline = r.Deadline!.Value,
+                    CompletedAt = r.Assignments
+                                   .Where(a => a.CompletedAt != null)
+                                   .OrderByDescending(a => a.CompletedAt)
+                                   .Select(a => a.CompletedAt!.Value)
+                                   .FirstOrDefault(),
+                    CourierId = r.Assignments
+                                   .Where(a => a.CompletedAt != null)
+                                   .OrderByDescending(a => a.CompletedAt)
+                                   .Select(a => a.CourierId)
+                                   .FirstOrDefault(),
+                })
+                .ToListAsync(cancellationToken);
+
+            var onTimeRateByCourier = deadlineRows
+                .Where(x => x.CourierId != Guid.Empty && x.CompletedAt != default)
+                .GroupBy(x => x.CourierId)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var total = g.Count();
+                        var onTime = g.Count(x => x.CompletedAt <= x.Deadline);
+                        return total > 0
+                            ? (double?)Math.Round((double)onTime / total * 100, 1)
+                            : null;
+                    });
+
+            // Cancelled: a courier's assignment is cancelled when the Request is
+            // Cancelled and they had an active assignment on it
+            var cancelledByCourier = await _db.Requests
+                .Where(r => r.Status == RequestStatus.Cancelled)
+                .SelectMany(r => r.Assignments)
+                .GroupBy(a => a.CourierId)
+                .Select(g => new { CourierId = g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken);
+
+            var cancelledDict = cancelledByCourier
+                .ToDictionary(x => x.CourierId, x => x.Count);
+
+            // ── Step 2: resolve courier names via IUserRepository ────────────────────
+            // Collect all distinct courier IDs across all result sets
+            var allCourierIds = assignmentCounts
+                .Select(x => x.CourierId)
+                .Distinct()
+                .ToList();
+
+            var nameById = new Dictionary<Guid, string>();
+            foreach (var courierId in allCourierIds)
+            {
+                var user = await _userRepository.FindByIdAsync(courierId);
+                nameById[courierId] = user?.FullName ?? "Unknown";
+            }
+
+            // ── Step 3: merge into DTOs ───────────────────────────────────────────────
+            var result = assignmentCounts
+                .Select(c => new CourierPerformanceDto(
+                    CourierId: c.CourierId,
+                    CourierName: nameById.GetValueOrDefault(c.CourierId, "Unknown"),
+                    TotalAssignments: c.TotalAssignments,
+                    Completed: c.Completed,
+                    Cancelled: cancelledDict.GetValueOrDefault(c.CourierId, 0),
+                    AvgExecutionMinutes: avgExecutionByCourier.GetValueOrDefault(c.CourierId),
+                    AvgRating: avgRatingByCourier.GetValueOrDefault(c.CourierId),
+                    OnTimeRate: onTimeRateByCourier.GetValueOrDefault(c.CourierId)))
+                .OrderByDescending(x => x.Completed)
                 .ToList();
 
             return result;

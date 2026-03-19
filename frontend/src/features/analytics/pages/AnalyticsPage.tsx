@@ -6,18 +6,23 @@ import { KpiCard } from "../components/KpiCard";
 import { TrendChart } from "../components/TrendChart";
 import {
   useAnalyticsCostBreakdown,
+  useAnalyticsCourierPerformance,
   useAnalyticsSummary,
   useAnalyticsTrend,
 } from "../hooks/useAnalytics";
+import { CourierPerformanceTable } from "../components/CourierPerformanceTable";
 
 export const AnalyticsPage = () => {
   const summary = useAnalyticsSummary();
   const trend = useAnalyticsTrend();
   const costBreakdown = useAnalyticsCostBreakdown();
+  const courierPerformance = useAnalyticsCourierPerformance();
 
-  const isLoading =
-    summary.isLoading || trend.isLoading || costBreakdown.isLoading;
-  const isError = summary.isError || trend.isError || costBreakdown.isError;
+
+const isLoading = summary.isLoading    || trend.isLoading ||
+                  costBreakdown.isLoading || courierPerformance.isLoading;
+const isError   = summary.isError      || trend.isError   ||
+                  costBreakdown.isError  || courierPerformance.isError;
 
   if (isLoading) return <PageSpinner />;
   if (isError) return <ErrorMessage message="Failed to load analytics data." />;
@@ -114,6 +119,15 @@ export const AnalyticsPage = () => {
           </p>
         )}
       </section>
+{/* Courier Performance */}
+      <section className="rounded-xl border bg-card p-6 shadow-sm">
+  <h2 className="mb-1 text-base font-semibold">Courier Performance</h2>
+  <p className="mb-4 text-xs text-muted-foreground">
+    Execution time and ratings are calculated from completed assignments only.
+    On-time rate excludes requests with no deadline.
+  </p>
+  <CourierPerformanceTable data={courierPerformance.data ?? []} />
+</section>
     </div>
   );
 };

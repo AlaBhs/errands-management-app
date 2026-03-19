@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Analytics.Queries.GetAnalyticsSummary;
 using ErrandsManagement.Application.Analytics.Queries.GetCostBreakdown;
+using ErrandsManagement.Application.Analytics.Queries.GetCourierPerformance;
 using ErrandsManagement.Application.Analytics.Queries.GetRequestTrend;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -43,6 +44,15 @@ public sealed class AnalyticsController : ControllerBase
     {
         var result = await _mediator.Send(
             new GetCostBreakdownQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>GET /api/analytics/courier-performance</summary>
+    [HttpGet("courier-performance")]
+    public async Task<IActionResult> GetCourierPerformance(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new GetCourierPerformanceQuery(), cancellationToken);
         return Ok(result);
     }
 }
