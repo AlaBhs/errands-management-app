@@ -82,9 +82,41 @@ namespace ErrandsManagement.Infrastructure.Repositories
             );
         }
 
-        public Task<IReadOnlyList<TrendPointDto>> GetTrendAsync(
+        public async Task<IReadOnlyList<TrendPointDto>> GetTrendAsync(
             CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+        {
+            var cutoff = DateTime.UtcNow.AddMonths(-5); // current month + 5 previous = 6 total
+            var cutoffFloor = new DateTime(cutoff.Year, cutoff.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var raw = await _db.Requests
+                .Where(r => r.CreatedAt >= cutoffFloor)
+                .GroupBy(r => new { r.CreatedAt.Year, r.CreatedAt.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Count = g.Count(),
+                })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.Month)
+                .ToListAsync(cancellationToken);
+
+            // Ensure every month in the window is represented, even if count is 0
+            var result = new List<TrendPointDto>();
+            for (var i = 0; i < 6; i++)
+            {
+                var point = cutoffFloor.AddMonths(i);
+                var match = raw.FirstOrDefault(
+                    x => x.Year == point.Year && x.Month == point.Month);
+
+                result.Add(new TrendPointDto(
+                    Year: point.Year,
+                    Month: point.Month,
+                    Count: match?.Count ?? 0));
+            }
+
+            return result;
+        }
 
         public Task<IReadOnlyList<CostBreakdownDto>> GetCostBreakdownAsync(
             CancellationToken cancellationToken = default)

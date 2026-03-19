@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Application.Analytics.Queries.GetAnalyticsSummary;
+using ErrandsManagement.Application.Analytics.Queries.GetRequestTrend;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,15 @@ public sealed class AnalyticsController : ControllerBase
     {
         var result = await _mediator.Send(
             new GetAnalyticsSummaryQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>GET /api/analytics/trend</summary>
+    [HttpGet("trend")]
+    public async Task<IActionResult> GetTrend(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new GetRequestTrendQuery(), cancellationToken);
         return Ok(result);
     }
 }
