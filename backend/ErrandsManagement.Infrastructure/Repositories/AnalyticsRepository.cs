@@ -118,8 +118,44 @@ namespace ErrandsManagement.Infrastructure.Repositories
             return result;
         }
 
-        public Task<IReadOnlyList<CostBreakdownDto>> GetCostBreakdownAsync(
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+        public async Task<IReadOnlyList<CostBreakdownDto>> GetCostBreakdownAsync(
+    CancellationToken cancellationToken = default)
+        {
+            // Estimated cost: grouped directly on Requests
+            var estimated = await _db.Requests
+                .GroupBy(r => r.Category)
+                .Select(g => new
+                {
+                    Category = g.Key,
+                    EstimatedCost = g.Sum(r => r.EstimatedCost ?? 0m),
+                })
+                .ToListAsync(cancellationToken);
+
+            var actualPairs = await _db.Requests
+                .Where(r => r.Assignments.Any())
+                .Select(r => new
+                {
+                    Category = r.Category,
+                    ActualCost = r.Assignments
+                                  .Sum(a => a.ActualCost ?? 0m),
+                })
+                .ToListAsync(cancellationToken);
+
+            var actualByCategory = actualPairs
+                .GroupBy(x => x.Category)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => x.ActualCost));
+
+            var result = estimated
+                .Select(e => new CostBreakdownDto(
+                    Category: e.Category.ToString(),
+                    EstimatedCost: e.EstimatedCost,
+                    ActualCost: actualByCategory.GetValueOrDefault(e.Category, 0m)))
+                .OrderBy(x => x.Category)
+                .ToList();
+
+            return result;
+        }
     }
 }
