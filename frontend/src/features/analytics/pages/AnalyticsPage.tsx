@@ -12,12 +12,25 @@ import {
 } from "../hooks/useAnalytics";
 import { CourierPerformanceTable } from "../components/CourierPerformanceTable";
 import { PipelineTimingCard } from "../components/PipelineTimingCard";
+import type { AnalyticsFilter } from "../types";
+import { DateRangeFilter } from "../components/DateRangeFilter";
+import { useState } from "react";
+
+// Default: last 30 days
+const toIsoDate = (d: Date): string => d.toISOString().split("T")[0];
+
+const DEFAULT_FILTER: AnalyticsFilter = {
+  from: toIsoDate(new Date(Date.now() - 30 * 86_400_000)),
+  to: toIsoDate(new Date()),
+};
 
 export const AnalyticsPage = () => {
-  const summary = useAnalyticsSummary();
-  const trend = useAnalyticsTrend();
-  const costBreakdown = useAnalyticsCostBreakdown();
-  const courierPerformance = useAnalyticsCourierPerformance();
+  const [filter, setFilter] = useState<AnalyticsFilter>(DEFAULT_FILTER);
+
+  const summary = useAnalyticsSummary(filter);
+  const trend = useAnalyticsTrend(filter);
+  const costBreakdown = useAnalyticsCostBreakdown(filter);
+  const courierPerformance = useAnalyticsCourierPerformance(filter);
 
   const isLoading =
     summary.isLoading ||
@@ -48,7 +61,11 @@ export const AnalyticsPage = () => {
           Overview of all errand requests
         </p>
       </div>
-
+      <DateRangeFilter
+        filter={filter}
+        onPreset={setFilter}
+        onApply={setFilter}
+      />
       {/* KPI Cards */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <KpiCard label="Total Requests" value={s.totalRequests} />
@@ -61,21 +78,21 @@ export const AnalyticsPage = () => {
               : undefined
           }
         />
-          <KpiCard
-    label="Active Requests"
-    value={(s.byStatus["Assigned"] ?? 0) + (s.byStatus["InProgress"] ?? 0)}
-    sub={
-      (() => {
-        const assigned   = s.byStatus["Assigned"]   ?? 0;
-        const inProgress = s.byStatus["InProgress"] ?? 0;
-        if (assigned === 0 && inProgress === 0) return "None in flight";
-        if (assigned === 0)   return `${inProgress} in progress`;
-        if (inProgress === 0) return `${assigned} awaiting pickup`;
-        return `${inProgress} in progress · ${assigned} awaiting pickup`;
-      })()
-    }
-    subVariant="default"
-  />
+        <KpiCard
+          label="Active Requests"
+          value={
+            (s.byStatus["Assigned"] ?? 0) + (s.byStatus["InProgress"] ?? 0)
+          }
+          sub={(() => {
+            const assigned = s.byStatus["Assigned"] ?? 0;
+            const inProgress = s.byStatus["InProgress"] ?? 0;
+            if (assigned === 0 && inProgress === 0) return "None in flight";
+            if (assigned === 0) return `${inProgress} in progress`;
+            if (inProgress === 0) return `${assigned} awaiting pickup`;
+            return `${inProgress} in progress · ${assigned} awaiting pickup`;
+          })()}
+          subVariant="default"
+        />
         <KpiCard label="Avg Survey Rating" value={avgRatingLabel} />
         <KpiCard
           label="Deadline Compliance"

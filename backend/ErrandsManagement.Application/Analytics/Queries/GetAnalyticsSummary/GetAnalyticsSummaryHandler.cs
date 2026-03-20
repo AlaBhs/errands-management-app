@@ -17,6 +17,6 @@ namespace ErrandsManagement.Application.Analytics.Queries.GetAnalyticsSummary
         public Task<AnalyticsSummaryDto> Handle(
             GetAnalyticsSummaryQuery request,
             CancellationToken cancellationToken)
-            => _analyticsRepository.GetSummaryAsync(cancellationToken);
+            => _analyticsRepository.GetSummaryAsync(request.From, request.To, cancellationToken);
     }
 }

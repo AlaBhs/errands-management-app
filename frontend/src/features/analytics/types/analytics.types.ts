@@ -34,3 +34,8 @@ export interface CourierPerformance {
   avgRating: number | null;
   onTimeRate: number | null;
 }
+
+export interface AnalyticsFilter {
+  from: string | null; // ISO date string YYYY-MM-DD
+  to: string | null;
+}

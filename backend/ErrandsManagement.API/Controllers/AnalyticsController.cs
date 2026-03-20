@@ -20,39 +20,47 @@ public sealed class AnalyticsController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>GET /api/analytics/summary</summary>
     [HttpGet("summary")]
-    public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetSummary(
+     [FromQuery] DateTime? from,
+     [FromQuery] DateTime? to,
+     CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new GetAnalyticsSummaryQuery(), cancellationToken);
+            new GetAnalyticsSummaryQuery(from, to), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>GET /api/analytics/trend</summary>
     [HttpGet("trend")]
-    public async Task<IActionResult> GetTrend(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetTrend(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new GetRequestTrendQuery(), cancellationToken);
+            new GetRequestTrendQuery(from, to), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>GET /api/analytics/cost-breakdown</summary>
     [HttpGet("cost-breakdown")]
-    public async Task<IActionResult> GetCostBreakdown(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCostBreakdown(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new GetCostBreakdownQuery(), cancellationToken);
+            new GetCostBreakdownQuery(from, to), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>GET /api/analytics/courier-performance</summary>
     [HttpGet("courier-performance")]
-    public async Task<IActionResult> GetCourierPerformance(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCourierPerformance(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new GetCourierPerformanceQuery(), cancellationToken);
+            new GetCourierPerformanceQuery(from, to), cancellationToken);
         return Ok(result);
     }
 }

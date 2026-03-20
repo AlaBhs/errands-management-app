@@ -18,5 +18,5 @@ public sealed class GetCourierPerformanceHandler
     public Task<IReadOnlyList<CourierPerformanceDto>> Handle(
         GetCourierPerformanceQuery request,
         CancellationToken cancellationToken)
-        => _analyticsRepository.GetCourierPerformanceAsync(cancellationToken);
+        => _analyticsRepository.GetCourierPerformanceAsync(request.From, request.To, cancellationToken);
 }

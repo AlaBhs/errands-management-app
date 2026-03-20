@@ -17,6 +17,6 @@ namespace ErrandsManagement.Application.Analytics.Queries.GetCostBreakdown
         public Task<IReadOnlyList<CostBreakdownDto>> Handle(
             GetCostBreakdownQuery request,
             CancellationToken cancellationToken)
-            => _analyticsRepository.GetCostBreakdownAsync(cancellationToken);
+            => _analyticsRepository.GetCostBreakdownAsync(request.From, request.To, cancellationToken);
     }
 }

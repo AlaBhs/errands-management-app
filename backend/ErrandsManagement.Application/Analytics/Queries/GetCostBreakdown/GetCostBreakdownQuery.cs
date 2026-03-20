@@ -3,5 +3,8 @@ using MediatR;
 
 namespace ErrandsManagement.Application.Analytics.Queries.GetCostBreakdown
 {
-    public sealed record GetCostBreakdownQuery : IRequest<IReadOnlyList<CostBreakdownDto>>;
+    public sealed record GetCostBreakdownQuery(
+        DateTime? From,
+        DateTime? To
+    ) : IRequest<IReadOnlyList<CostBreakdownDto>>;
 }

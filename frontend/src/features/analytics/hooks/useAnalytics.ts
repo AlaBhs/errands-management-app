@@ -1,35 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi } from "../api/analytics.api";
+import type { AnalyticsFilter } from "../types/analytics.types";
 
 const analyticsKeys = {
-  all: ["analytics"] as const,
-  summary: () => [...analyticsKeys.all, "summary"] as const,
-  trend: () => [...analyticsKeys.all, "trend"] as const,
-  costBreakdown: () => [...analyticsKeys.all, "cost-breakdown"] as const,
-  courierPerformance: () =>
-    [...analyticsKeys.all, "courier-performance"] as const,
+  all:                () => ["analytics"]                              as const,
+  summary:            (f: AnalyticsFilter) => [...analyticsKeys.all(), "summary",             f] as const,
+  trend:              (f: AnalyticsFilter) => [...analyticsKeys.all(), "trend",               f] as const,
+  costBreakdown:      (f: AnalyticsFilter) => [...analyticsKeys.all(), "cost-breakdown",      f] as const,
+  courierPerformance: (f: AnalyticsFilter) => [...analyticsKeys.all(), "courier-performance", f] as const,
 };
 
-export const useAnalyticsSummary = () =>
+export const useAnalyticsSummary = (filter: AnalyticsFilter) =>
   useQuery({
-    queryKey: analyticsKeys.summary(),
-    queryFn: analyticsApi.getSummary,
+    queryKey: analyticsKeys.summary(filter),
+    queryFn:  () => analyticsApi.getSummary(filter),
   });
 
-export const useAnalyticsTrend = () =>
+export const useAnalyticsTrend = (filter: AnalyticsFilter) =>
   useQuery({
-    queryKey: analyticsKeys.trend(),
-    queryFn: analyticsApi.getTrend,
+    queryKey: analyticsKeys.trend(filter),
+    queryFn:  () => analyticsApi.getTrend(filter),
   });
 
-export const useAnalyticsCostBreakdown = () =>
+export const useAnalyticsCostBreakdown = (filter: AnalyticsFilter) =>
   useQuery({
-    queryKey: analyticsKeys.costBreakdown(),
-    queryFn: analyticsApi.getCostBreakdown,
+    queryKey: analyticsKeys.costBreakdown(filter),
+    queryFn:  () => analyticsApi.getCostBreakdown(filter),
   });
 
-export const useAnalyticsCourierPerformance = () =>
+export const useAnalyticsCourierPerformance = (filter: AnalyticsFilter) =>
   useQuery({
-    queryKey: analyticsKeys.courierPerformance(),
-    queryFn: analyticsApi.getCourierPerformance,
+    queryKey: analyticsKeys.courierPerformance(filter),
+    queryFn:  () => analyticsApi.getCourierPerformance(filter),
   });

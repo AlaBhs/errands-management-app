@@ -17,6 +17,6 @@ namespace ErrandsManagement.Application.Analytics.Queries.GetRequestTrend
         public Task<IReadOnlyList<TrendPointDto>> Handle(
             GetRequestTrendQuery request,
             CancellationToken cancellationToken)
-            => _analyticsRepository.GetTrendAsync(cancellationToken);
+            => _analyticsRepository.GetTrendAsync(request.From, request.To, cancellationToken);
     }
 }

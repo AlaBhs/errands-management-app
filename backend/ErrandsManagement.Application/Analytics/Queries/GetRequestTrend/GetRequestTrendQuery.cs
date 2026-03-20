@@ -3,5 +3,8 @@ using MediatR;
 
 namespace ErrandsManagement.Application.Analytics.Queries.GetRequestTrend
 {
-    public sealed record GetRequestTrendQuery : IRequest<IReadOnlyList<TrendPointDto>>;
+    public sealed record GetRequestTrendQuery(
+    DateTime? From,
+    DateTime? To
+    ) : IRequest<IReadOnlyList<TrendPointDto>>;
 }
