@@ -19,6 +19,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
     restart: unless-stopped
 
   frontend:
@@ -52,3 +54,4 @@ services:
 
 volumes:
   sql_data:
+  uploads_data:

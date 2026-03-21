@@ -1,5 +1,6 @@
 using ErrandsManagement.API.Common.Extensions;
 using ErrandsManagement.API.Common.Middleware;
+using ErrandsManagement.API.Extensions;
 using ErrandsManagement.Application;
 using ErrandsManagement.Infrastructure;
 
@@ -19,6 +20,8 @@ await app.InitialiseDatabaseAsync();
 app.UseOpenApiDocumentation();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
+app.EnsureWebRootExists();
+app.UseStaticFiles();
 app.UseCors(CorsExtensions.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();

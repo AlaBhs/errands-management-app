@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
 using ErrandsManagement.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddDatabase(configuration);
         services.AddIdentityConfiguration();
         services.AddRepositories();
+        services.AddStorage();
 
         return services;
     }
@@ -60,6 +62,13 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 
+        return services;
+    }
+
+    private static IServiceCollection AddStorage(
+    this IServiceCollection services)
+    {
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
 }

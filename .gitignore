@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Environment variable files, which may contain sensitive information such as API keys or database connection strings
 .env
+
+# Directory for uploaded files, which may contain sensitive information and can be large in size
+uploads/
