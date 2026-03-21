@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.Attachments.Commands.DeleteAttachment;
 using ErrandsManagement.Application.Attachments.Commands.UploadAttachment;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -53,5 +54,19 @@ public sealed class AttachmentsController : ControllerBase
                 result,
                 StatusCodes.Status201Created,
                 HttpContext.TraceIdentifier));
+    }
+    /// <summary>DELETE /api/requests/{requestId}/attachments/{attachmentId}</summary>
+    [HttpDelete("{attachmentId:guid}")]
+    [Authorize(Roles = "Admin,Collaborator")]
+    public async Task<IActionResult> Delete(
+        Guid              requestId,
+        Guid              attachmentId,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(
+            new DeleteAttachmentCommand(requestId, attachmentId),
+            cancellationToken);
+
+        return NoContent();
     }
 }
