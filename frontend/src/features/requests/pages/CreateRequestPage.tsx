@@ -7,6 +7,8 @@ import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
+import { AttachmentUploader } from "../components/AttachmentUploader";
+import { useState } from "react";
 
 const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
 
@@ -58,6 +60,7 @@ type FormValues = z.infer<typeof schema>;
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const { mutate, isPending, isError, error } = useCreateRequest();
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
 
   const {
     register,
@@ -86,7 +89,9 @@ export function CreateRequestPage() {
         deliveryAddress: values.deliveryAddress,
       },
       {
-        onSuccess: () => navigate("/requests/mine"),
+        onSuccess: (response) => {
+          setCreatedRequestId(response.data ?? null);
+        },
       },
     );
   };
@@ -230,51 +235,51 @@ export function CreateRequestPage() {
               )}
             </div>
           </div>
-            {/* Contact Person + Phone */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="contactPerson"
-                  className="block text-sm font-medium text-[#2E2E38] mb-2"
-                >
-                  Contact Person (Vis-à-vis)
-                  <span className="ml-1 text-xs text-gray-400">(optional)</span>
-                </label>
-                <input
-                  id="contactPerson"
-                  type="text"
-                  {...register("contactPerson")}
-                  placeholder="Name of person to meet"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.contactPerson && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.contactPerson.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="contactPhone"
-                  className="block text-sm font-medium text-[#2E2E38] mb-2"
-                >
-                  Contact Phone
-                  <span className="ml-1 text-xs text-gray-400">(optional)</span>
-                </label>
-                <input
-                  id="contactPhone"
-                  type="tel"
-                  {...register("contactPhone")}
-                  placeholder="+216 XX XXX XXX"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.contactPhone && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.contactPhone.message}
-                  </p>
-                )}
-              </div>
+          {/* Contact Person + Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label
+                htmlFor="contactPerson"
+                className="block text-sm font-medium text-[#2E2E38] mb-2"
+              >
+                Contact Person (Vis-à-vis)
+                <span className="ml-1 text-xs text-gray-400">(optional)</span>
+              </label>
+              <input
+                id="contactPerson"
+                type="text"
+                {...register("contactPerson")}
+                placeholder="Name of person to meet"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              />
+              {errors.contactPerson && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.contactPerson.message}
+                </p>
+              )}
             </div>
+            <div>
+              <label
+                htmlFor="contactPhone"
+                className="block text-sm font-medium text-[#2E2E38] mb-2"
+              >
+                Contact Phone
+                <span className="ml-1 text-xs text-gray-400">(optional)</span>
+              </label>
+              <input
+                id="contactPhone"
+                type="tel"
+                {...register("contactPhone")}
+                placeholder="+216 XX XXX XXX"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+              />
+              {errors.contactPhone && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.contactPhone.message}
+                </p>
+              )}
+            </div>
+          </div>
           {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-3">
@@ -407,20 +412,40 @@ export function CreateRequestPage() {
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-2">
               Attachments
-              <span className="ml-1 text-xs text-gray-400">(coming soon)</span>
+              <span className="ml-1 text-xs text-gray-400">(optional)</span>
             </label>
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-[#2E2E38] transition-colors cursor-not-allowed bg-gray-50/50">
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-600 mb-1">
-                <span className="text-[#2E2E38] font-medium">
-                  Click to upload
-                </span>{" "}
-                or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                PDF, DOC, DOCX, XLS, XLSX (max. 10MB)
-              </p>
-            </div>
+
+            {createdRequestId ? (
+              // Request created — show live uploader
+              <div className="space-y-3">
+                <AttachmentUploader requestId={createdRequestId} />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/requests/mine")}
+                    className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg
+                     hover:bg-[#1a1a24] transition-colors"
+                  >
+                    Done — Go to My Requests
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Request not yet created — show placeholder
+              <div
+                className="border-2 border-dashed border-border rounded-lg
+                    p-8 text-center bg-gray-50/50 opacity-60
+                    cursor-not-allowed"
+              >
+                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">
+                  Submit the request first to attach files
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Images or PDF · Max 10 MB · Up to 5 files
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -434,10 +459,16 @@ export function CreateRequestPage() {
             </button>
             <button
               type="submit"
-              disabled={isPending}
-              className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg hover:bg-[#1a1a24] transition-colors flex items-center gap-2 disabled:opacity-50"
+              disabled={isPending || !!createdRequestId}
+              className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg
+             hover:bg-[#1a1a24] transition-colors flex items-center
+             gap-2 disabled:opacity-50"
             >
-              {isPending ? "Submitting..." : "Submit Request"}
+              {isPending
+                ? "Submitting..."
+                : createdRequestId
+                  ? "Request Submitted ✓"
+                  : "Submit Request"}
             </button>
           </div>
         </form>

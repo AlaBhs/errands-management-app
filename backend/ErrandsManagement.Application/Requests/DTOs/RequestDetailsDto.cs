@@ -1,4 +1,6 @@
-﻿namespace ErrandsManagement.Application.Requests.DTOs;
+﻿using ErrandsManagement.Application.Attachments.DTOs;
+
+namespace ErrandsManagement.Application.Requests.DTOs;
 
 public sealed record RequestDetailsDto(
     Guid Id,
@@ -18,4 +20,5 @@ public sealed record RequestDetailsDto(
     AddressDto DeliveryAddress,
     AssignmentDto? CurrentAssignment,
     IReadOnlyCollection<AuditLogDto> AuditLogs,
+    IReadOnlyList<AttachmentDto> Attachments,
     SurveyDto? Survey);

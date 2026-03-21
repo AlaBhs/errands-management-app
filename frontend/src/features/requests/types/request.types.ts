@@ -1,4 +1,4 @@
-import type { PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
+import type { AttachmentType, PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
 
 
 // --- Nested DTOs ---
@@ -63,5 +63,15 @@ export interface RequestDetailsDto {
   deliveryAddress: AddressDto;
   currentAssignment?: AssignmentDto;
   auditLogs: AuditLogDto[];
+  attachments: AttachmentDto[];
   survey?: SurveyDto;
+}
+
+export interface AttachmentDto {
+  id:          string;
+  fileName:    string;
+  contentType: string;
+  uri:         string;
+  type:        AttachmentType;
+  uploadedAt:  string;
 }

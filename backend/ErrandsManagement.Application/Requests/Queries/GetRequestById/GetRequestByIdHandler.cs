@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Attachments.DTOs;
+using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
@@ -77,6 +78,16 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
             request.AuditLogs
                 .OrderByDescending(a => a.OccurredAt)
                 .Select(a => new AuditLogDto(a.EventType, a.Detail, a.OccurredAt))
+                .ToList(),
+            request.Attachments                          
+                .OrderBy(a => a.UploadedAt)
+                .Select(a => new AttachmentDto(
+                    a.Id,
+                    a.FileName,
+                    a.ContentType,
+                    a.Uri,              
+                    a.Type,
+                    a.UploadedAt))
                 .ToList(),
             request.Survey is null
                 ? null

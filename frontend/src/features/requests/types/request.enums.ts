@@ -28,3 +28,10 @@ export const RequestCategory = {
 } as const;
 
 export type RequestCategory = typeof RequestCategory[keyof typeof RequestCategory];
+
+export const AttachmentType = {
+  Document       : 'Document',
+  DischargePhoto : 'DischargePhoto',
+} as const;
+
+export type AttachmentType = typeof AttachmentType[keyof typeof AttachmentType];

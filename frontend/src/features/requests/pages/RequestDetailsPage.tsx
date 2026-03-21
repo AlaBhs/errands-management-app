@@ -16,6 +16,7 @@ import {
   formatDate,
   formatDuration,
 } from "@/shared/utils/date";
+import { AttachmentList } from "../components/AttachmentList";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -100,6 +101,24 @@ export function RequestDetailsPage() {
             Additional Comments
           </h2>
           <p className="text-sm text-amber-700">{request.comment}</p>
+        </div>
+      )}
+
+      {request.attachments && request.attachments.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-medium text-gray-700">
+            Attachments
+            <span className="ml-2 text-xs text-gray-400 font-normal">
+              {request.attachments.length} / 5
+            </span>
+          </h2>
+          <AttachmentList
+            requestId={request.id}
+            attachments={request.attachments}
+            canDelete={
+              role === UserRole.Admin || role === UserRole.Collaborator
+            }
+          />
         </div>
       )}
 
