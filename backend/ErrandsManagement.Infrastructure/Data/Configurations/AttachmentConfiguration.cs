@@ -28,6 +28,11 @@ public sealed class AttachmentConfiguration : IEntityTypeConfiguration<Attachmen
                .IsRequired()
                .HasMaxLength(1000);
 
+        builder.Property(a => a.Type)
+               .IsRequired()
+               .HasConversion<string>()
+               .HasMaxLength(50);
+
         builder.Property(a => a.UploadedAt)
                .IsRequired();
     }

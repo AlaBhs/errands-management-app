@@ -1,5 +1,7 @@
 ﻿
 
+using ErrandsManagement.Domain.Enums;
+
 namespace ErrandsManagement.Application.Attachments.DTOs
 {
     public sealed record AttachmentDto(
@@ -7,6 +9,7 @@ namespace ErrandsManagement.Application.Attachments.DTOs
         string FileName,
         string ContentType,
         string Uri,
+        AttachmentType Type,
         DateTime UploadedAt
     );
 }

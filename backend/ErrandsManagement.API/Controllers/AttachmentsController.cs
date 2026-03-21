@@ -1,6 +1,7 @@
 ﻿using ErrandsManagement.API.Common.Responses;
 using ErrandsManagement.Application.Attachments.Commands.DeleteAttachment;
 using ErrandsManagement.Application.Attachments.Commands.UploadAttachment;
+using ErrandsManagement.Application.Attachments.Commands.UploadDischargePhoto;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,5 +69,42 @@ public sealed class AttachmentsController : ControllerBase
             cancellationToken);
 
         return NoContent();
+    }
+
+    /// <summary>POST /api/requests/{requestId}/attachments/discharge</summary>
+    [HttpPost("discharge")]
+    [Authorize(Roles = "Courier")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
+    public async Task<IActionResult> UploadDischargePhoto(
+        Guid requestId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(
+                ApiResponse<string>.FailureResponse(
+                    "No file provided.",
+                    StatusCodes.Status400BadRequest,
+                    HttpContext.TraceIdentifier));
+
+        await using var stream = file.OpenReadStream();
+
+        var command = new UploadDischargePhotoCommand(
+            RequestId: requestId,
+            FileName: file.FileName,
+            ContentType: file.ContentType,
+            FileSize: file.Length,
+            FileStream: stream);
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return CreatedAtAction(
+            nameof(UploadDischargePhoto),
+            new { requestId },
+            ApiResponse<object>.SuccessResponse(
+                result,
+                StatusCodes.Status201Created,
+                HttpContext.TraceIdentifier));
     }
 }

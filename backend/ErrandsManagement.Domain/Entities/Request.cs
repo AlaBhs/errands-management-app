@@ -156,13 +156,35 @@ public class Request : BaseEntity
         return assignment;
     }
 
-    public void AddAttachment(string fileName, string contentType, string uri)
+    public void AddAttachment(
+        string fileName,
+        string contentType,
+        string uri,
+        AttachmentType type = AttachmentType.Document)
     {
         if (_attachments.Count >= 5)
             throw new InvalidRequestStateException(
                 "A request cannot have more than 5 attachments.");
 
-        _attachments.Add(new Attachment(Id, fileName, contentType, uri));
+        _attachments.Add(new Attachment(Id, fileName, contentType, uri, type));
+    }
+
+    public void AddDischargePhoto(string fileName, string contentType, string uri)
+    {
+        if (Status != RequestStatus.Completed)
+            throw new InvalidRequestStateException(
+                "Discharge photo can only be added to completed requests.");
+
+        var existing = _attachments
+            .Any(a => a.Type == AttachmentType.DischargePhoto);
+
+        if (existing)
+            throw new InvalidRequestStateException(
+                "A discharge photo has already been submitted for this request.");
+
+        _attachments.Add(new Attachment(
+            Id, fileName, contentType, uri,
+            AttachmentType.DischargePhoto));
     }
 
     public void RemoveAttachment(Guid attachmentId)
