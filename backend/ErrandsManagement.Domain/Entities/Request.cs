@@ -156,4 +156,22 @@ public class Request : BaseEntity
         return assignment;
     }
 
+    public void AddAttachment(string fileName, string contentType, string uri)
+    {
+        if (_attachments.Count >= 5)
+            throw new InvalidRequestStateException(
+                "A request cannot have more than 5 attachments.");
+
+        _attachments.Add(new Attachment(Id, fileName, contentType, uri));
+    }
+
+    public void RemoveAttachment(Guid attachmentId)
+    {
+        var attachment = _attachments.FirstOrDefault(a => a.Id == attachmentId)
+            ?? throw new InvalidRequestStateException(
+                "Attachment not found on this request.");
+
+        _attachments.Remove(attachment);
+    }
+
 }
