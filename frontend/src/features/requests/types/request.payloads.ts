@@ -29,6 +29,7 @@ export interface CancelRequestPayload {
 export interface CompleteRequestPayload {
   actualCost?: number;
   note?: string;
+  dischargePhoto?: File;
 }
 
 export interface SubmitSurveyPayload {

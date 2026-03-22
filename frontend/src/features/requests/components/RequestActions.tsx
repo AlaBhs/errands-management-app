@@ -12,7 +12,7 @@ import { isApiError } from "@/shared/api/client";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { UserRole } from "@/features/auth";
-import { DischargePhotoUploader } from "./DischargePhotoUploader";
+import { DischargePhotoSelector } from "./DischargePhotoSelector";
 
 interface RequestActionsProps {
   request: RequestDetailsDto;
@@ -44,7 +44,7 @@ export function RequestActions({ request }: RequestActionsProps) {
   const [completeNote, setCompleteNote] = useState("");
   const [rating, setRating] = useState<number>(5);
   const [surveyComment, setSurveyComment] = useState("");
-  const [justCompleted, setJustCompleted] = useState(false);
+  const [dischargePhoto, setDischargePhoto] = useState<File | null>(null);
 
   const anyPending =
     assign.isPending ||
@@ -167,61 +167,53 @@ export function RequestActions({ request }: RequestActionsProps) {
       {/* IN PROGRESS — Courier: complete + cancel with required reason */}
       {status === "InProgress" && role === UserRole.Courier && (
         <div className="space-y-3">
-          {!justCompleted ? (
-            // ── Phase 1 — complete form ──────────────────────────────────
-            <div className="space-y-2">
-              <input
-                type="number"
-                value={actualCost}
-                onChange={(e) => setActualCost(e.target.value)}
-                placeholder="Actual cost (optional)"
-                className="w-full rounded-md border border-gray-300 px-3 py-2
-                     text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <input
-                value={completeNote}
-                onChange={(e) => setCompleteNote(e.target.value)}
-                placeholder="Note (optional)"
-                className="w-full rounded-md border border-gray-300 px-3 py-2
-                     text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                onClick={() =>
-                  complete.mutate(
-                    {
-                      actualCost: actualCost
-                        ? parseFloat(actualCost)
-                        : undefined,
-                      note: completeNote || undefined,
-                    },
-                    { onSuccess: () => setJustCompleted(true) },
-                  )
-                }
-                disabled={anyPending}
-                className="w-full rounded-md bg-green-600 px-4 py-2 text-sm
-                     font-medium text-white hover:bg-green-700 disabled:opacity-50"
-              >
-                {complete.isPending ? "Completing..." : "Mark as Completed"}
-              </button>
-            </div>
-          ) : (
-            // ── Phase 2 — discharge photo (optional) ────────────────────
-            <DischargePhotoUploader
-              requestId={id}
-              onDone={() => setJustCompleted(false)}
+          <div className="space-y-2">
+            <input
+              type="number"
+              value={actualCost}
+              onChange={(e) => setActualCost(e.target.value)}
+              placeholder="Actual cost (optional)"
+              className="w-full rounded-md border border-gray-300 px-3 py-2
+                   text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
-          )}
+            <input
+              value={completeNote}
+              onChange={(e) => setCompleteNote(e.target.value)}
+              placeholder="Note (optional)"
+              className="w-full rounded-md border border-gray-300 px-3 py-2
+                   text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
 
-          {!justCompleted && (
-            <CancelSection
-              value={cancelReason}
-              onChange={setCancelReason}
-              onConfirm={() => cancel.mutate({ reason: cancelReason })}
-              isPending={cancel.isPending}
-              disabled={anyPending}
-              reasonRequired={true}
+            {/* Discharge photo — optional, inline */}
+            <DischargePhotoSelector
+              file={dischargePhoto}
+              onChange={setDischargePhoto}
             />
-          )}
+
+            <button
+              onClick={() =>
+                complete.mutate({
+                  actualCost: actualCost ? parseFloat(actualCost) : undefined,
+                  note: completeNote || undefined,
+                  dischargePhoto: dischargePhoto ?? undefined,
+                })
+              }
+              disabled={anyPending}
+              className="w-full rounded-md bg-green-600 px-4 py-2 text-sm
+                   font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {complete.isPending ? "Completing..." : "Mark as Completed"}
+            </button>
+          </div>
+
+          <CancelSection
+            value={cancelReason}
+            onChange={setCancelReason}
+            onConfirm={() => cancel.mutate({ reason: cancelReason })}
+            isPending={cancel.isPending}
+            disabled={anyPending}
+            reasonRequired={true}
+          />
         </div>
       )}
 

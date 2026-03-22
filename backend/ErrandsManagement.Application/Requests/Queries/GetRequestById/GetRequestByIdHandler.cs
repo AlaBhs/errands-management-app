@@ -34,7 +34,7 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
 
         var currentAssignment = request.Assignments
             .OrderByDescending(a => a.AssignedAt)
-            .FirstOrDefault(a => !a.IsCompleted);
+            .FirstOrDefault();
 
         AssignmentDto? assignmentDto = null;
 

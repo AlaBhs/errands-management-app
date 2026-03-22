@@ -161,15 +161,30 @@ public sealed class RequestsController : ControllerBase
 
     [HttpPost("{id:guid}/complete")]
     [Authorize(Roles = "Courier")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
     public async Task<IActionResult> Complete(
     Guid id,
-    [FromBody] CompleteRequestDto request,
+    [FromForm] decimal? actualCost,
+    [FromForm] string? note,
+    IFormFile? dischargePhoto,
     CancellationToken cancellationToken)
     {
+        Stream? photoStream = null;
+
+        if (dischargePhoto is not null && dischargePhoto.Length > 0)
+            photoStream = dischargePhoto.OpenReadStream();
+
+        await using var _ = photoStream;
+
         var command = new CompleteRequestCommand(
-            id,
-            request.ActualCost,
-            request.Note);
+            RequestId: id,
+            ActualCost: actualCost,
+            Note: note,
+            DischargePhotoFileName: dischargePhoto?.FileName,
+            DischargePhotoContentType: dischargePhoto?.ContentType,
+            DischargePhotoSize: dischargePhoto?.Length ?? 0,
+            DischargePhotoStream: photoStream);
 
         await _mediator.Send(command, cancellationToken);
 

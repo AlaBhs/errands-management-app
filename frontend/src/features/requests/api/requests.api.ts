@@ -53,10 +53,27 @@ export const requestsApi = {
       .post<ApiResponse<null>>(`/requests/${id}/cancel`, payload)
       .then((res) => res.data),
 
-  complete: (id: string, payload: CompleteRequestPayload) =>
-    apiClient
-      .post<ApiResponse<null>>(`/requests/${id}/complete`, payload)
-      .then((res) => res.data),
+  complete: async (
+    id: string,
+    payload: CompleteRequestPayload,
+  ): Promise<ApiResponse<null>> => {
+    const form = new FormData();
+
+    if (payload.actualCost !== undefined && payload.actualCost !== null)
+      form.append("actualCost", payload.actualCost.toString());
+
+    if (payload.note) form.append("note", payload.note);
+
+    if (payload.dischargePhoto)
+      form.append("dischargePhoto", payload.dischargePhoto);
+
+    const { data } = await apiClient.post<ApiResponse<null>>(
+      `/requests/${id}/complete`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data;
+  },
 
   submitSurvey: (id: string, payload: SubmitSurveyPayload) =>
     apiClient
