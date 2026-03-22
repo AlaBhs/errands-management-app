@@ -19,12 +19,12 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: Location })?.from?.pathname ?? '/requests';
+  const from = (location.state as { from?: Location })?.from?.pathname ?? '/';
 
   // Redirect already-authenticated users away from the login page
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/requests', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

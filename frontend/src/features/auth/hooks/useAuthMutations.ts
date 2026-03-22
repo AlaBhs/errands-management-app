@@ -33,7 +33,7 @@ export function useLogout() {
     },
     onSettled: () => {
       clearAuth();
-      navigate('/login', { replace: true });
+      navigate('/login', { replace: true, state: null });
     },
   });
 }
