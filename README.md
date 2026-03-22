@@ -1,44 +1,30 @@
 # Errands Management App
 
-This branch implements a fully functional analytics dashboard for the Admin
-role, replacing the previous static placeholder with real data.
+This branch adds file attachments to requests and proof-of-delivery
+photos for couriers.
 
-## What's New — `feature/analytics`
+## What's New — `feature/attachments`
 
-### Analytics Dashboard (`/analytics` — Admin only)
+### File Attachments
+- Collaborators and Admins can attach images and PDFs (max 10 MB, 5 files per request)
+- Files can be added during creation or on any active request (Pending or Assigned)
+- Completed and Cancelled requests are locked from new attachments
+- Images open in a lightbox, PDFs open in a new tab, both are downloadable
 
-- **KPI Cards** — Total requests, completed rate, active requests, avg
-  survey rating, deadline compliance, and cost variance with animated
-  counters and color-coded status indicators
-- **Status Distribution** — Stacked proportional bar with per-status
-  breakdown cards showing count and percentage
-- **Pipeline Timing** — Average time spent in each lifecycle stage
-  (queue wait, pickup delay, execution) with automatic bottleneck detection
-- **Monthly Trend** — Area chart showing request volume over time
-- **Category Breakdown** — Horizontal bar chart per request category
-- **Cost Breakdown** — Estimated vs actual spend per category with
-  variance analysis
-- **Courier Performance** — Per-courier table with score badge, rating,
-  on-time rate, and execution time
+### Discharge Photo
+- Couriers attach an optional proof-of-delivery photo when completing a request
+- Submitted in the same action as marking complete — one button, one call
+- Appears in the attachments section with a Discharge badge
 
-### Date Range Filter
-Sticky filter bar with quick presets (Last 30 days, Last 3 months,
-Last 6 months, All time), year dropdown, and custom date range picker.
-All widgets update simultaneously when the filter changes.
+### File Validation
+Content type and file extension are cross-validated — mismatches and
+missing extensions are rejected. Allowed: `.jpg` `.jpeg` `.png` `.gif`
+`.webp` `.pdf` (PDF not allowed for discharge photos).
 
-### Dev Seeder
-63 requests spread across 2024–2026 with realistic timestamps, giving
-meaningful data across all filter presets on first run.
-
-To re-seed from scratch:
-```sql
-DELETE FROM Surveys;
-DELETE FROM AuditLogs;
-DELETE FROM Assignments;
-DELETE FROM Requests;
-```
-
-Then restart the API — the seeder runs automatically on startup.
+### Storage
+Files are stored locally in `wwwroot/uploads/yyyy/MM/dd/` behind
+`IFileStorageService` — swapping to Azure Blob requires one DI line change.
+Files persist across container restarts via a named Docker volume.
 
 ## How to Test with Docker
 
@@ -64,6 +50,6 @@ docker-compose up --build
 
 ## Notes
 
-- All 237 tests pass with 0 failures (`dotnet test` from the `backend` directory).
-- The analytics dashboard is Admin-only — other roles are redirected by `RoleGuard`.
+- All 265 tests pass with 0 failures (`dotnet test` from the `backend` directory).
+- Static files at `/uploads/*` are proxied to the API via Vite in development.
 - This branch includes all features from all previous branches.
