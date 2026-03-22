@@ -56,6 +56,19 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
         return json.GetProperty("data").GetGuid();
     }
 
+
+    private static HttpContent EmptyFormContent()
+    {
+        var content = new ByteArrayContent(Array.Empty<byte>());
+        content.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("multipart/form-data")
+            {
+                Parameters = { new System.Net.Http.Headers.NameValueHeaderValue(
+                "boundary", "----boundary") }
+            };
+        return content;
+    }
+
     // ── GET /api/requests/{id} ────────────────────────────────────────────────
 
     [Fact]
@@ -213,9 +226,13 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
             new { },
             TestContext.Current.CancellationToken);
 
-        var response = await courierClient.PostAsJsonAsync(
+        var form = new MultipartFormDataContent("----boundary");
+        form.Add(new StringContent("25.50"), "actualCost");
+        form.Add(new StringContent("Delivered successfully"), "note");
+
+        var response = await courierClient.PostAsync(
             $"/api/requests/{requestId}/complete",
-            new { actualCost = 25.50, note = "Delivered successfully" },
+            form,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -229,9 +246,13 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
         var requestId = await CreateRequestAsync(collaboratorId);
 
         var courierClient = _factory.CreateAuthenticatedClient("Courier");
-        var response = await courierClient.PostAsJsonAsync(
+
+        // Pending request — domain throws InvalidRequestStateException
+        var form = EmptyFormContent();
+
+        var response = await courierClient.PostAsync(
             $"/api/requests/{requestId}/complete",
-            new { actualCost = (decimal?)null, note = (string?)null },
+            form,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -311,9 +332,20 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
             new { },
             TestContext.Current.CancellationToken);
 
-        await courierClient.PostAsJsonAsync(
+        var completeResponse = await courierClient.PostAsync(
             $"/api/requests/{requestId}/complete",
-            new { actualCost = (decimal?)null, note = (string?)null },
+            EmptyFormContent(),
+            TestContext.Current.CancellationToken);
+
+        var body = await completeResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        completeResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK,
+            because: $"complete endpoint returned: {body}");
+
+        await courierClient.PostAsync(
+            $"/api/requests/{requestId}/complete",
+            EmptyFormContent(),
             TestContext.Current.CancellationToken);
 
         var response = await collaboratorClient.PostAsJsonAsync(
@@ -361,9 +393,9 @@ public class RequestLifecycleTests : IClassFixture<CustomWebApplicationFactory>
             $"/api/requests/{requestId}/start",
             new { },
             TestContext.Current.CancellationToken);
-        await courierClient.PostAsJsonAsync(
+        await courierClient.PostAsync(
             $"/api/requests/{requestId}/complete",
-            new { actualCost = (decimal?)null, note = (string?)null },
+            EmptyFormContent(),
             TestContext.Current.CancellationToken);
         await collaboratorClient.PostAsJsonAsync(
             $"/api/requests/{requestId}/survey",

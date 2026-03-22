@@ -22,6 +22,9 @@ public class RequestBuilder
     private string _comment = "Leave at the door";
     private DateTime? _deadline = DateTime.UtcNow.AddDays(1);
     private decimal? _estimatedCost = 10;
+    private Guid? _assignedCourierId;
+    private bool _started;
+    private bool _completed;
 
     public RequestBuilder WithTitle(string title)
     {
@@ -71,9 +74,30 @@ public class RequestBuilder
         return this;
     }
 
+    public RequestBuilder WithAssignment(Guid courierId)
+    {
+        _assignedCourierId = courierId;
+        return this;
+    }
+
+    public RequestBuilder WithStarted()
+    {
+        _assignedCourierId ??= Guid.NewGuid();
+        _started = true;
+        return this;
+    }
+
+    public RequestBuilder WithCompleted()
+    {
+        _assignedCourierId ??= Guid.NewGuid();
+        _started = true;
+        _completed = true;
+        return this;
+    }
+
     public Request Build()
     {
-        return new Request(
+        var request = new Request(
             _title,
             _description,
             _requesterId,
@@ -84,7 +108,19 @@ public class RequestBuilder
             _contactPhone,
             _comment,
             _deadline,
-            _estimatedCost
-        );
+            _estimatedCost);
+
+        if (_assignedCourierId.HasValue)
+        {
+            request.Assign(_assignedCourierId.Value);
+
+            if (_started)
+                request.Start();
+
+            if (_completed)
+                request.Complete(null, null);
+        }
+
+        return request;
     }
 }

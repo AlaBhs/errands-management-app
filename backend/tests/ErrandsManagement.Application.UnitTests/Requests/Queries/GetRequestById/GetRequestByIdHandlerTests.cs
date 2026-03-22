@@ -1,5 +1,7 @@
-﻿using ErrandsManagement.Application.Interfaces;
+﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
+using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.UnitTests.Builders;
 using FluentAssertions;
 using Moq;
@@ -90,21 +92,29 @@ public class GetRequestByIdHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Return_Null_CurrentAssignment_After_Request_Is_Completed()
+    public async Task Handle_Should_Return_CurrentAssignment_After_Request_Is_Completed()
     {
-        var request = new RequestBuilder().Build();
-        request.Assign(Guid.NewGuid());
-        request.Start();
-        request.Complete();
+        var courierId = Guid.NewGuid();
+        var request = new RequestBuilder()
+            .WithAssignment(courierId)
+            .WithCompleted()
+            .Build();
 
         _repositoryMock
             .Setup(r => r.GetByIdAsync(request.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(request);
 
-        var result = await _handler.Handle(
-            new GetRequestByIdQuery(request.Id), CancellationToken.None);
+        _userRepoMock
+            .Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserDto?)null);
 
-        result!.CurrentAssignment.Should().BeNull();
+        var result = await _handler.Handle(
+            new GetRequestByIdQuery(request.Id),
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.CurrentAssignment.Should().NotBeNull();
+        result.CurrentAssignment!.CourierId.Should().Be(courierId);
     }
 
     [Fact]

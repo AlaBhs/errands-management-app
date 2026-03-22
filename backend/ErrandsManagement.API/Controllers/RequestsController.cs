@@ -163,6 +163,7 @@ public sealed class RequestsController : ControllerBase
     [Authorize(Roles = "Courier")]
     [RequestSizeLimit(10 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
+    [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
     public async Task<IActionResult> Complete(
     Guid id,
     [FromForm] decimal? actualCost,

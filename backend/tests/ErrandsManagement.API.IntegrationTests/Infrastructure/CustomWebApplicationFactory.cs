@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Infrastructure.Data;
+﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -62,6 +63,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                     .UseSqlite(_connection)
                     .ConfigureWarnings(w =>
                         w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+
+            services.PostConfigure<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>(_ => { });
+
+            services.AddScoped<IFileStorageService, StubFileStorageService>();
         });
     }
 
