@@ -27,8 +27,8 @@ const statusOptions: { label: string; value: RequestStatus }[] = [
 export function MyRequestsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortField | undefined>(undefined);
-  const [descending, setDescending] = useState(false);
+  const [sortBy, setSortBy] = useState<SortField | undefined>('createdat');
+  const [descending, setDescending] = useState(true);
   const [status, setStatus] = useState<RequestStatus | undefined>(undefined);
   const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "">(
     "",

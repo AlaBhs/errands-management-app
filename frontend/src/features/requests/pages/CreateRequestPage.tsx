@@ -2,15 +2,25 @@ import { useNavigate } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload } from "lucide-react";
+import { FileIcon, Upload, X } from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
-import { AttachmentUploader } from "../components/AttachmentUploader";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { attachmentsApi } from "../api/attachments.api";
 
 const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
+const ALLOWED_TYPES  = ["image/jpeg", "image/png", "image/gif",
+                        "image/webp", "application/pdf"];
+const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_FILES      = 5;
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const schema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -60,41 +70,101 @@ type FormValues = z.infer<typeof schema>;
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const { mutate, isPending, isError, error } = useCreateRequest();
-  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
+const inputRef                        = useRef<HTMLInputElement>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileErrors, setFileErrors]     = useState<Record<string, string>>({});
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { priority: 1 },
-  });
+  const { register, handleSubmit, control, formState: { errors } } =
+    useForm<FormValues>({
+      resolver: zodResolver(schema),
+      defaultValues: { priority: 1 },
+    });
+
+    const validateFile = (file: File): string | null => {
+    if (!ALLOWED_TYPES.includes(file.type))
+      return "Only images (JPEG, PNG, GIF, WEBP) and PDF files are allowed.";
+    if (file.size > MAX_SIZE_BYTES)
+      return `Exceeds 10 MB limit (${formatBytes(file.size)}).`;
+    return null;
+  };
+
+  const addFiles = (incoming: FileList | File[]) => {
+    const arr      = Array.from(incoming);
+    const newFiles = arr.slice(0, MAX_FILES - selectedFiles.length);
+    const newErrors: Record<string, string> = {};
+
+    const valid = newFiles.filter((f) => {
+      const err = validateFile(f);
+      if (err) newErrors[f.name] = err;
+      return !err;
+    });
+
+    setSelectedFiles((prev) => [...prev, ...valid]);
+    if (Object.keys(newErrors).length > 0)
+      setFileErrors((prev) => ({ ...prev, ...newErrors }));
+  };
+
+  const removeFile = (name: string) => {
+    setSelectedFiles((prev) => prev.filter((f) => f.name !== name));
+    setFileErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
 
   const onSubmit = (values: FormValues) => {
     mutate(
       {
-        title: values.title,
-        description: values.description,
-        priority: values.priority,
-        category: values.category,
+        title:         values.title,
+        description:   values.description,
+        priority:      values.priority,
+        category:      values.category,
         contactPerson: values.contactPerson || undefined,
-        contactPhone: values.contactPhone || undefined,
-        comment: values.comment || undefined,
-        deadline: values.deadline || undefined,
+        contactPhone:  values.contactPhone  || undefined,
+        comment:       values.comment       || undefined,
+        deadline:      values.deadline      || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
           : undefined,
         deliveryAddress: values.deliveryAddress,
       },
       {
-        onSuccess: (response) => {
-          setCreatedRequestId(response.data ?? null);
+        onSuccess: async (response) => {
+          const requestId = response.data;
+          if (!requestId) { navigate("/requests/mine"); return; }
+
+          // Upload any pre-selected files silently after creation
+          if (selectedFiles.length > 0) {
+            setIsUploadingFiles(true);
+            try {
+              for (const file of selectedFiles) {
+                await attachmentsApi.upload(requestId, file);
+              }
+              toast.success(
+                `Request submitted with ${selectedFiles.length} attachment${selectedFiles.length > 1 ? "s" : ""}.`
+              );
+            } catch {
+              toast.warning(
+                "Request created but some attachments failed to upload. " +
+                "You can add them from the request details page."
+              );
+            } finally {
+              setIsUploadingFiles(false);
+            }
+          } else {
+            toast.success("Request submitted successfully.");
+          }
+
+          navigate("/requests/mine");
         },
       },
     );
   };
+
+  const isSubmitting = isPending || isUploadingFiles;
+  const canAddMore   = selectedFiles.length < MAX_FILES;
 
   return (
     <div className="">
@@ -408,43 +478,92 @@ export function CreateRequestPage() {
             </div>
           </fieldset>
 
-          {/* File Upload placeholder */}
+          {/* ── Attachments ── */}
           <div>
             <label className="block text-sm font-medium text-[#2E2E38] mb-2">
               Attachments
               <span className="ml-1 text-xs text-gray-400">(optional)</span>
             </label>
 
-            {createdRequestId ? (
-              // Request created — show live uploader
-              <div className="space-y-3">
-                <AttachmentUploader requestId={createdRequestId} />
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/requests/mine")}
-                    className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg
-                     hover:bg-[#1a1a24] transition-colors"
+            {/* Drop zone */}
+            <div
+              onClick={() => canAddMore && inputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (canAddMore) addFiles(e.dataTransfer.files);
+              }}
+              className={`border-2 border-dashed rounded-lg p-8 text-center
+                          transition-colors
+                          ${
+                            canAddMore
+                              ? "cursor-pointer hover:border-[#2E2E38]"
+                              : "cursor-not-allowed opacity-50"
+                          }
+                          border-border`}
+            >
+              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-1">
+                <span className="font-medium text-[#2E2E38]">
+                  Click to upload
+                </span>{" "}
+                or drag and drop
+              </p>
+              <p className="text-xs text-gray-400">
+                Images or PDF · Max 10 MB · Up to {MAX_FILES} files
+              </p>
+              {!canAddMore && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  Maximum {MAX_FILES} files reached
+                </p>
+              )}
+            </div>
+
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={ALLOWED_TYPES.join(",")}
+              className="hidden"
+              onChange={(e) => e.target.files && addFiles(e.target.files)}
+            />
+
+            {/* Validation errors for rejected files */}
+            {Object.entries(fileErrors).map(([name, err]) => (
+              <p key={name} className="mt-1 text-xs text-red-500">
+                {name}: {err}
+              </p>
+            ))}
+
+            {/* Selected file list */}
+            {selectedFiles.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {selectedFiles.map((file) => (
+                  <li
+                    key={file.name}
+                    className="flex items-center gap-3 rounded-lg border
+                               border-border bg-white px-3 py-2 text-sm"
                   >
-                    Done — Go to My Requests
-                  </button>
-                </div>
-              </div>
-            ) : (
-              // Request not yet created — show placeholder
-              <div
-                className="border-2 border-dashed border-border rounded-lg
-                    p-8 text-center bg-gray-50/50 opacity-60
-                    cursor-not-allowed"
-              >
-                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">
-                  Submit the request first to attach files
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Images or PDF · Max 10 MB · Up to 5 files
-                </p>
-              </div>
+                    <FileIcon className="w-4 h-4 shrink-0 text-gray-400" />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-gray-700">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatBytes(file.size)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(file.name)}
+                      className="shrink-0 text-gray-400
+                                 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
@@ -453,22 +572,23 @@ export function CreateRequestPage() {
             <button
               type="button"
               onClick={() => navigate("/requests/mine")}
-              className="px-6 py-2 border border-border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border border-border rounded-lg
+                         text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isPending || !!createdRequestId}
+              disabled={isSubmitting}
               className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg
-             hover:bg-[#1a1a24] transition-colors flex items-center
-             gap-2 disabled:opacity-50"
+                         hover:bg-[#1a1a24] transition-colors flex items-center
+                         gap-2 disabled:opacity-50"
             >
-              {isPending
-                ? "Submitting..."
-                : createdRequestId
-                  ? "Request Submitted ✓"
-                  : "Submit Request"}
+              {isSubmitting
+                ? isUploadingFiles
+                  ? `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""}...`
+                  : "Submitting..."
+                : "Submit Request"}
             </button>
           </div>
         </form>

@@ -31,6 +31,7 @@ public sealed class RequestRepository : IRequestRepository
             .Include(r => r.Assignments)
             .Include(r => r.AuditLogs)
             .Include(r => r.Survey)
+            .Include(r => r.Attachments)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
     public async Task<PagedResult<RequestListItemDto>> GetPagedAsync(
