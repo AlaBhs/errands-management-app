@@ -17,6 +17,7 @@ import {
   formatDuration,
 } from "@/shared/utils/date";
 import { AttachmentList } from "../components/AttachmentList";
+import { AttachmentUploader } from "../components/AttachmentUploader";
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -119,6 +120,17 @@ export function RequestDetailsPage() {
               role === UserRole.Admin || role === UserRole.Collaborator
             }
           />
+          {/* Add more attachments — only on active requests */}
+          {(request.status === "Pending" || request.status === "Assigned") &&
+            (role === UserRole.Admin || role === UserRole.Collaborator) &&
+            request.attachments.length < 5 && (
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <p className="mb-2 text-xs font-medium text-gray-500">
+                  Add attachment
+                </p>
+                <AttachmentUploader requestId={request.id} />
+              </div>
+            )}
         </div>
       )}
 

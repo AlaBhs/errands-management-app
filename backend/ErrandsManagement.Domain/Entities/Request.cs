@@ -162,6 +162,11 @@ public class Request : BaseEntity
         string uri,
         AttachmentType type = AttachmentType.Document)
     {
+
+        if (Status == RequestStatus.Completed || Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException(
+                "Attachments cannot be added to completed or cancelled requests.");
+
         if (_attachments.Count >= 5)
             throw new InvalidRequestStateException(
                 "A request cannot have more than 5 attachments.");
