@@ -1,4 +1,4 @@
-import type { RequestStatus } from "../types";
+import type { RequestStatus } from "../../features/requests/types";
 
 const statusStyles: Record<RequestStatus, string> = {
   Pending:    "bg-yellow-100 text-yellow-800",
@@ -12,7 +12,7 @@ interface StatusBadgeProps {
   status: RequestStatus;
 }
 
-export default function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[status]}`}>
       {status}

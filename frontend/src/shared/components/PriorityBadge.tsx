@@ -1,4 +1,4 @@
-import type { PriorityLevel } from '../types';
+import type { PriorityLevel } from '../../features/requests/types';
 
 const priorityStyles: Record<PriorityLevel, string> = {
   Low:    'bg-gray-100 text-gray-600',
@@ -11,7 +11,7 @@ interface PriorityBadgeProps {
   priority: PriorityLevel;
 }
 
-export default function PriorityBadge({ priority }: PriorityBadgeProps) {
+export function PriorityBadge({ priority }: PriorityBadgeProps) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${priorityStyles[priority]}`}>
       {priority} Priority

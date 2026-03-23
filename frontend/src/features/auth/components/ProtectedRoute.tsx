@@ -6,7 +6,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
  * If the user is not authenticated, redirects to the login page.
  * Otherwise, renders the child route elements.
  */
-export default function ProtectedRoute() {
+export function ProtectedRoute() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const location = useLocation();
 

@@ -1,4 +1,4 @@
-import type { RequestCategory } from '../types';
+import type { RequestCategory } from '../../features/requests/types';
 
 const categoryStyles: Record<RequestCategory, string> = {
   OfficeSupplies: 'bg-yellow-100 text-yellow-700',
@@ -20,7 +20,7 @@ interface CategoryBadgeProps {
   category: RequestCategory;
 }
 
-export default function CategoryBadge({ category }: CategoryBadgeProps) {
+export function CategoryBadge({ category }: CategoryBadgeProps) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryStyles[category]}`}>
       {categoryLabels[category]}

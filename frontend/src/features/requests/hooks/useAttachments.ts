@@ -7,8 +7,8 @@ export const useUploadAttachment = (requestId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (file: File) =>
-      attachmentsApi.upload(requestId, file),
+    mutationFn: async (file: File) =>
+      await attachmentsApi.upload(requestId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: requestKeys.detail(requestId),
@@ -17,6 +17,26 @@ export const useUploadAttachment = (requestId: string) => {
     },
     onError: () => {
       toast.error("Failed to upload attachment. Please try again.");
+    },
+  });
+};
+
+export const useUploadAttachments = (requestId: string | null) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!requestId) throw new Error("No request ID");
+      for (const file of files) {
+        await attachmentsApi.upload(requestId, file);
+      }
+    },
+    onSuccess: () => {
+      if (requestId) {
+        queryClient.invalidateQueries({
+          queryKey: requestKeys.detail(requestId),
+        });
+      }
     },
   });
 };

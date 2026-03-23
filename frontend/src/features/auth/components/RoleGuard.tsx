@@ -7,7 +7,7 @@ interface RoleGuardProps {
   allowed: UserRole[];
 }
 
-export default function RoleGuard({ allowed }: RoleGuardProps) {
+export function RoleGuard({ allowed }: RoleGuardProps) {
   const role = useAuthStore((s) => s.user?.role);
   const isInitializing = useAuthStore((s) => s.isInitializing);
   if (isInitializing) {

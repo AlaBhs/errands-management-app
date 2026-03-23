@@ -9,13 +9,18 @@ import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { attachmentsApi } from "../api/attachments.api";
+import { useUploadAttachments } from "../hooks";
 
 const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
-const ALLOWED_TYPES  = ["image/jpeg", "image/png", "image/gif",
-                        "image/webp", "application/pdf"];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_FILES      = 5;
+const MAX_FILES = 5;
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -70,18 +75,24 @@ type FormValues = z.infer<typeof schema>;
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const { mutate, isPending, isError, error } = useCreateRequest();
-const inputRef                        = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fileErrors, setFileErrors]     = useState<Record<string, string>>({});
-  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
+  const { mutateAsync: uploadFiles, isPending: isUploadingFiles } =
+    useUploadAttachments(createdRequestId);
 
-  const { register, handleSubmit, control, formState: { errors } } =
-    useForm<FormValues>({
-      resolver: zodResolver(schema),
-      defaultValues: { priority: 1 },
-    });
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { priority: 1 },
+  });
 
-    const validateFile = (file: File): string | null => {
+  const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type))
       return "Only images (JPEG, PNG, GIF, WEBP) and PDF files are allowed.";
     if (file.size > MAX_SIZE_BYTES)
@@ -90,7 +101,7 @@ const inputRef                        = useRef<HTMLInputElement>(null);
   };
 
   const addFiles = (incoming: FileList | File[]) => {
-    const arr      = Array.from(incoming);
+    const arr = Array.from(incoming);
     const newFiles = arr.slice(0, MAX_FILES - selectedFiles.length);
     const newErrors: Record<string, string> = {};
 
@@ -117,14 +128,14 @@ const inputRef                        = useRef<HTMLInputElement>(null);
   const onSubmit = (values: FormValues) => {
     mutate(
       {
-        title:         values.title,
-        description:   values.description,
-        priority:      values.priority,
-        category:      values.category,
+        title: values.title,
+        description: values.description,
+        priority: values.priority,
+        category: values.category,
         contactPerson: values.contactPerson || undefined,
-        contactPhone:  values.contactPhone  || undefined,
-        comment:       values.comment       || undefined,
-        deadline:      values.deadline      || undefined,
+        contactPhone: values.contactPhone || undefined,
+        comment: values.comment || undefined,
+        deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
           : undefined,
@@ -133,25 +144,24 @@ const inputRef                        = useRef<HTMLInputElement>(null);
       {
         onSuccess: async (response) => {
           const requestId = response.data;
-          if (!requestId) { navigate("/requests/mine"); return; }
+          if (!requestId) {
+            navigate("/requests/mine");
+            return;
+          }
 
-          // Upload any pre-selected files silently after creation
+          setCreatedRequestId(requestId);
+
           if (selectedFiles.length > 0) {
-            setIsUploadingFiles(true);
             try {
-              for (const file of selectedFiles) {
-                await attachmentsApi.upload(requestId, file);
-              }
+              await uploadFiles(selectedFiles);
               toast.success(
-                `Request submitted with ${selectedFiles.length} attachment${selectedFiles.length > 1 ? "s" : ""}.`
+                `Request submitted with ${selectedFiles.length} attachment${selectedFiles.length > 1 ? "s" : ""}.`,
               );
             } catch {
               toast.warning(
                 "Request created but some attachments failed to upload. " +
-                "You can add them from the request details page."
+                  "You can add them from the request details page.",
               );
-            } finally {
-              setIsUploadingFiles(false);
             }
           } else {
             toast.success("Request submitted successfully.");
@@ -164,7 +174,7 @@ const inputRef                        = useRef<HTMLInputElement>(null);
   };
 
   const isSubmitting = isPending || isUploadingFiles;
-  const canAddMore   = selectedFiles.length < MAX_FILES;
+  const canAddMore = selectedFiles.length < MAX_FILES;
 
   return (
     <div className="">

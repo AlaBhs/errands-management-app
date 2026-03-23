@@ -1,4 +1,4 @@
-import AuthInitializer from "@/features/auth/components/AuthInitializer";
+import { AuthInitializer } from "@/features/auth/components/AuthInitializer";
 import type { ApiErrorResponse } from "@/shared/api/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

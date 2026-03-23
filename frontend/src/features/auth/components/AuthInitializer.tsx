@@ -4,7 +4,7 @@ import { authApi } from '../api/auth.api';
 import { extractUserFromToken } from '../utils/jwtUtils';
 import { PageSpinner } from '@/shared/components/PageSpinner';
 
-export default function AuthInitializer({ children }: { children: ReactNode }) {
+export function AuthInitializer({ children }: { children: ReactNode }) {
   const { setAuth, clearAuth, setInitializing, isInitializing } = useAuthStore();
 
   useEffect(() => {
