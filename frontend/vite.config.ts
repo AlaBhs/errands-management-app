@@ -25,4 +25,37 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core — changes almost never
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // Data fetching + state
+          "vendor-query": [
+            "@tanstack/react-query",
+            "@tanstack/react-query-devtools",
+            "zustand",
+            "axios",
+          ],
+          // UI primitives — single unified radix package
+          "vendor-ui": [
+            "radix-ui",
+            "class-variance-authority",
+            "clsx",
+            "tailwind-merge",
+            "sonner",
+          ],
+          // Icons — typically large
+          "vendor-icons": [
+            "lucide-react",
+            "@hugeicons/react",
+            "@hugeicons/core-free-icons",
+          ],
+          // Forms + validation
+          "vendor-forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+        },
+      },
+    },
+  },
 });
