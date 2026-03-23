@@ -1,55 +1,59 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/app/layouts/MainLayout";
-import { RequestsListPage } from "@/features/requests/pages/RequestsListPage";
-import { RequestDetailsPage } from "@/features/requests/pages/RequestDetailsPage";
-import { CreateRequestPage } from "@/features/requests/pages/CreateRequestPage";
-import { MyRequestsPage } from "@/features/requests/pages/MyRequestsPage";
-import { MyAssignmentsPage } from "@/features/requests/pages/MyAssignmentsPage";
-import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
-import { AdminPage } from "@/features/admin/pages/AdminPage";
-import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
-import { UserManagementPage } from "@/features/users/pages/UserManagementPage";
-import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
-import { RoleGuard } from "@/features/auth/components/RoleGuard";
-import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { UserRole } from "@/features/auth";
+import { Routes, Route, Navigate } from 'react-router';
+import { MainLayout }    from '@/app/layouts/MainLayout';
+import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
+import { RoleGuard }     from '@/features/auth/components/RoleGuard';
+import { LoginPage }     from '@/features/auth/pages/LoginPage';
+import { UserRole }      from '@/features/auth';
+import { PageSpinner }   from '@/shared/components/PageSpinner';
+import { lazy, Suspense } from 'react';
+
+// Heavy pages — loaded only when visited
+const RequestsListPage   = lazy(() => import('@/features/requests/pages/RequestsListPage').then(m => ({ default: m.RequestsListPage })));
+const RequestDetailsPage = lazy(() => import('@/features/requests/pages/RequestDetailsPage').then(m => ({ default: m.RequestDetailsPage })));
+const CreateRequestPage  = lazy(() => import('@/features/requests/pages/CreateRequestPage').then(m => ({ default: m.CreateRequestPage })));
+const MyRequestsPage     = lazy(() => import('@/features/requests/pages/MyRequestsPage').then(m => ({ default: m.MyRequestsPage })));
+const MyAssignmentsPage  = lazy(() => import('@/features/requests/pages/MyAssignmentsPage').then(m => ({ default: m.MyAssignmentsPage })));
+const AdminPage          = lazy(() => import('@/features/admin/pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const AnalyticsPage      = lazy(() => import('@/features/analytics/pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const UserManagementPage = lazy(() => import('@/features/users/pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
+const PublicOrDashboard  = lazy(() => import('@/app/router/PublicOrDashboard').then(m => ({ default: m.PublicOrDashboard })));
 
 export function AppRouter() {
   return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
+    <Suspense fallback={<PageSpinner />}>
+      <Routes>
+        {/* Public */}
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          {/* Shared */}
-          <Route index element={<DashboardPage />} />
-          <Route path="/requests/:id" element={<RequestDetailsPage />} />
+        {/* Protected */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
 
-          {/* Admin only */}
-          <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
-            <Route path="/requests" element={<RequestsListPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin/users" element={<UserManagementPage />} />
-          </Route>
+            <Route index element={<PublicOrDashboard />} />
+            <Route path="/requests/:id" element={<RequestDetailsPage />} />
 
-          {/* Collaborator only */}
-          <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
-            <Route path="/requests/mine" element={<MyRequestsPage />} />
-            <Route path="/requests/new" element={<CreateRequestPage />} />
-          </Route>
+            <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
+              <Route path="/requests"    element={<RequestsListPage />} />
+              <Route path="/analytics"   element={<AnalyticsPage />} />
+              <Route path="/admin"       element={<AdminPage />} />
+              <Route path="/admin/users" element={<UserManagementPage />} />
+            </Route>
 
-          {/* Courier only */}
-          <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
-            <Route path="/assignments" element={<MyAssignmentsPage />} />
+            <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
+              <Route path="/requests/mine" element={<MyRequestsPage />} />
+              <Route path="/requests/new"  element={<CreateRequestPage />} />
+            </Route>
+
+            <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
+              <Route path="/assignments" element={<MyAssignmentsPage />} />
+            </Route>
+
           </Route>
         </Route>
-      </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
+
