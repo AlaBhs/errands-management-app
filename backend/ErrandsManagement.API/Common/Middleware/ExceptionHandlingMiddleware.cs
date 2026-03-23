@@ -59,6 +59,22 @@ public sealed class ExceptionHandlingMiddleware
                 new { message = ex.Message },
                 StatusCodes.Status400BadRequest);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized access.");
+            await WriteErrorResponse(
+                context,
+                new { message = ex.Message },
+                StatusCodes.Status401Unauthorized);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation.");
+            await WriteErrorResponse(
+                context,
+                new { message = ex.Message },
+                StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception.");
