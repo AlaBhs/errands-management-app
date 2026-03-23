@@ -31,9 +31,10 @@ apiClient.interceptors.response.use(
 
     const is401 = error.response?.status === 401;
     const isRefreshEndpoint = originalConfig?.url?.includes("/auth/refresh");
+    const isLoginEndpoint = originalConfig?.url?.includes("/auth/login");
     const alreadyRetried = originalConfig?._retry;
 
-    if (is401 && !isRefreshEndpoint && !alreadyRetried) {
+    if (is401 && !isRefreshEndpoint && !alreadyRetried && !isLoginEndpoint) {
       originalConfig._retry = true;
 
       try {
@@ -70,20 +71,34 @@ apiClient.interceptors.response.use(
 );
 
 // ─── Error normalization ───────────────────────────────────────────────────────
-function extractFirstError(errors?: Record<string, string[]>): string {
-  if (!errors) return "An unexpected error occurred.";
-  const firstKey = Object.keys(errors)[0];
-  return errors[firstKey]?.[0] ?? "An unexpected error occurred.";
-}
-
 function normalizeError(error: AxiosError<ApiErrorResponse>): NormalizedApiError {
-  const apiError = error.response?.data;
-  return {
-    statusCode: apiError?.statusCode ?? 500,
-    errors: apiError?.errors ?? {},
-    traceId: apiError?.traceId ?? "",
-    message: extractFirstError(apiError?.errors),
-  };
+  // Cast to any to access both camelCase and PascalCase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiError = error.response?.data as any;
+
+  const statusCode = apiError?.statusCode ?? apiError?.StatusCode ?? 500;
+  const rawErrors = apiError?.errors ?? apiError?.Errors ?? {};
+  const traceId = apiError?.traceId ?? apiError?.TraceId ?? "";
+
+  // Convert rawErrors to the expected Record<string, string[]> format
+  const errors: Record<string, string[]> = {};
+  for (const key in rawErrors) {
+    const value = rawErrors[key];
+    if (Array.isArray(value)) {
+      errors[key] = value;
+    } else if (typeof value === "string") {
+      errors[key] = [value];
+    }
+  }
+
+  // Extract the first error message
+  let message = "An unexpected error occurred.";
+  const firstKey = Object.keys(errors)[0];
+  if (firstKey && errors[firstKey]?.length) {
+    message = errors[firstKey][0];
+  }
+
+  return { statusCode, errors, traceId, message };
 }
 
 export interface NormalizedApiError {

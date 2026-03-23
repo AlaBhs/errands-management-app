@@ -17,7 +17,7 @@ export function useLogin() {
     onSuccess: ({ accessToken }) => {
       const user = extractUserFromToken(accessToken);
       setAuth(user, accessToken);
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     },
   });
 }
