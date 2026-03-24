@@ -1,236 +1,302 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { LayoutGrid, List } from "lucide-react";
 import { useRequests } from "../hooks";
-import { StatusBadge } from "@/features/requests";
-import { PageSpinner } from "@/shared/components/PageSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
-import { RequestCategory, type RequestStatus, type SortField } from "../types";
 import { formatDate } from "@/shared/utils/date";
+import { StatusBadge } from "@/shared/components/StatusBadge";
+import { PriorityBadge } from "@/shared/components/PriorityBadge";
+import { cn } from "@/lib/utils";
+import { useViewMode } from "../hooks/useViewMode";
+import {
+  RequestFilters,
+  type RequestFiltersValue,
+} from "../components/RequestFilters";
+import { RequestCard } from "../components/RequestCard";
+import { RequestListSkeleton } from "../components/RequestListSkeleton";
+import type { PriorityLevel } from "../types";
 
 const PAGE_SIZE = 10;
 
-const sortOptions: { label: string; value: SortField }[] = [
-  { label: "Created At", value: "createdat" },
-  { label: "Deadline", value: "deadline" },
-  { label: "Estimated Cost", value: "estimatedcost" },
-];
-
-const statusOptions: { label: string; value: RequestStatus }[] = [
-  { label: "Pending", value: "Pending" },
-  { label: "Assigned", value: "Assigned" },
-  { label: "In Progress", value: "InProgress" },
-  { label: "Completed", value: "Completed" },
-  { label: "Cancelled", value: "Cancelled" },
-];
+const DEFAULT_FILTERS: RequestFiltersValue = {
+  search: "",
+  status: "",
+  category: "",
+  sortBy: "createdat",
+  descending: true,
+};
 
 export function RequestsListPage() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortField | undefined>("createdat");
-  const [descending, setDescending] = useState(true);
-  const [status, setStatus] = useState<RequestStatus | undefined>(undefined);
-  const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "">(
-    "",
-  );
+  const [filters, setFilters] = useState<RequestFiltersValue>(DEFAULT_FILTERS);
+  const [viewMode, setViewMode] = useViewMode("admin-requests-view");
+
+  const handleFilterChange = (next: Partial<RequestFiltersValue>) => {
+    setFilters((prev) => ({ ...prev, ...next }));
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+  };
 
   const { data, isLoading, isError, error } = useRequests({
     page,
     pageSize: PAGE_SIZE,
-    search: search || undefined,
-    sortBy,
-    descending,
-    status,
-    category: categoryFilter || undefined,
+    search: filters.search || undefined,
+    sortBy: filters.sortBy || undefined,
+    descending: filters.descending,
+    status: filters.status || undefined,
+    category: filters.category || undefined,
   });
-
-  const resetPage = () => setPage(1);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">All Requests</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            System-wide view of all requests.
+          <h1 className="text-2xl font-semibold text-foreground">
+            All Requests
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {data
+              ? `${data.totalCount} request${data.totalCount !== 1 ? "s" : ""} total`
+              : "System-wide view of all requests"}
           </p>
+        </div>
+
+        {/* View toggle */}
+        <div
+          className="flex items-center gap-1 rounded-lg border
+                        bg-card p-1 shadow-sm"
+        >
+          <button
+            onClick={() => setViewMode("table")}
+            aria-label="Table view"
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md",
+              "transition-colors",
+              viewMode === "table"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-accent",
+            )}
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("card")}
+            aria-label="Card view"
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md",
+              "transition-colors",
+              viewMode === "card"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-accent",
+            )}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Search requests..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            resetPage();
-          }}
-          className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+      {/* ── Filters ─────────────────────────────────────────────────── */}
+      <RequestFilters
+        value={filters}
+        onChange={handleFilterChange}
+        onReset={handleReset}
+      />
 
-        <select
-          value={status ?? ""}
-          onChange={(e) => {
-            setStatus((e.target.value as RequestStatus) || undefined);
-            resetPage();
-          }}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">All statuses</option>
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={categoryFilter}
-          onChange={(e) => {
-            setCategoryFilter(e.target.value as RequestCategory | "");
-            resetPage();
-          }}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">All categories</option>
-          <option value={RequestCategory.OfficeSupplies}>
-            Office Supplies
-          </option>
-          <option value={RequestCategory.ITEquipment}>IT Equipment</option>
-          <option value={RequestCategory.Travel}>Travel</option>
-          <option value={RequestCategory.Facilities}>Facilities</option>
-          <option value={RequestCategory.Other}>Other</option>
-        </select>
-        <select
-          value={sortBy ?? ""}
-          onChange={(e) => {
-            setSortBy((e.target.value as SortField) || undefined);
-            resetPage();
-          }}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">Sort by...</option>
-          {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        {sortBy && (
-          <button
-            onClick={() => {
-              setDescending((d) => !d);
-              resetPage();
-            }}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm hover:bg-gray-50"
-          >
-            {descending ? "↓ Desc" : "↑ Asc"}
-          </button>
-        )}
-      </div>
-
-      {/* States */}
-      {isLoading && <PageSpinner />}
+      {/* ── Error ───────────────────────────────────────────────────── */}
       {isError && (
         <ErrorMessage
           message={isApiError(error) ? error.message : "Something went wrong."}
         />
       )}
 
-      {/* Table */}
-      {data && (
+      {/* ── Loading skeleton ────────────────────────────────────────── */}
+      {isLoading && <RequestListSkeleton mode={viewMode} />}
+
+      {/* ── Content ─────────────────────────────────────────────────── */}
+      {data && !isLoading && (
         <>
-          <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  {[
-                    "Title",
-                    "Category",
-                    "Priority",
-                    "Status",
-                    "Deadline",
-                    "Est. Cost",
-                    "",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left font-medium text-gray-500"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {data.items.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-gray-400"
-                    >
-                      No requests found.
-                    </td>
+          {data.items.length === 0 ? (
+            <EmptyState
+              hasFilters={
+                !!(filters.search || filters.status || filters.category)
+              }
+            />
+          ) : viewMode === "card" ? (
+            // ── Card grid ─────────────────────────────────────────────
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.items.map((req) => (
+                <RequestCard key={req.id} request={req} />
+              ))}
+            </div>
+          ) : (
+            // ── Table ─────────────────────────────────────────────────
+            <div
+              className="overflow-hidden rounded-xl border
+                            bg-card shadow-sm"
+            >
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    {[
+                      "Title",
+                      "Category",
+                      "Priority",
+                      "Status",
+                      "Deadline",
+                      "Est. Cost",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left text-xs
+                                   font-medium text-muted-foreground
+                                   uppercase tracking-wider"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ) : (
-                  data.items.map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900">
-                        {req.title}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {data.items.map((req) => (
+                    <tr
+                      key={req.id}
+                      onClick={() => navigate(`/requests/${req.id}`)}
+                      className="group cursor-pointer transition-colors
+                                 hover:bg-muted/40"
+                    >
+                      {/* Left border accent via box-shadow trick */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "h-full w-0.5 rounded-full shrink-0 self-stretch",
+                              {
+                                "bg-gray-300": req.priority === "Low",
+                                "bg-blue-400": req.priority === "Normal",
+                                "bg-orange-400": req.priority === "High",
+                                "bg-red-500": req.priority === "Urgent",
+                              },
+                            )}
+                          />
+                          <span
+                            className="font-medium text-foreground
+                                           truncate max-w-[200px]"
+                          >
+                            {req.title}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3.5 text-muted-foreground">
                         {req.category}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {req.priority}
+                      <td className="px-4 py-3.5">
+                        <PriorityBadge
+                          priority={req.priority as PriorityLevel}
+                        />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <StatusBadge status={req.status} />
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td
+                        className="px-4 py-3.5 text-muted-foreground
+                                     whitespace-nowrap"
+                      >
                         {req.deadline ? formatDate(req.deadline) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3.5 text-muted-foreground">
                         {req.estimatedCost != null
                           ? `$${req.estimatedCost}`
                           : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          to={`/requests/${req.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          View
-                        </Link>
-                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          {/* ── Pagination ──────────────────────────────────────────── */}
+          <div
+            className="flex items-center justify-between
+                          text-sm text-muted-foreground"
+          >
             <span>
-              Showing {data.totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
-              {Math.min(page * PAGE_SIZE, data.totalCount)} of {data.totalCount}
+              {data.totalCount === 0
+                ? "No results"
+                : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(
+                    page * PAGE_SIZE,
+                    data.totalCount,
+                  )} of ${data.totalCount}`}
             </span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded border px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+                className="rounded-lg border px-3 py-1.5 text-xs
+                           font-medium transition-colors
+                           hover:bg-accent disabled:opacity-40
+                           disabled:cursor-not-allowed"
               >
                 Previous
               </button>
+
+              {/* Page numbers */}
+              {Array.from(
+                {
+                  length: Math.ceil(data.totalCount / PAGE_SIZE),
+                },
+                (_, i) => i + 1,
+              )
+                .filter(
+                  (p) =>
+                    p === 1 ||
+                    p === Math.ceil(data.totalCount / PAGE_SIZE) ||
+                    Math.abs(p - page) <= 1,
+                )
+                .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                  if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, i) =>
+                  p === "..." ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      className="px-1 text-muted-foreground"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p as number)}
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-xs font-medium",
+                        "transition-colors",
+                        page === p
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "hover:bg-accent",
+                      )}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * PAGE_SIZE >= data.totalCount}
-                className="rounded border px-3 py-1 disabled:opacity-40 hover:bg-gray-50"
+                className="rounded-lg border px-3 py-1.5 text-xs
+                           font-medium transition-colors
+                           hover:bg-accent disabled:opacity-40
+                           disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -238,6 +304,32 @@ export function RequestsListPage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({ hasFilters }: { hasFilters: boolean }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center
+                    rounded-xl border bg-card py-16 text-center"
+    >
+      <div
+        className="mb-4 flex h-12 w-12 items-center justify-center
+                      rounded-full bg-muted"
+      >
+        <List className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm font-medium text-foreground">
+        {hasFilters ? "No requests match your filters" : "No requests yet"}
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {hasFilters
+          ? "Try adjusting or clearing your filters"
+          : "Requests will appear here once created"}
+      </p>
     </div>
   );
 }
