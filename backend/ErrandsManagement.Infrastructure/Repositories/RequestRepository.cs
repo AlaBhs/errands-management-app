@@ -166,7 +166,7 @@ public sealed class RequestRepository : IRequestRepository
     {
         var query = _context.Requests
             .AsNoTracking()
-            .Where(r => r.Assignments.Any(a => a.CourierId == courierId && a.CompletedAt == null));
+            .Where(r => r.Assignments.Any(a => a.CourierId == courierId));
 
         if (parameters.Status.HasValue)
             query = query.Where(r => r.Status == parameters.Status.Value);

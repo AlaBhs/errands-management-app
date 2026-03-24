@@ -4,13 +4,13 @@ import {
   LayoutDashboard,
   FileText,
   PlusCircle,
-  ClipboardList,
   BarChart3,
   Settings,
   LogOut,
   PanelLeftClose,
   PanelLeft,
   ChevronRight,
+  CalendarClock,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -93,8 +93,8 @@ const courierNav: NavGroup[] = [
       },
       {
         path: "/assignments",
-        label: "My Assignments",
-        icon: ClipboardList,
+        label: "My Schedule",
+        icon: CalendarClock,
         exact: true,
       },
     ],

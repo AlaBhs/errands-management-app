@@ -1,45 +1,42 @@
 import { X, Search, SlidersHorizontal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import {
-  RequestCategory,
-  RequestStatus,
-  type SortField,
-} from "../types";
+import { RequestCategory, RequestStatus, type SortField } from "../types";
 
 export interface RequestFiltersValue {
-  search:     string;
-  status:     RequestStatus | "";
-  category:   RequestCategory | "";
-  sortBy:     SortField | "";
+  search: string;
+  status: RequestStatus | "";
+  category: RequestCategory | "";
+  sortBy: SortField | "";
   descending: boolean;
 }
 
 interface RequestFiltersProps {
-  value:    RequestFiltersValue;
+  value: RequestFiltersValue;
   onChange: (next: Partial<RequestFiltersValue>) => void;
-  onReset:  () => void;
+  onReset: () => void;
+  statusOptions?: { label: string; value: RequestStatus }[];
 }
 
 const STATUS_OPTIONS: { label: string; value: RequestStatus }[] = [
-  { label: "Pending",     value: "Pending"     },
-  { label: "Assigned",    value: "Assigned"    },
-  { label: "In Progress", value: "InProgress"  },
-  { label: "Completed",   value: "Completed"   },
-  { label: "Cancelled",   value: "Cancelled"   },
+  { label: "Pending", value: "Pending" },
+  { label: "Assigned", value: "Assigned" },
+  { label: "In Progress", value: "InProgress" },
+  { label: "Completed", value: "Completed" },
+  { label: "Cancelled", value: "Cancelled" },
 ];
 
 const CATEGORY_OPTIONS: { label: string; value: RequestCategory }[] = [
   { label: "Office Supplies", value: RequestCategory.OfficeSupplies },
-  { label: "IT Equipment",    value: RequestCategory.ITEquipment    },
-  { label: "Travel",          value: RequestCategory.Travel         },
-  { label: "Facilities",      value: RequestCategory.Facilities     },
-  { label: "Other",           value: RequestCategory.Other          },
+  { label: "IT Equipment", value: RequestCategory.ITEquipment },
+  { label: "Travel", value: RequestCategory.Travel },
+  { label: "Facilities", value: RequestCategory.Facilities },
+  { label: "Other", value: RequestCategory.Other },
 ];
 
 const SORT_OPTIONS: { label: string; value: SortField }[] = [
-  { label: "Created At",     value: "createdat"     },
-  { label: "Deadline",       value: "deadline"      },
+  { label: "Created At", value: "createdat" },
+  { label: "Deadline", value: "deadline" },
   { label: "Estimated Cost", value: "estimatedcost" },
 ];
 
@@ -52,9 +49,11 @@ interface ChipProps {
 
 function FilterChip({ label, onRemove }: ChipProps) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full
+    <span
+      className="inline-flex items-center gap-1 rounded-full
                      bg-primary/10 px-2.5 py-1 text-xs font-medium
-                     text-primary">
+                     text-primary"
+    >
       {label}
       <button
         onClick={onRemove}
@@ -74,29 +73,38 @@ export function RequestFilters({
   value,
   onChange,
   onReset,
+  statusOptions,
 }: RequestFiltersProps) {
   const hasFilters =
     value.search || value.status || value.category || value.sortBy;
 
-  const statusLabel   = STATUS_OPTIONS.find(o => o.value === value.status)?.label;
-  const categoryLabel = CATEGORY_OPTIONS.find(o => o.value === value.category)?.label;
-  const sortLabel     = SORT_OPTIONS.find(o => o.value === value.sortBy)?.label;
+  const statusLabel = STATUS_OPTIONS.find(
+    (o) => o.value === value.status,
+  )?.label;
+  const categoryLabel = CATEGORY_OPTIONS.find(
+    (o) => o.value === value.category,
+  )?.label;
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === value.sortBy)?.label;
+  const resolvedStatusOptions = statusOptions ?? STATUS_OPTIONS;
 
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2
-                      rounded-xl border bg-card px-4 py-3 shadow-sm">
-
+      <div
+        className="flex flex-wrap items-center gap-x-3 gap-y-2
+                      rounded-xl border bg-card px-4 py-3 shadow-sm"
+      >
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4
-                             -translate-y-1/2 text-muted-foreground" />
+          <Search
+            className="absolute left-3 top-1/2 h-4 w-4
+                             -translate-y-1/2 text-muted-foreground"
+          />
           <input
             type="text"
             placeholder="Search requests..."
             value={value.search}
-            onChange={e => onChange({ search: e.target.value })}
+            onChange={(e) => onChange({ search: e.target.value })}
             className="w-full rounded-md border bg-background py-1.5
                        pl-9 pr-3 text-sm focus:outline-none
                        focus:ring-2 focus:ring-ring transition-colors
@@ -122,7 +130,7 @@ export function RequestFilters({
           </span>
           <select
             value={value.status}
-            onChange={e =>
+            onChange={(e) =>
               onChange({ status: e.target.value as RequestStatus | "" })
             }
             className="rounded-md border bg-background px-2 py-1.5
@@ -131,8 +139,10 @@ export function RequestFilters({
                        transition-colors hover:border-ring cursor-pointer"
           >
             <option value="">All</option>
-            {STATUS_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {resolvedStatusOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -146,7 +156,7 @@ export function RequestFilters({
           </span>
           <select
             value={value.category}
-            onChange={e =>
+            onChange={(e) =>
               onChange({ category: e.target.value as RequestCategory | "" })
             }
             className="rounded-md border bg-background px-2 py-1.5
@@ -155,8 +165,10 @@ export function RequestFilters({
                        transition-colors hover:border-ring cursor-pointer"
           >
             <option value="">All</option>
-            {CATEGORY_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {CATEGORY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -168,7 +180,7 @@ export function RequestFilters({
           <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
           <select
             value={value.sortBy}
-            onChange={e =>
+            onChange={(e) =>
               onChange({ sortBy: e.target.value as SortField | "" })
             }
             className="rounded-md border bg-background px-2 py-1.5
@@ -177,8 +189,10 @@ export function RequestFilters({
                        transition-colors hover:border-ring cursor-pointer"
           >
             <option value="">Sort by...</option>
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
 
@@ -190,7 +204,7 @@ export function RequestFilters({
                 "transition-colors hover:bg-accent hover:text-accent-foreground",
                 value.descending
                   ? "bg-muted text-muted-foreground"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {value.descending ? "↓ Desc" : "↑ Asc"}

@@ -32,6 +32,7 @@ export function useAssignRequest(id: string) {
       requestsApi.assign(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: requestKeys.all });
       toast.success("Courier assigned successfully.");
     },
     onError: (err) => {
@@ -46,6 +47,7 @@ export function useStartRequest(id: string) {
     mutationFn: () => requestsApi.start(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: requestKeys.all });
       toast.success("Request started.");
     },
     onError: (err) => {
@@ -61,6 +63,7 @@ export function useCancelRequest(id: string) {
       requestsApi.cancel(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: requestKeys.all });
       toast.success("Request cancelled.");
     },
     onError: (err) => {
@@ -76,6 +79,7 @@ export function useCompleteRequest(id: string) {
       requestsApi.complete(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: requestKeys.all });
       toast.success("Request marked as completed.");
     },
     onError: (err) => {

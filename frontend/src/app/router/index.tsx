@@ -33,9 +33,9 @@ const MyRequestsPage = lazy(() =>
     default: m.MyRequestsPage,
   })),
 );
-const MyAssignmentsPage = lazy(() =>
-  import("@/features/requests/pages/MyAssignmentsPage").then((m) => ({
-    default: m.MyAssignmentsPage,
+const MySchedulePage = lazy(() =>
+  import("@/features/requests/pages/MySchedulePage").then((m) => ({
+    default: m.MySchedulePage,
   })),
 );
 const AdminPage = lazy(() =>
@@ -85,7 +85,7 @@ export function AppRouter() {
             </Route>
 
             <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
-              <Route path="/assignments" element={<MyAssignmentsPage />} />
+              <Route path="/assignments" element={<MySchedulePage />} />
             </Route>
           </Route>
         </Route>
