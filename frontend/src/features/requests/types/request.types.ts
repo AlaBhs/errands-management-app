@@ -43,6 +43,7 @@ export interface RequestListItemDto {
   category: RequestCategory;
   estimatedCost?: number;
   deadline?: string;
+  hasSurvey?: boolean;
 }
 
 export interface RequestDetailsDto {

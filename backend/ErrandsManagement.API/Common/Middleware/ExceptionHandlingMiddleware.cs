@@ -75,6 +75,19 @@ public sealed class ExceptionHandlingMiddleware
                 new { message = ex.Message },
                 StatusCodes.Status400BadRequest);
         }
+        catch (OperationCanceledException ex)
+        {
+            // Client disconnected – normal behavior, not an error
+            _logger.LogInformation(ex, "Request was canceled by the client.");
+            context.Response.StatusCode = 499; // 499 = Client Closed Request (non-standard but descriptive)
+
+            // If the response hasn't started yet, we can try to complete it.
+            // In most cases, the client is already gone, so writing a body is unnecessary.
+            if (!context.Response.HasStarted)
+            {
+                await context.Response.CompleteAsync();
+            }
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception.");

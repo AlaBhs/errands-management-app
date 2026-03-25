@@ -15,7 +15,7 @@ export function RoleGuard({ allowed }: RoleGuardProps) {
   }
 
   if (!role || !allowed.includes(role)) {
-    return <Navigate to="/requests" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

@@ -29,8 +29,8 @@ public class GetMyRequestsHandlerTests
         var parameters = new RequestQueryParameters { Page = 1, PageSize = 10 };
         var items = new List<RequestListItemDto>
         {
-            new(Guid.NewGuid(), "Request 1", "Desc", "Pending",   "Normal", "Other", null, null),
-            new(Guid.NewGuid(), "Request 2", "Desc", "Assigned",  "High",   "Other", null, null),
+            new(Guid.NewGuid(), "Request 1", "Desc", "Pending",   "Normal", "Other", null, null, false),
+            new(Guid.NewGuid(), "Request 2", "Desc", "Assigned",  "High",   "Other", null, null, false),
         };
         var paged = PagedResult<RequestListItemDto>.Create(items, 1, 10, 2);
 

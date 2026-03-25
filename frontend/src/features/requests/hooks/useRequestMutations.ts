@@ -97,6 +97,7 @@ export function useSubmitSurvey(id: string) {
       requestsApi.submitSurvey(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: requestKeys.all });
       toast.success("Survey submitted. Thank you for your feedback!");
     },
     onError: (err) => {

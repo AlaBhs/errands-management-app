@@ -79,6 +79,7 @@ public sealed class RequestRepository : IRequestRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .Include(r => r.Survey)
             .Skip((parameters.Page - 1) * parameters.PageSize)
             .Take(parameters.PageSize)
             .Select(r => new RequestListItemDto(
@@ -89,7 +90,8 @@ public sealed class RequestRepository : IRequestRepository
                 r.Priority.ToString(),
                 r.Category.ToString(),
                 r.EstimatedCost,
-                r.Deadline
+                r.Deadline,
+                r.Survey != null
             ))
             .ToListAsync(cancellationToken);
 
@@ -140,6 +142,7 @@ public sealed class RequestRepository : IRequestRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .Include(r => r.Survey)
             .Skip((parameters.Page - 1) * parameters.PageSize)
             .Take(parameters.PageSize)
             .Select(r => new RequestListItemDto(
@@ -150,7 +153,8 @@ public sealed class RequestRepository : IRequestRepository
                 r.Priority.ToString(),
                 r.Category.ToString(),
                 r.EstimatedCost,
-                r.Deadline))
+                r.Deadline,
+                r.Survey != null))
             .ToListAsync(cancellationToken);
 
         return PagedResult<RequestListItemDto>.Create(
@@ -200,6 +204,7 @@ public sealed class RequestRepository : IRequestRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
+            .Include(r => r.Survey)
             .Skip((parameters.Page - 1) * parameters.PageSize)
             .Take(parameters.PageSize)
             .Select(r => new RequestListItemDto(
@@ -210,7 +215,8 @@ public sealed class RequestRepository : IRequestRepository
                 r.Priority.ToString(),
                 r.Category.ToString(),
                 r.EstimatedCost,
-                r.Deadline))
+                r.Deadline,
+                r.Survey != null))
             .ToListAsync(cancellationToken);
 
         return PagedResult<RequestListItemDto>.Create(
