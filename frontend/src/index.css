@@ -73,6 +73,15 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
 }
+/* EY brand colors */
+:root {
+  --ey-yellow: #FFE600;
+  --ey-dark: #2E2E38;
+  --ey-gray: #3a3a48;
+  --ey-white: #FFFFFF;
+  --ey-red: #E54B4B;
+  --ey-green: #4CAF50;
+}
 
 @theme inline {
     --font-sans: 'Figtree Variable', sans-serif;
@@ -142,3 +151,49 @@
 .shake {
   animation: shake 0.45s ease-in-out;
 }
+
+/* Sonner toast customizations – EY style */
+[data-sonner-toast] {
+  font-family: var(--font-sans);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  gap: 0.75rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Background colors based on toast type */
+[data-sonner-toast][data-type="success"] {
+  background-color: var(--ey-green);
+  color: white;
+  border: none;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: var(--ey-red);
+  color: white;
+  border: none;
+}
+
+[data-sonner-toast][data-type="info"] {
+  background-color: var(--ey-dark);
+  color: var(--ey-white);
+  border-left: 4px solid var(--ey-yellow);
+}
+
+[data-sonner-toast][data-type="info"] svg {
+  color: var(--ey-yellow);
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-left: 4px solid #f59e0b;
+}
+
+/* For dark theme toasts (if needed) */
+.dark [data-sonner-toast][data-type="info"] {
+  background-color: var(--ey-gray);
+  border-left-color: var(--ey-yellow);
+}
+
