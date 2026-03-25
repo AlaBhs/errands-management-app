@@ -7,14 +7,14 @@ import { isApiError } from "@/shared/api/client";
 import { formatDate } from "@/shared/utils/date";
 import { StatusBadge } from "@/shared/components/StatusBadge";
 import { PriorityBadge } from "@/shared/components/PriorityBadge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 import { useViewMode } from "../hooks/useViewMode";
 import {
   RequestFilters,
   type RequestFiltersValue,
-} from "../components/RequestFilters";
-import { RequestCard } from "../components/RequestCard";
-import { RequestListSkeleton } from "../components/RequestListSkeleton";
+} from "../components/common/RequestFilters";
+import { RequestCard } from "../components/common/RequestCard";
+import { RequestListSkeleton } from "../components/skeletons/RequestListSkeleton";
 import type { PriorityLevel } from "../types";
 
 const PAGE_SIZE = 10;

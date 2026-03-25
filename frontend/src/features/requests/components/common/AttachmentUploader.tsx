@@ -1,6 +1,6 @@
 import { useRef, useState }         from "react";
 import { Upload, X, File, Loader2 } from "lucide-react";
-import { useUploadAttachment }       from "../hooks/";
+import { useUploadAttachment }       from "../../hooks";
 
 interface AttachmentUploaderProps {
   requestId: string;

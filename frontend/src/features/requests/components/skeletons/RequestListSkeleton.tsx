@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ViewMode } from "../hooks/useViewMode";
+import type { ViewMode } from "../../hooks/useViewMode";
 
 export function RequestListSkeleton({ mode }: { mode: ViewMode }) {
   if (mode === "card") {

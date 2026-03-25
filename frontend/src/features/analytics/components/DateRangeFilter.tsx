@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 import type { AnalyticsFilter } from "../types/analytics.types";
 
 interface DateRangeFilterProps {

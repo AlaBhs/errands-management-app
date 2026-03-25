@@ -26,4 +26,4 @@ export * from "./hooks/useRequestMutations";
 export { StatusBadge } from "../../shared/components/StatusBadge";
 export { PriorityBadge } from "../../shared/components/PriorityBadge";
 export { CategoryBadge } from "../../shared/components/CategoryBadge";
-export { RequestActions } from "./components/RequestActions";
+export { RequestActions } from "./components/common/RequestActions";

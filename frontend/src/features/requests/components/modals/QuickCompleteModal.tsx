@@ -1,7 +1,7 @@
 import { useRef, useState }              from "react";
 import { X, DollarSign, FileText,
          Camera, Loader2 }               from "lucide-react";
-import { useCompleteRequest }            from "../hooks/useRequestMutations";
+import { useCompleteRequest }            from "../../hooks/useRequestMutations";
 import { isApiError }                    from "@/shared/api/client";
 
 interface QuickCompleteModalProps {

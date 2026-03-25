@@ -3,12 +3,12 @@ import { Calendar, Tag, Zap, Play, ArrowRight, Clock } from "lucide-react";
 import { StatusBadge } from "@/shared/components/StatusBadge";
 import { PriorityBadge } from "@/shared/components/PriorityBadge";
 import { formatDate } from "@/shared/utils/date";
-import { useStartRequest } from "../hooks/useRequestMutations";
-import { cn } from "@/lib/utils";
-import type { RequestListItemDto } from "../types";
-import type { PriorityLevel } from "../types";
+import { useStartRequest } from "../../hooks/useRequestMutations";
+import { cn } from "@/shared/utils/utils";
+import type { RequestListItemDto } from "../../types";
+import type { PriorityLevel } from "../../types";
 import { useState } from "react";
-import { QuickCompleteModal } from "./QuickCompleteModal";
+import { QuickCompleteModal } from "../modals/QuickCompleteModal";
 
 const PRIORITY_BORDER: Record<PriorityLevel, string> = {
   Low: "border-l-gray-300",

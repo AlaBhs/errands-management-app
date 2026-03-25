@@ -3,8 +3,8 @@ import { Calendar, DollarSign, Tag, ArrowRight } from "lucide-react";
 import { StatusBadge }        from "@/shared/components/StatusBadge";
 import { PriorityBadge }      from "@/shared/components/PriorityBadge";
 import { formatDate }         from "@/shared/utils/date";
-import type { RequestListItemDto } from "../types";
-import type { PriorityLevel }      from "../types";
+import type { RequestListItemDto } from "../../types";
+import type { PriorityLevel }      from "../../types";
 
 const PRIORITY_BORDER: Record<PriorityLevel, string> = {
   Low:    "border-l-gray-300",

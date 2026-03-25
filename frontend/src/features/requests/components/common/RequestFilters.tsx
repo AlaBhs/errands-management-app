@@ -1,7 +1,7 @@
 import { X, Search, SlidersHorizontal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { RequestCategory, RequestStatus, type SortField } from "../types";
+import { cn } from "@/shared/utils/utils";
+import { RequestCategory, RequestStatus, type SortField } from "../../types";
 
 export interface RequestFiltersValue {
   search: string;

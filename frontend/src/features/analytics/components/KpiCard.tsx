@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 import { useAnimatedCounter } from "../hooks/useAnimatedCounter";
 
 interface KpiCardProps {

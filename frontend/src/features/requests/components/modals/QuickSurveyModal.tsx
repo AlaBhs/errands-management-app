@@ -1,9 +1,9 @@
 import { useState }              from "react";
 import { X, Star, MessageSquare,
          Loader2 }               from "lucide-react";
-import { useSubmitSurvey }       from "../hooks/useRequestMutations";
+import { useSubmitSurvey }       from "../../hooks/useRequestMutations";
 import { isApiError }            from "@/shared/api/client";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/utils/utils";
 
 interface QuickSurveyModalProps {
   requestId: string;

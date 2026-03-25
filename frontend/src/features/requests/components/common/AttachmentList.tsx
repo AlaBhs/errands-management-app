@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { File, ImageIcon, Trash2, Loader2, X, Download } from "lucide-react";
 import { formatDateTime } from "@/shared/utils/date";
-import { useDeleteAttachment } from "../hooks/useAttachments";
-import type { AttachmentDto } from "../types/request.types";
-import { AttachmentType } from "../types";
+import { useDeleteAttachment } from "../../hooks/useAttachments";
+import type { AttachmentDto } from "../../types/request.types";
+import { AttachmentType } from "../../types";
 
 interface AttachmentListProps {
   requestId: string;
