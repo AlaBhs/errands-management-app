@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useRequest } from "../hooks/useRequests";
 import { RequestActions } from "../components/common/RequestActions";
 import { AttachmentList } from "../components/common/AttachmentList";
@@ -30,6 +30,7 @@ import {
   FileText,
   ChevronLeft,
   Paperclip,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 
@@ -95,6 +96,7 @@ export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading, isError, error } = useRequest(id!);
   const role = useAuthStore((s) => s.user?.role);
+  const navigate = useNavigate();
 
   const backLink =
     role === UserRole.Courier
@@ -364,6 +366,38 @@ export function RequestDetailsPage() {
 
         {/* ── Right column ────────────────────────────────────────── */}
         <div className="space-y-6">
+          {/* Resubmit panel — Cancelled requests, Collaborator only */}
+          {request.status === "Cancelled" && role === UserRole.Collaborator && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <RotateCcw className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">
+                    This request was cancelled
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    You can resubmit it with the same details — review and
+                    adjust before sending.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() =>
+                  navigate("/requests/new", {
+                    state: { resubmitFrom: request },
+                  })
+                }
+                className="w-full inline-flex items-center justify-center gap-2
+                             rounded-lg border border-amber-300 bg-white px-4 py-2
+                             text-sm font-medium text-amber-800 shadow-sm
+                             hover:bg-amber-100 transition-colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Resubmit this Request
+              </button>
+            </div>
+          )}
+
           {/* Actions */}
           <RequestActions request={request} />
 

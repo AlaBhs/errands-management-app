@@ -17,7 +17,6 @@ export function useCreateRequest() {
     mutationFn: (payload: CreateRequestPayload) => requestsApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestKeys.all });
-      toast.success("Request submitted successfully.");
     },
     onError: (err) => {
       toast.error(isApiError(err) ? err.message : "Failed to submit request.");

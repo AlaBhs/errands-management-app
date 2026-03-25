@@ -1,17 +1,32 @@
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileIcon, Upload, X } from "lucide-react";
+import { FileIcon, Upload, X, Loader2, RotateCcw } from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { FormSection } from "@/shared/components/FormSection";
+import { FieldGroup } from "@/shared/components/FieldGroup";
 import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
+import type { RequestDetailsDto } from "../types";
 
-const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const PRIORITY_LEVELS = ["Low", "Normal", "High", "Urgent"] as const;
+
+const CATEGORY_OPTIONS: { value: RequestCategory; label: string }[] = [
+  { value: RequestCategory.OfficeSupplies, label: "Office Supplies" },
+  { value: RequestCategory.ITEquipment, label: "IT Equipment" },
+  { value: RequestCategory.Travel, label: "Travel" },
+  { value: RequestCategory.Facilities, label: "Facilities" },
+  { value: RequestCategory.Other, label: "Other" },
+];
+
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -22,10 +37,20 @@ const ALLOWED_TYPES = [
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_FILES = 5;
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+const minDeadlineDate = (): string => {
+  const d = new Date();
+  d.setHours(d.getHours() + 24);
+  return d.toISOString().split("T")[0];
+};
+
+// ── Schema ────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -49,10 +74,7 @@ const schema = z.object({
     .optional()
     .refine((val) => {
       if (!val) return true;
-      const selected = new Date(val);
-      const minDate = new Date();
-      minDate.setHours(minDate.getHours() + 24);
-      return selected >= minDate;
+      return new Date(val) >= new Date(minDeadlineDate());
     }, "Deadline must be at least 24 hours from now."),
   estimatedCost: z
     .string()
@@ -72,15 +94,66 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+// ── Prefill helper — maps RequestDetailsDto → FormValues ──────────────────────
+
+function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
+  if (!prefill) return { priority: 1 };
+
+  const priorityMap: Record<string, number> = {
+    Low: 0,
+    Normal: 1,
+    High: 2,
+    Urgent: 3,
+  };
+
+  return {
+    title: prefill.title,
+    description: prefill.description,
+    priority: priorityMap[prefill.priority] ?? 1,
+    category: prefill.category,
+    contactPerson: prefill.contactPerson ?? "",
+    contactPhone: prefill.contactPhone ?? "",
+    comment: prefill.comment ?? "",
+    estimatedCost:
+      prefill.estimatedCost != null ? String(prefill.estimatedCost) : "",
+    deliveryAddress: {
+      street: prefill.deliveryAddress.street,
+      city: prefill.deliveryAddress.city,
+      postalCode: prefill.deliveryAddress.postalCode,
+      country: prefill.deliveryAddress.country,
+      note: prefill.deliveryAddress.note ?? "",
+    },
+    // deadline intentionally omitted — old deadline is likely stale
+  };
+}
+
+// ── Shared input className ────────────────────────────────────────────────────
+
+const inputCls =
+  "w-full px-4 py-2 border border-border rounded-lg text-sm " +
+  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "placeholder:text-muted-foreground";
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function CreateRequestPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /** Router-state prefill: set by the Resubmit button in MyRequestsPage */
+  const resubmitSource = location.state?.resubmitFrom as
+    | RequestDetailsDto
+    | undefined;
+  const isResubmit = Boolean(resubmitSource);
+
   const { mutate, isPending, isError, error } = useCreateRequest();
+
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
-  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
+
   const { mutateAsync: uploadFiles, isPending: isUploadingFiles } =
-    useUploadAttachments(createdRequestId);
+    useUploadAttachments();
 
   const {
     register,
@@ -89,8 +162,10 @@ export function CreateRequestPage() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { priority: 1 },
+    defaultValues: buildDefaultValues(resubmitSource),
   });
+
+  // ── File handling ──────────────────────────────────────────────────────────
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type))
@@ -125,6 +200,8 @@ export function CreateRequestPage() {
     });
   };
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
   const onSubmit = (values: FormValues) => {
     mutate(
       {
@@ -149,11 +226,9 @@ export function CreateRequestPage() {
             return;
           }
 
-          setCreatedRequestId(requestId);
-
           if (selectedFiles.length > 0) {
             try {
-              await uploadFiles(selectedFiles);
+              await uploadFiles({ requestId, files: selectedFiles });
               toast.success(
                 `Request submitted with ${selectedFiles.length} attachment${selectedFiles.length > 1 ? "s" : ""}.`,
               );
@@ -176,15 +251,26 @@ export function CreateRequestPage() {
   const isSubmitting = isPending || isUploadingFiles;
   const canAddMore = selectedFiles.length < MAX_FILES;
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl text-[#2E2E38] mb-1">Create New Request</h1>
-        <p className="text-gray-600">
-          Submit a new errand request for processing
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title={isResubmit ? "Resubmit Request" : "Create New Request"}
+        subtitle={
+          isResubmit
+            ? `Pre-filled from "${resubmitSource!.title}" — review and resubmit.`
+            : "Submit a new errand request for processing."
+        }
+        actions={
+          isResubmit ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-200">
+              <RotateCcw className="h-3 w-3" />
+              Resubmitting cancelled request
+            </span>
+          ) : undefined
+        }
+      />
 
       {isError && (
         <ErrorMessage
@@ -192,310 +278,252 @@ export function CreateRequestPage() {
         />
       )}
 
-      {/* Form Card */}
-      <div className="bg-white rounded-lg border border-border p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title */}
-          <div>
-            <label
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {/* ── General Info ─────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl border border-border p-6 mb-4 space-y-5">
+          <FormSection
+            title="General Info"
+            description="Describe your request in detail so it can be processed accurately."
+          >
+            <FieldGroup
+              label="Request Title"
               htmlFor="title"
-              className="block text-sm font-medium text-[#2E2E38] mb-2"
+              error={errors.title?.message}
             >
-              Request Title *
-            </label>
-            <input
-              id="title"
-              type="text"
-              {...register("title")}
-              placeholder="Enter a descriptive title"
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-            />
-            {errors.title && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.title.message}
-              </p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-[#2E2E38] mb-2"
-            >
-              Description *
-            </label>
-            <textarea
-              id="description"
-              {...register("description")}
-              placeholder="Provide detailed information about your request"
-              rows={5}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38] resize-none"
-            />
-            {errors.description && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-          {/* Comment */}
-          <div>
-            <label
-              htmlFor="comment"
-              className="block text-sm font-medium text-[#2E2E38] mb-2"
-            >
-              Additional Comments
-              <span className="ml-1 text-xs text-gray-400">(optional)</span>
-            </label>
-            <textarea
-              id="comment"
-              {...register("comment")}
-              rows={3}
-              placeholder="Any additional instructions for the courier — access codes, schedule constraints, special handling..."
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38] resize-none"
-            />
-            {errors.comment && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.comment.message}
-              </p>
-            )}
-          </div>
-          {/* Category + Deadline row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-[#2E2E38] mb-2">
-                Category *
-              </label>
-              <select
-                {...register("category")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              >
-                <option value="">Select a category...</option>
-                <option value={RequestCategory.OfficeSupplies}>
-                  Office Supplies
-                </option>
-                <option value={RequestCategory.ITEquipment}>
-                  IT Equipment
-                </option>
-                <option value={RequestCategory.Travel}>Travel</option>
-                <option value={RequestCategory.Facilities}>Facilities</option>
-                <option value={RequestCategory.Other}>Other</option>
-              </select>
-              {errors.category && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.category.message}
-                </p>
-              )}
-            </div>
-
-            {/* Deadline */}
-            <div>
-              <label
-                htmlFor="deadline"
-                className="block text-sm font-medium text-[#2E2E38] mb-2"
-              >
-                Due Date
-              </label>
               <input
-                id="deadline"
-                type="date"
-                min={(() => {
-                  const d = new Date();
-                  d.setHours(d.getHours() + 24);
-                  return d.toISOString().split("T")[0];
-                })()}
-                {...register("deadline")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deadline && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deadline.message}
-                </p>
-              )}
-            </div>
-          </div>
-          {/* Contact Person + Phone */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="contactPerson"
-                className="block text-sm font-medium text-[#2E2E38] mb-2"
-              >
-                Contact Person (Vis-à-vis)
-                <span className="ml-1 text-xs text-gray-400">(optional)</span>
-              </label>
-              <input
-                id="contactPerson"
+                id="title"
                 type="text"
-                {...register("contactPerson")}
-                placeholder="Name of person to meet"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                {...register("title")}
+                placeholder="e.g. Deliver office supplies to floor 3"
+                className={inputCls}
               />
-              {errors.contactPerson && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.contactPerson.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="contactPhone"
-                className="block text-sm font-medium text-[#2E2E38] mb-2"
-              >
-                Contact Phone
-                <span className="ml-1 text-xs text-gray-400">(optional)</span>
-              </label>
-              <input
-                id="contactPhone"
-                type="tel"
-                {...register("contactPhone")}
-                placeholder="+216 XX XXX XXX"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.contactPhone && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.contactPhone.message}
-                </p>
-              )}
-            </div>
-          </div>
-          {/* Priority */}
-          <div>
-            <label className="block text-sm font-medium text-[#2E2E38] mb-3">
-              Priority Level *
-            </label>
-            <Controller
-              name="priority"
-              control={control}
-              render={({ field }) => (
-                <div className="flex gap-4">
-                  {priorityLevels.map((priority, index) => (
-                    <label
-                      key={priority}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        value={index}
-                        checked={field.value === index}
-                        onChange={() => field.onChange(index)}
-                        className="w-4 h-4 text-[#2E2E38] focus:ring-[#2E2E38]"
-                      />
-                      <span className="text-sm text-gray-700">{priority}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            />
-            {errors.priority && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.priority.message}
-              </p>
-            )}
-          </div>
+            </FieldGroup>
 
-          {/* Estimated Cost */}
-          <div>
-            <label
-              htmlFor="estimatedCost"
-              className="block text-sm font-medium text-[#2E2E38] mb-2"
+            <FieldGroup
+              label="Description"
+              htmlFor="description"
+              error={errors.description?.message}
             >
-              Estimated Cost
-              <span className="ml-1 text-xs text-gray-400">(optional)</span>
-            </label>
-            <input
-              id="estimatedCost"
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("estimatedCost")}
-              placeholder="0.00"
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-            />
-            {errors.estimatedCost && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.estimatedCost.message}
-              </p>
-            )}
+              <textarea
+                id="description"
+                {...register("description")}
+                placeholder="Provide detailed information about what needs to be done..."
+                rows={4}
+                className={inputCls + " resize-none"}
+              />
+            </FieldGroup>
+
+            <FieldGroup
+              label="Additional Comments"
+              htmlFor="comment"
+              optional
+              error={errors.comment?.message}
+            >
+              <textarea
+                id="comment"
+                {...register("comment")}
+                rows={2}
+                placeholder="Access codes, schedule constraints, special handling instructions..."
+                className={inputCls + " resize-none"}
+              />
+            </FieldGroup>
+          </FormSection>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6 space-y-5">
+          {/* ── Classification ───────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white rounded-xl border border-border p-6 mb-5">
+            <FormSection
+              title="Classification"
+              description="Helps route your request to the right team."
+            >
+              <FieldGroup label="Category" error={errors.category?.message}>
+                <select {...register("category")} className={inputCls}>
+                  <option value="" disabled>
+                    Select a category…
+                  </option>
+                  {CATEGORY_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </FieldGroup>
+
+              <FieldGroup
+                label="Due Date"
+                htmlFor="deadline"
+                optional
+                error={errors.deadline?.message}
+              >
+                <input
+                  id="deadline"
+                  type="date"
+                  min={minDeadlineDate()}
+                  {...register("deadline")}
+                  className={inputCls}
+                />
+              </FieldGroup>
+
+              <FieldGroup
+                label="Priority Level"
+                error={errors.priority?.message}
+              >
+                <Controller
+                  name="priority"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      value={field.value}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value, 10))
+                      }
+                      className={inputCls}
+                    >
+                      {PRIORITY_LEVELS.map((label, idx) => (
+                        <option key={label} value={idx}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+              </FieldGroup>
+
+              <FieldGroup
+                label="Estimated Cost"
+                htmlFor="estimatedCost"
+                optional
+                error={errors.estimatedCost?.message}
+              >
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+                    $
+                  </span>
+                  <input
+                    id="estimatedCost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register("estimatedCost")}
+                    placeholder="0.00"
+                    className={`${inputCls} pl-7`}
+                  />
+                </div>
+              </FieldGroup>
+            </FormSection>
           </div>
 
-          {/* Delivery Address */}
-          <fieldset className="space-y-4 border-t border-border pt-4">
-            <legend className="text-sm font-medium text-[#2E2E38] px-2 bg-white">
-              Delivery Address
-            </legend>
+          {/* ── Contact & Address ────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white rounded-xl border border-border p-6 mb-5">
+            <FormSection
+              title="Contact & Address"
+              description="Who to meet on-site and where to deliver."
+            >
+              {/* Contact row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <FieldGroup
+                  label="Contact Person"
+                  htmlFor="contactPerson"
+                  optional
+                  error={errors.contactPerson?.message}
+                >
+                  <input
+                    id="contactPerson"
+                    type="text"
+                    {...register("contactPerson")}
+                    placeholder="Name of person to meet on-site"
+                    className={inputCls}
+                  />
+                </FieldGroup>
 
-            <div>
-              <input
-                {...register("deliveryAddress.street")}
-                placeholder="Street *"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deliveryAddress?.street && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deliveryAddress.street.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <input
-                  {...register("deliveryAddress.city")}
-                  placeholder="City *"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.deliveryAddress?.city && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.deliveryAddress.city.message}
-                  </p>
-                )}
+                <FieldGroup
+                  label="Contact Phone"
+                  htmlFor="contactPhone"
+                  optional
+                  error={errors.contactPhone?.message}
+                >
+                  <input
+                    id="contactPhone"
+                    type="tel"
+                    {...register("contactPhone")}
+                    placeholder="+216 XX XXX XXX"
+                    className={inputCls}
+                  />
+                </FieldGroup>
               </div>
-              <div>
-                <input
-                  {...register("deliveryAddress.postalCode")}
-                  placeholder="Postal Code *"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.deliveryAddress?.postalCode && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.deliveryAddress.postalCode.message}
-                  </p>
-                )}
+
+              {/* Address grid – 2 columns, fields: City, Postal Code, Country, Street */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FieldGroup
+                  label="City"
+                  htmlFor="city"
+                  error={errors.deliveryAddress?.city?.message}
+                >
+                  <input
+                    id="city"
+                    {...register("deliveryAddress.city")}
+                    placeholder="City"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Postal Code"
+                  htmlFor="postalCode"
+                  error={errors.deliveryAddress?.postalCode?.message}
+                >
+                  <input
+                    id="postalCode"
+                    {...register("deliveryAddress.postalCode")}
+                    placeholder="Postal code"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Country"
+                  htmlFor="country"
+                  error={errors.deliveryAddress?.country?.message}
+                >
+                  <input
+                    id="country"
+                    {...register("deliveryAddress.country")}
+                    placeholder="Country"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Street"
+                  htmlFor="street"
+                  error={errors.deliveryAddress?.street?.message}
+                >
+                  <input
+                    id="street"
+                    {...register("deliveryAddress.street")}
+                    placeholder="123 Main Street"
+                    className={inputCls}
+                  />
+                </FieldGroup>
               </div>
-            </div>
 
-            <div>
-              <input
-                {...register("deliveryAddress.country")}
-                placeholder="Country *"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deliveryAddress?.country && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deliveryAddress.country.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <input
-                {...register("deliveryAddress.note")}
-                placeholder="Note (optional)"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-            </div>
-          </fieldset>
-
-          {/* ── Attachments ── */}
-          <div>
-            <label className="block text-sm font-medium text-[#2E2E38] mb-2">
-              Attachments
-              <span className="ml-1 text-xs text-gray-400">(optional)</span>
-            </label>
-
-            {/* Drop zone */}
+              <FieldGroup label="Address Note" htmlFor="addressNote" optional>
+                <input
+                  id="addressNote"
+                  {...register("deliveryAddress.note")}
+                  placeholder="Floor, building, landmark…"
+                  className={inputCls}
+                />
+              </FieldGroup>
+            </FormSection>
+          </div>
+        </div>
+        {/* ── Attachments ──────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl border border-border p-6 mb-4 space-y-5">
+          <FormSection
+            title="Attachments"
+            description="Images or PDF documents up to 10 MB each."
+          >
             <div
               onClick={() => canAddMore && inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
@@ -503,14 +531,12 @@ export function CreateRequestPage() {
                 e.preventDefault();
                 if (canAddMore) addFiles(e.dataTransfer.files);
               }}
-              className={`border-2 border-dashed rounded-lg p-8 text-center
-                          transition-colors
-                          ${
-                            canAddMore
-                              ? "cursor-pointer hover:border-[#2E2E38]"
-                              : "cursor-not-allowed opacity-50"
-                          }
-                          border-border`}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                ${
+                  canAddMore
+                    ? "cursor-pointer hover:border-[#2E2E38] hover:bg-gray-50"
+                    : "cursor-not-allowed opacity-50"
+                } border-border`}
             >
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600 mb-1">
@@ -519,7 +545,7 @@ export function CreateRequestPage() {
                 </span>{" "}
                 or drag and drop
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Images or PDF · Max 10 MB · Up to {MAX_FILES} files
               </p>
               {!canAddMore && (
@@ -538,36 +564,32 @@ export function CreateRequestPage() {
               onChange={(e) => e.target.files && addFiles(e.target.files)}
             />
 
-            {/* Validation errors for rejected files */}
             {Object.entries(fileErrors).map(([name, err]) => (
-              <p key={name} className="mt-1 text-xs text-red-500">
+              <p key={name} className="text-xs text-red-500">
                 {name}: {err}
               </p>
             ))}
 
-            {/* Selected file list */}
             {selectedFiles.length > 0 && (
-              <ul className="mt-3 space-y-2">
+              <ul className="space-y-2">
                 {selectedFiles.map((file) => (
                   <li
                     key={file.name}
-                    className="flex items-center gap-3 rounded-lg border
-                               border-border bg-white px-3 py-2 text-sm"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-gray-50 px-3 py-2 text-sm"
                   >
                     <FileIcon className="w-4 h-4 shrink-0 text-gray-400" />
                     <div className="flex-1 min-w-0">
                       <p className="truncate font-medium text-gray-700">
                         {file.name}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {formatBytes(file.size)}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(file.name)}
-                      className="shrink-0 text-gray-400
-                                 hover:text-red-500 transition-colors"
+                      className="shrink-0 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -575,46 +597,45 @@ export function CreateRequestPage() {
                 ))}
               </ul>
             )}
-          </div>
+          </FormSection>
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => navigate("/requests/mine")}
-              className="px-6 py-2 border border-border rounded-lg
-                         text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg
-                         hover:bg-[#1a1a24] transition-colors flex items-center
-                         gap-2 disabled:opacity-50"
-            >
-              {isSubmitting
-                ? isUploadingFiles
-                  ? `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""}...`
-                  : "Submitting..."
-                : "Submit Request"}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Help Section */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Need Help?</h3>
-        <p className="text-sm text-blue-700">
-          For urgent requests, please contact the Facilities team at{" "}
-          <a href="mailto:facilities@ey.com" className="underline">
-            facilities@ey.com
-          </a>{" "}
-          or call ext. 2345
-        </p>
-      </div>
+        {/* ── Form Actions ─────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-end gap-3 py-4 border-t border-border">
+          <button
+            type="button"
+            onClick={() => navigate("/requests/mine")}
+            disabled={isSubmitting}
+            className="px-6 py-2 border border-border rounded-lg text-sm text-gray-700
+                       hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-[#2E2E38] text-white
+                       rounded-lg text-sm hover:bg-[#1a1a24] transition-colors
+                       disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {isUploadingFiles
+                  ? `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""}…`
+                  : "Submitting…"}
+              </>
+            ) : isResubmit ? (
+              <>
+                <RotateCcw className="h-4 w-4" />
+                Resubmit Request
+              </>
+            ) : (
+              "Submit Request"
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

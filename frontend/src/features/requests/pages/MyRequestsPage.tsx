@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Hourglass,
+  RotateCcw,
 } from "lucide-react";
 import { useMyRequests } from "../hooks";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
@@ -396,7 +397,6 @@ function CollaboratorRequestCard({ request }: { request: RequestListItemDto }) {
           "bg-card p-5 shadow-sm transition-all duration-150 cursor-pointer",
           "hover:-translate-y-0.5 hover:shadow-md",
           PRIORITY_BORDER[request.priority] ?? "border-l-gray-300",
-          isCancelled && "opacity-60 grayscale",
         )}
       >
         {/* Survey prompt banner */}
@@ -443,31 +443,49 @@ function CollaboratorRequestCard({ request }: { request: RequestListItemDto }) {
         </div>
 
         {/* Footer */}
-        <div
-          className={cn(
-            "flex items-center justify-between border-t border-border pt-3 mt-auto",
-            "text-xs",
-          )}
-        >
-          <span
+        {isCancelled ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/requests/${request.id}`);
+            }}
+            className="mt-auto flex w-full items-center justify-center gap-1.5
+                       rounded-lg border border-amber-200 bg-amber-50 py-2
+                       text-xs font-medium text-amber-800
+                       hover:bg-amber-100 transition-colors"
+          >
+            <RotateCcw className="h-3 w-3" />
+            View &amp; Resubmit
+          </button>
+        ) : (
+          <div
             className={cn(
-              "flex items-center gap-1",
-              isOverdue ? "text-red-500 font-medium" : "text-muted-foreground",
+              "flex items-center justify-between border-t border-border pt-3 mt-auto",
+              "text-xs",
             )}
           >
-            <Clock className="h-3.5 w-3.5" />
-            {isOverdue
-              ? `Overdue — ${formatDate(request.deadline!)}`
-              : request.deadline
-                ? formatDate(request.deadline)
-                : "No deadline"}
-          </span>
-          {request.estimatedCost != null && (
-            <span className="text-muted-foreground">
-              ${request.estimatedCost}
+            <span
+              className={cn(
+                "flex items-center gap-1",
+                isOverdue
+                  ? "text-red-500 font-medium"
+                  : "text-muted-foreground",
+              )}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              {isOverdue
+                ? `Overdue — ${formatDate(request.deadline!)}`
+                : request.deadline
+                  ? formatDate(request.deadline)
+                  : "No deadline"}
             </span>
-          )}
-        </div>
+            {request.estimatedCost != null && (
+              <span className="text-muted-foreground">
+                ${request.estimatedCost}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       {/* Survey modal */}
       {showSurveyModal && (
@@ -490,6 +508,7 @@ function CollaboratorTableRow({
   request: RequestListItemDto;
   onClick: () => void;
 }) {
+  const navigate = useNavigate();
   const isCompleted = request.status === "Completed";
   const isCancelled = request.status === "Cancelled";
   const needsSurvey = isCompleted && !request.hasSurvey;
@@ -557,6 +576,21 @@ function CollaboratorTableRow({
             <Star className="h-2.5 w-2.5" />
             Rate
           </span>
+        )}
+        {isCancelled && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/requests/${request.id}`);
+            }}
+            className="inline-flex items-center gap-1 rounded-full
+                       bg-amber-50 border border-amber-200 px-2 py-0.5
+                       text-[10px] font-semibold text-amber-700
+                       hover:bg-amber-100 transition-colors"
+          >
+            <RotateCcw className="h-2.5 w-2.5" />
+            Resubmit
+          </button>
         )}
       </td>
     </tr>

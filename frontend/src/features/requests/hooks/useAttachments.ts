@@ -21,22 +21,25 @@ export const useUploadAttachment = (requestId: string) => {
   });
 };
 
-export const useUploadAttachments = (requestId: string | null) => {
+export const useUploadAttachments = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (files: File[]) => {
-      if (!requestId) throw new Error("No request ID");
+    mutationFn: async ({
+      requestId,
+      files,
+    }: {
+      requestId: string;
+      files: File[];
+    }) => {
       for (const file of files) {
         await attachmentsApi.upload(requestId, file);
       }
     },
-    onSuccess: () => {
-      if (requestId) {
-        queryClient.invalidateQueries({
-          queryKey: requestKeys.detail(requestId),
-        });
-      }
+    onSuccess: (_data, { requestId }) => {
+      queryClient.invalidateQueries({
+        queryKey: requestKeys.detail(requestId),
+      });
     },
   });
 };
