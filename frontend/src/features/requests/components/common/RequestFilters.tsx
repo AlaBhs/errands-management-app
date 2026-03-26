@@ -19,7 +19,7 @@ interface RequestFiltersProps {
   onChange: (next: Partial<RequestFiltersValue>) => void;
   onReset: () => void;
   statusOptions?: { label: string; value: RequestStatus }[];
-  role: "admin" | "collaborator" | "requester";
+  role: "admin" | "collaborator" | "courier";
 }
 
 const STATUS_OPTIONS: { label: string; value: RequestStatus }[] = [
@@ -201,7 +201,7 @@ export function RequestFilters({
               </label>
             </div>
           </>
-        ) : (
+        ) : role == "admin" ? (
           <>
             <Separator orientation="vertical" className="hidden h-5 sm:block" />
             <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export function RequestFilters({
               </label>
             </div>
           </>
-        )}
+        ) : null}
 
         <Separator orientation="vertical" className="hidden h-5 sm:block" />
 

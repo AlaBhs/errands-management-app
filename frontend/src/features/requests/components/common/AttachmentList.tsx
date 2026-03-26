@@ -16,7 +16,6 @@ const API_BASE =
 
 const getFileUrl = (uri: string) =>
   `${API_BASE}${uri.startsWith("/") ? uri : `/${uri}`}`;
-console.log("API_BASE:", API_BASE);
 const isImage = (contentType: string) => contentType.startsWith("image/");
 
 export function AttachmentList({
@@ -24,21 +23,22 @@ export function AttachmentList({
   attachments,
   canDelete,
 }: AttachmentListProps) {
-  const { mutate: remove, isPending } = useDeleteAttachment(requestId);
+  const { mutate: remove } = useDeleteAttachment(requestId);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   if (attachments.length === 0)
     return <p className="text-sm text-gray-400 italic">No attachments.</p>;
 
   const handleDelete = (id: string) => {
+    setConfirmingId(null);
     setDeletingId(id);
     remove(id, { onSettled: () => setDeletingId(null) });
   };
 
   const handleOpen = (att: AttachmentDto) => {
     const url = getFileUrl(att.uri);
-    console.log("Opening file at:", url);
     if (isImage(att.contentType)) {
       // Open image in lightbox
       setLightboxUrl(url);
@@ -54,7 +54,6 @@ export function AttachmentList({
         {attachments.map((att) => {
           const isImg = isImage(att.contentType);
           const isDischarge = att.type === AttachmentType.DischargePhoto;
-          const isDeleting = deletingId === att.id;
 
           return (
             <li
@@ -106,21 +105,47 @@ export function AttachmentList({
               </a>
 
               {/* Delete */}
-              {canDelete && (
-                <button
-                  type="button"
-                  disabled={isDeleting || isPending}
-                  onClick={() => handleDelete(att.id)}
-                  className="shrink-0 text-gray-400 hover:text-red-500
-                             transition-colors disabled:opacity-40"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
-              )}
+              {canDelete &&
+                (confirmingId === att.id ? (
+                  // Inline confirmation
+                  <div
+                    className="flex items-center gap-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-xs text-gray-500">Delete?</span>
+                    <button
+                      onClick={() => handleDelete(att.id)}
+                      disabled={!!deletingId}
+                      className="rounded px-2 py-0.5 text-xs font-medium
+                   bg-red-100 text-red-600 hover:bg-red-200
+                   transition-colors disabled:opacity-40"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={() => setConfirmingId(null)}
+                      className="rounded px-2 py-0.5 text-xs font-medium
+                   bg-gray-100 text-gray-600 hover:bg-gray-200
+                   transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!!deletingId}
+                    onClick={() => setConfirmingId(att.id)}
+                    className="shrink-0 text-gray-400 hover:text-red-500
+                 transition-colors disabled:opacity-40"
+                  >
+                    {deletingId === att.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                ))}
             </li>
           );
         })}

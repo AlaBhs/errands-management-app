@@ -219,6 +219,7 @@ export function MySchedulePage() {
         onChange={handleFilterChange}
         onReset={handleReset}
         statusOptions={COURIER_STATUS_OPTIONS}
+        role={"courier"}
       />
 
       {/* ── Error ───────────────────────────────────────────────────── */}
