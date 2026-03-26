@@ -1,63 +1,197 @@
-import { useRequests, useMyRequests, useMyAssignments } from '@/features/requests';
-import { RequestStatus } from '@/features/requests/types/request.enums';
+import { useAnalyticsMyCourierPerformance } from "@/features/analytics/hooks/useAnalytics";
 import {
-  FileText, Clock, CheckCircle, TruckIcon,
-  AlertTriangle, ClipboardList,
-} from 'lucide-react';
+  useRequests,
+  useMyRequests,
+  useMyAssignments,
+} from "@/features/requests";
+import { RequestStatus } from "@/features/requests/types/request.enums";
+
+const last30Days = new Date(Date.now() - 30 * 86_400_000)
+  .toISOString()
+  .split("T")[0];
+const today = new Date().toISOString().split("T")[0];
+const now = Date.now();
 
 export function useAdminDashboardStats() {
-  const { data: all }        = useRequests({ page: 1, pageSize: 1 });
-  const { data: pending }    = useRequests({ page: 1, pageSize: 1, status: RequestStatus.Pending });
-  const { data: inProgress } = useRequests({ page: 1, pageSize: 1, status: RequestStatus.InProgress });
-  const { data: completed }  = useRequests({ page: 1, pageSize: 1, status: RequestStatus.Completed });
-  const { data: recent, isLoading } = useRequests({ page: 1, pageSize: 5 });
+  const { data: pending, isLoading: l2 } = useRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Pending,
+    from: last30Days,
+    to: today,
+  });
+  const { data: assigned, isLoading: l3 } = useRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Assigned,
+    from: last30Days,
+    to: today,
+  });
+  const { data: inProgress, isLoading: l4 } = useRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.InProgress,
+    from: last30Days,
+    to: today,
+  });
+  const { data: completed, isLoading: l5 } = useRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Completed,
+    from: last30Days,
+    to: today,
+  });
+  const { data: cancelled, isLoading: l6 } = useRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Cancelled,
+    from: last30Days,
+    to: today,
+  });
+  const { data: recent, isLoading: l7 } = useRequests({
+    page: 1,
+    pageSize: 5,
+    sortBy: "createdat",
+    descending: true,
+    from: last30Days,
+    to: today,
+  });
+  const { data: overdueData, isLoading: l1 } = useRequests({
+    page: 1,
+    pageSize: 5,
+    isOverdue: true,
+  });
 
   return {
-    isLoading,
+    isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7,
     items: recent?.items ?? [],
-    stats: [
-      { title: 'Total Requests', value: all?.totalCount        ?? '—', icon: FileText,    bg: 'bg-blue-50',   color: 'text-blue-600' },
-      { title: 'Pending',        value: pending?.totalCount    ?? '—', icon: Clock,       bg: 'bg-orange-50', color: 'text-orange-600' },
-      { title: 'In Progress',    value: inProgress?.totalCount ?? '—', icon: TruckIcon,   bg: 'bg-purple-50', color: 'text-purple-600' },
-      { title: 'Completed',      value: completed?.totalCount  ?? '—', icon: CheckCircle, bg: 'bg-green-50',  color: 'text-green-600' },
-    ],
+    overdue: {
+      count: overdueData?.totalCount ?? 0,
+      items: (overdueData?.items ?? []).map((r) => {
+        const daysLate = r.deadline
+          ? Math.floor((now - new Date(r.deadline).getTime()) / 86_400_000)
+          : 0;
+
+        return {
+          id: r.id,
+          title: r.title,
+          daysLate,
+        };
+      }),
+    },
+    statusData: {
+      Pending: pending?.totalCount ?? 0,
+      Assigned: assigned?.totalCount ?? 0,
+      InProgress: inProgress?.totalCount ?? 0,
+      Completed: completed?.totalCount ?? 0,
+      Cancelled: cancelled?.totalCount ?? 0,
+    },
   };
 }
 
 export function useCollaboratorDashboardStats() {
-  const { data: all }       = useMyRequests({ page: 1, pageSize: 1 });
-  const { data: pending }   = useMyRequests({ page: 1, pageSize: 1, status: RequestStatus.Pending });
-  const { data: completed } = useMyRequests({ page: 1, pageSize: 1, status: RequestStatus.Completed });
-  const { data: cancelled } = useMyRequests({ page: 1, pageSize: 1, status: RequestStatus.Cancelled });
-  const { data: recent, isLoading } = useMyRequests({ page: 1, pageSize: 5 });
+  const { data: pending, isLoading: l2 } = useMyRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Pending,
+    from: last30Days,
+    to: today,
+  });
+  const { data: inProgress, isLoading: l3 } = useMyRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.InProgress,
+    from: last30Days,
+    to: today,
+  });
+  const { data: completed, isLoading: l4 } = useMyRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Completed,
+    from: last30Days,
+    to: today,
+  });
+  const { data: cancelled, isLoading: l5 } = useMyRequests({
+    page: 1,
+    pageSize: 1,
+    status: RequestStatus.Cancelled,
+    from: last30Days,
+    to: today,
+  });
+  const { data: recent, isLoading: l6 } = useMyRequests({
+    page: 1,
+    pageSize: 5,
+    sortBy: "createdat",
+    descending: true,
+    from: last30Days,
+    to: today,
+  });
+  const { data: pendingSurveysData, isLoading: l1 } = useMyRequests({
+    page: 1,
+    pageSize: 5,
+    status: RequestStatus.Completed,
+    hasSurvey: false,
+  });
 
   return {
-    isLoading,
+    isLoading: l1 || l2 || l3 || l4 || l5 || l6,
     items: recent?.items ?? [],
-    stats: [
-      { title: 'My Requests', value: all?.totalCount       ?? '—', icon: FileText,      bg: 'bg-blue-50',   color: 'text-blue-600' },
-      { title: 'Pending',     value: pending?.totalCount   ?? '—', icon: Clock,         bg: 'bg-orange-50', color: 'text-orange-600' },
-      { title: 'Completed',   value: completed?.totalCount ?? '—', icon: CheckCircle,   bg: 'bg-green-50',  color: 'text-green-600' },
-      { title: 'Cancelled',   value: cancelled?.totalCount ?? '—', icon: AlertTriangle, bg: 'bg-red-50',    color: 'text-red-600' },
-    ],
+    pendingSurveys: {
+      count: pendingSurveysData?.totalCount ?? 0,
+      items: (pendingSurveysData?.items ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+      })),
+    },
+    statusData: {
+      Pending: pending?.totalCount ?? 0,
+      InProgress: inProgress?.totalCount ?? 0,
+      Completed: completed?.totalCount ?? 0,
+      Cancelled: cancelled?.totalCount ?? 0,
+    },
   };
 }
 
 export function useCourierDashboardStats() {
-  const { data: all }        = useMyAssignments({ page: 1, pageSize: 1 });
-  const { data: assigned }   = useMyAssignments({ page: 1, pageSize: 1, status: RequestStatus.Assigned });
-  const { data: inProgress } = useMyAssignments({ page: 1, pageSize: 1, status: RequestStatus.InProgress });
-  const { data: completed }  = useMyAssignments({ page: 1, pageSize: 1, status: RequestStatus.Completed });
-  const { data: recent, isLoading } = useMyAssignments({ page: 1, pageSize: 5 });
+  const { data: assigned, isLoading: l2 } = useMyAssignments({
+    page: 1,
+    pageSize: 1,
+    from: last30Days,
+    to: today,
+    status: RequestStatus.Assigned,
+  });
+  const { data: inProgress, isLoading: l3 } = useMyAssignments({
+    page: 1,
+    pageSize: 1,
+    from: last30Days,
+    to: today,
+    status: RequestStatus.InProgress,
+  });
+  const { data: completed, isLoading: l4 } = useMyAssignments({
+    page: 1,
+    pageSize: 1,
+    from: last30Days,
+    to: today,
+    status: RequestStatus.Completed,
+  });
+  const { data: recent, isLoading: l5 } = useMyAssignments({
+    page: 1,
+    pageSize: 5,
+    sortBy: "createdat",
+    descending: true,
+  });
+  const { data: performance, isLoading: l1 } =
+    useAnalyticsMyCourierPerformance(30);
 
   return {
-    isLoading,
+    isLoading: l1 || l2 || l3 || l4 || l5,
     items: recent?.items ?? [],
-    stats: [
-      { title: 'Total Assigned', value: all?.totalCount        ?? '—', icon: ClipboardList, bg: 'bg-blue-50',   color: 'text-blue-600' },
-      { title: 'Awaiting Start', value: assigned?.totalCount   ?? '—', icon: Clock,         bg: 'bg-orange-50', color: 'text-orange-600' },
-      { title: 'In Progress',    value: inProgress?.totalCount ?? '—', icon: TruckIcon,     bg: 'bg-purple-50', color: 'text-purple-600' },
-      { title: 'Completed',      value: completed?.totalCount  ?? '—', icon: CheckCircle,   bg: 'bg-green-50',  color: 'text-green-600' },
-    ],
+
+    statusData: {
+      Assigned: assigned?.totalCount ?? 0,
+      InProgress: inProgress?.totalCount ?? 0,
+      Completed: completed?.totalCount ?? 0,
+    },
+    performance,
   };
 }
