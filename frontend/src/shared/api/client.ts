@@ -20,6 +20,9 @@ apiClient.interceptors.request.use(async (config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  if (config.params) {
+    config.params = cleanParams(config.params);
+  }
   return config;
 });
 
@@ -114,5 +117,15 @@ export function isApiError(error: unknown): error is NormalizedApiError {
     error !== null &&
     "statusCode" in error &&
     "message" in error
+  );
+}
+
+function cleanParams(params?: Record<string, unknown>) {
+  if (!params) return params;
+
+  return Object.fromEntries(
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== null && v !== ""
+    )
   );
 }
