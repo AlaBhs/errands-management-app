@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StatusDistributionCardProps {
-  data: Record<string, number>;
+  data?: Record<string, number>;
 }
 
 const STATUS_CONFIG = {
@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 const ORDER = ["Completed", "InProgress", "Assigned", "Pending", "Cancelled"] as const;
 
 export const StatusDistributionCard = ({
-  data,
+  data = {},
 }: StatusDistributionCardProps) => {
   const total = Object.values(data).reduce((s, v) => s + v, 0);
   if (total === 0) return null;

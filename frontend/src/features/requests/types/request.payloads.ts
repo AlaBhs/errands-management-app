@@ -44,5 +44,9 @@ export interface RequestQueryParams extends PaginationParams {
   status?: RequestStatus;
   search?: string;
   descending?: boolean;
+  isOverdue?: boolean;
+  hasSurvey?: boolean;
   category?: RequestCategory;
+  from?: string;
+  to?:   string;
 }
