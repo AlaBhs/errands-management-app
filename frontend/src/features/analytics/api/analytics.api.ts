@@ -6,6 +6,7 @@ import type {
   CourierPerformance,
   TrendPoint,
 } from "../types/analytics.types";
+import type { ApiResponse } from "@/shared/api/types";
 
 const toParams = (filter: AnalyticsFilter) => ({
   ...(filter.from && { from: filter.from }),
@@ -13,38 +14,38 @@ const toParams = (filter: AnalyticsFilter) => ({
 });
 
 export const analyticsApi = {
-  getSummary: async (filter: AnalyticsFilter): Promise<AnalyticsSummary> => {
-    const { data } = await apiClient.get<AnalyticsSummary>(
-      "/analytics/summary",
-      { params: toParams(filter) },
-    );
-    return data;
-  },
+  getSummary: async (filter: AnalyticsFilter) =>
+    apiClient
+      .get<ApiResponse<AnalyticsSummary>>("/analytics/summary", {
+        params: toParams(filter),
+      })
+      .then((res) => res.data),
 
-  getTrend: async (filter: AnalyticsFilter): Promise<TrendPoint[]> => {
-    const { data } = await apiClient.get<TrendPoint[]>("/analytics/trend", {
-      params: toParams(filter),
-    });
-    return data;
-  },
+  getTrend: async (filter: AnalyticsFilter) =>
+    apiClient
+      .get<ApiResponse<TrendPoint[]>>("/analytics/trend", {
+        params: toParams(filter),
+      })
+      .then((res) => res.data),
 
-  getCostBreakdown: async (
-    filter: AnalyticsFilter,
-  ): Promise<CostBreakdown[]> => {
-    const { data } = await apiClient.get<CostBreakdown[]>(
-      "/analytics/cost-breakdown",
-      { params: toParams(filter) },
-    );
-    return data;
-  },
+  getCostBreakdown: async (filter: AnalyticsFilter) =>
+    apiClient
+      .get<
+        ApiResponse<CostBreakdown[]>
+      >("/analytics/cost-breakdown", { params: toParams(filter) })
+      .then((res) => res.data),
 
-  getCourierPerformance: async (
-    filter: AnalyticsFilter,
-  ): Promise<CourierPerformance[]> => {
-    const { data } = await apiClient.get<CourierPerformance[]>(
-      "/analytics/courier-performance",
-      { params: toParams(filter) },
-    );
-    return data;
-  },
+  getCourierPerformance: async (filter: AnalyticsFilter) =>
+    apiClient
+      .get<
+        ApiResponse<CourierPerformance[]>
+      >("/analytics/courier-performance", { params: toParams(filter) })
+      .then((res) => res.data),
+
+  getMyCourierPerformance: async (days = 30) =>
+    apiClient
+      .get<
+        ApiResponse<CourierPerformance>
+      >("/analytics/my-performance", { params: { days } })
+      .then((res) => res.data),
 };
