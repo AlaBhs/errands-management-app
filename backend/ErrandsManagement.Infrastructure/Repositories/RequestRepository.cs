@@ -3,6 +3,7 @@ using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,6 +51,18 @@ public sealed class RequestRepository : IRequestRepository
 
         if (parameters.Category.HasValue)
             query = query.Where(r => r.Category == parameters.Category.Value);
+
+        if (parameters.IsOverdue == true)
+            query = query.Where(r =>
+                r.Deadline < DateTime.UtcNow &&
+                r.Status != RequestStatus.Completed &&
+                r.Status != RequestStatus.Cancelled);
+
+        if (parameters.From.HasValue)
+            query = query.Where(r => r.CreatedAt >= parameters.From.Value);
+
+        if (parameters.To.HasValue)
+            query = query.Where(r => r.CreatedAt <= parameters.To.Value);
 
         // Search (example: search in Title and Description)
         if (!string.IsNullOrWhiteSpace(parameters.Search))
@@ -124,6 +137,24 @@ public sealed class RequestRepository : IRequestRepository
                 r.Description.ToLower().Contains(searchLower));
         }
 
+        if (parameters.From.HasValue)
+            query = query.Where(r => r.CreatedAt >= parameters.From.Value);
+
+        if (parameters.To.HasValue)
+            query = query.Where(r => r.CreatedAt <= parameters.To.Value);
+
+        if (parameters.HasSurvey.HasValue)
+        {
+            if (parameters.HasSurvey.Value)
+            {
+                query = query.Where(r => r.Survey != null);
+            }
+            else
+            {
+                query = query.Where(r => r.Survey == null && r.Status == RequestStatus.Completed);
+            }
+        }
+
         query = parameters.SortBy?.ToLower() switch
         {
             "deadline" => parameters.Descending
@@ -177,6 +208,12 @@ public sealed class RequestRepository : IRequestRepository
 
         if (parameters.Category.HasValue)
             query = query.Where(r => r.Category == parameters.Category.Value);
+
+        if (parameters.From.HasValue)
+            query = query.Where(r => r.CreatedAt >= parameters.From.Value);
+
+        if (parameters.To.HasValue)
+            query = query.Where(r => r.CreatedAt <= parameters.To.Value);
 
         if (!string.IsNullOrWhiteSpace(parameters.Search))
         {
