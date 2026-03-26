@@ -58,7 +58,7 @@ export function useAdminDashboardStats() {
   });
   const { data: overdueData, isLoading: l1 } = useRequests({
     page: 1,
-    pageSize: 5,
+    pageSize: 8,
     isOverdue: true,
   });
 

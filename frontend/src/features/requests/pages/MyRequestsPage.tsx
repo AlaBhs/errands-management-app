@@ -28,7 +28,7 @@ import { RequestListSkeleton } from "../components/skeletons/RequestListSkeleton
 import type { PriorityLevel, RequestListItemDto } from "../types";
 import { QuickSurveyModal } from "../components/modals/QuickSurveyModal";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 const DEFAULT_FILTERS: RequestFiltersValue = {
   search: "",
@@ -241,6 +241,7 @@ export function MyRequestsPage() {
         value={filters}
         onChange={handleFilterChange}
         onReset={handleReset}
+        role={"collaborator"}
       />
 
       {/* ── Error ───────────────────────────────────────────────────── */}

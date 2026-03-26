@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { LayoutGrid, List } from "lucide-react";
 import { useRequests } from "../hooks";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
@@ -17,7 +20,7 @@ import { RequestCard } from "../components/common/RequestCard";
 import { RequestListSkeleton } from "../components/skeletons/RequestListSkeleton";
 import type { PriorityLevel } from "../types";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 const DEFAULT_FILTERS: RequestFiltersValue = {
   search: "",
@@ -25,12 +28,26 @@ const DEFAULT_FILTERS: RequestFiltersValue = {
   category: "",
   sortBy: "createdat",
   descending: true,
+  isOverdue: undefined,
 };
 
 export function RequestsListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialIsOverdue = (() => {
+    const param = searchParams.get("isOverdue");
+    if (param === null) return undefined;
+    return param === "true";
+  })();
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<RequestFiltersValue>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<RequestFiltersValue>({
+    search: "",
+    status: "",
+    category: "",
+    sortBy: "createdat",
+    descending: true,
+    isOverdue: initialIsOverdue,
+  });
   const [viewMode, setViewMode] = useViewMode("admin-requests-view");
 
   const handleFilterChange = (next: Partial<RequestFiltersValue>) => {
@@ -51,6 +68,7 @@ export function RequestsListPage() {
     descending: filters.descending,
     status: filters.status || undefined,
     category: filters.category || undefined,
+    isOverdue: filters.isOverdue,
   });
 
   return (
@@ -107,6 +125,7 @@ export function RequestsListPage() {
         value={filters}
         onChange={handleFilterChange}
         onReset={handleReset}
+        role={"admin"}
       />
 
       {/* ── Error ───────────────────────────────────────────────────── */}

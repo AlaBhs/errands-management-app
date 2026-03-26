@@ -11,6 +11,7 @@ export interface RequestFiltersValue {
   sortBy: SortField | "";
   descending: boolean;
   hasSurvey?: boolean;
+  isOverdue?: boolean;
 }
 
 interface RequestFiltersProps {
@@ -18,6 +19,7 @@ interface RequestFiltersProps {
   onChange: (next: Partial<RequestFiltersValue>) => void;
   onReset: () => void;
   statusOptions?: { label: string; value: RequestStatus }[];
+  role: "admin" | "collaborator" | "requester";
 }
 
 const STATUS_OPTIONS: { label: string; value: RequestStatus }[] = [
@@ -76,6 +78,7 @@ export function RequestFilters({
   onChange,
   onReset,
   statusOptions,
+  role,
 }: RequestFiltersProps) {
   const hasFilters =
     value.search || value.status || value.category || value.sortBy;
@@ -174,27 +177,56 @@ export function RequestFilters({
             ))}
           </select>
         </div>
-        <Separator orientation="vertical" className="hidden h-5 sm:block" />
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Switch
-              checked={value.hasSurvey === false}
-              onCheckedChange={(checked) =>
-                onChange({ hasSurvey: checked ? false : undefined })
-              }
-              className={`
+        {role === "collaborator" ? (
+          <>
+            <Separator orientation="vertical" className="hidden h-5 sm:block" />
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch
+                  checked={value.hasSurvey === false}
+                  onCheckedChange={(checked) =>
+                    onChange({ hasSurvey: checked ? false : undefined })
+                  }
+                  className={`
                 relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer
                 rounded-full bg-gray-200 
                 data-[state=checked]:bg-[#2E2E38] 
                 transition-colors
                 focus:outline-none focus:ring-2 focus:ring-ring
               `}
-            />
-            <span className="text-xs font-medium text-foreground">
-              Requires Survey
-            </span>
-          </label>
-        </div>
+                />
+                <span className="text-xs font-medium text-foreground">
+                  Requires Survey
+                </span>
+              </label>
+            </div>
+          </>
+        ) : (
+          <>
+            <Separator orientation="vertical" className="hidden h-5 sm:block" />
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Switch
+                  checked={!!value.isOverdue}
+                  onCheckedChange={(checked) =>
+                    onChange({ isOverdue: checked })
+                  }
+                  className={`
+                relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer
+                rounded-full bg-gray-200 
+                data-[state=checked]:bg-[#2E2E38] 
+                transition-colors
+                focus:outline-none focus:ring-2 focus:ring-ring
+              `}
+                />
+                <span className="text-xs font-medium text-foreground">
+                  Overdue
+                </span>
+              </label>
+            </div>
+          </>
+        )}
+
         <Separator orientation="vertical" className="hidden h-5 sm:block" />
 
         {/* Sort */}
@@ -275,6 +307,12 @@ export function RequestFilters({
             <FilterChip
               label="Needs Review"
               onRemove={() => onChange({ hasSurvey: undefined })}
+            />
+          )}
+          {value.isOverdue && (
+            <FilterChip
+              label="Overdue"
+              onRemove={() => onChange({ isOverdue: undefined })}
             />
           )}
           {value.sortBy && sortLabel && (
