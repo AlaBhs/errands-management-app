@@ -2,6 +2,7 @@ import { X, Search, SlidersHorizontal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/shared/utils/utils";
 import { RequestCategory, RequestStatus, type SortField } from "../../types";
+import { Switch } from "@/components/ui/switch";
 
 export interface RequestFiltersValue {
   search: string;
@@ -9,6 +10,7 @@ export interface RequestFiltersValue {
   category: RequestCategory | "";
   sortBy: SortField | "";
   descending: boolean;
+  hasSurvey?: boolean;
 }
 
 interface RequestFiltersProps {
@@ -172,7 +174,27 @@ export function RequestFilters({
             ))}
           </select>
         </div>
-
+        <Separator orientation="vertical" className="hidden h-5 sm:block" />
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Switch
+              checked={value.hasSurvey === false}
+              onCheckedChange={(checked) =>
+                onChange({ hasSurvey: checked ? false : undefined })
+              }
+              className={`
+                relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer
+                rounded-full bg-gray-200 
+                data-[state=checked]:bg-[#2E2E38] 
+                transition-colors
+                focus:outline-none focus:ring-2 focus:ring-ring
+              `}
+            />
+            <span className="text-xs font-medium text-foreground">
+              Requires Survey
+            </span>
+          </label>
+        </div>
         <Separator orientation="vertical" className="hidden h-5 sm:block" />
 
         {/* Sort */}
@@ -247,6 +269,12 @@ export function RequestFilters({
             <FilterChip
               label={`Category: ${categoryLabel}`}
               onRemove={() => onChange({ category: "" })}
+            />
+          )}
+          {value.hasSurvey === false && (
+            <FilterChip
+              label="Needs Review"
+              onRemove={() => onChange({ hasSurvey: undefined })}
             />
           )}
           {value.sortBy && sortLabel && (

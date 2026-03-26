@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutGrid,
   List,
@@ -36,12 +36,27 @@ const DEFAULT_FILTERS: RequestFiltersValue = {
   category: "",
   sortBy: "createdat",
   descending: true,
+  hasSurvey: undefined,
 };
 
 export function MyRequestsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialHasSurvey = (() => {
+    const param = searchParams.get("hasSurvey");
+    if (param === null) return undefined;
+    return param === "true";
+  })();
+
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<RequestFiltersValue>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<RequestFiltersValue>({
+    search: "",
+    status: "",
+    category: "",
+    sortBy: "createdat",
+    descending: true,
+    hasSurvey: initialHasSurvey,
+  });
   const [viewMode, setViewMode] = useViewMode("collaborator-requests-view");
 
   // Summary counts — unfiltered
@@ -93,6 +108,7 @@ export function MyRequestsPage() {
     search: filters.search || undefined,
     sortBy: (filters.sortBy as SortField) || undefined,
     descending: filters.descending,
+    hasSurvey: filters.hasSurvey !== undefined ? filters.hasSurvey : undefined,
     status: filters.status || undefined,
     category: filters.category || undefined,
   });
