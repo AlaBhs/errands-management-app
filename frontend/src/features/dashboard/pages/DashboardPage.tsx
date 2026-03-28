@@ -78,9 +78,9 @@ function CourierDashboard() {
       rightPanel={
         <CourierPerformancePanel
           isLoading={isLoading}
-          avgRating={performance?.data.avgRating ?? 0}
-          completed={performance?.data.completed ?? 0}
-          onTimeRate={performance?.data.onTimeRate ?? 0}
+          avgRating={performance?.avgRating ?? 0}
+          completed={performance?.completed ?? 0}
+          onTimeRate={performance?.onTimeRate ?? 0}
         />
       }
     />

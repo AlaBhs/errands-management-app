@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route } from "react-router";
 import { MainLayout } from "@/app/layouts/MainLayout";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RoleGuard } from "@/features/auth/components/RoleGuard";
@@ -58,6 +58,11 @@ const PublicOrDashboard = lazy(() =>
     default: m.PublicOrDashboard,
   })),
 );
+const NotFoundPage = lazy(() =>
+  import("../pages/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  })),
+);
 
 export function AppRouter() {
   return (
@@ -90,7 +95,7 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );
