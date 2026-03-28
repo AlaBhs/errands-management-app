@@ -10,6 +10,10 @@ public abstract class BaseEntity
 
     public bool IsDeleted { get; protected set; }
 
+    private readonly List<IDomainEvent> _domainEvents = new();
+
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
     protected BaseEntity()
     {
         Id = Guid.NewGuid();
@@ -20,6 +24,12 @@ public abstract class BaseEntity
     {
         UpdatedAt = DateTime.UtcNow;
     }
+
+    protected void RaiseDomainEvent(IDomainEvent domainEvent)
+        => _domainEvents.Add(domainEvent);
+
+    public void ClearDomainEvents()
+        => _domainEvents.Clear();
 
     public void SoftDelete()
     {

@@ -1,6 +1,7 @@
 ﻿using ErrandsManagement.Domain.Common;
 using ErrandsManagement.Domain.Common.Exceptions;
 using ErrandsManagement.Domain.Enums;
+using ErrandsManagement.Domain.Events;
 using ErrandsManagement.Domain.ValueObjects;
 
 namespace ErrandsManagement.Domain.Entities;
@@ -83,6 +84,7 @@ public class Request : BaseEntity
         _assignments.Add(assignment);
 
         Status = RequestStatus.Assigned;
+        RaiseDomainEvent(new RequestAssignedEvent(Id, courierId, Title));
         MarkAsUpdated();
 
         AddAudit("Assigned", $"Request assigned to courier {courierId}");
@@ -96,6 +98,7 @@ public class Request : BaseEntity
         assignment.Start();
 
         Status = RequestStatus.InProgress;
+        RaiseDomainEvent(new RequestStartedEvent(Id, RequesterId, Title));
         MarkAsUpdated();
 
         AddAudit("Started", "Request marked as in progress.");
@@ -109,6 +112,7 @@ public class Request : BaseEntity
         assignment.Complete(actualCost, note);
 
         Status = RequestStatus.Completed;
+        RaiseDomainEvent(new RequestCompletedEvent(Id, RequesterId, Title));
         MarkAsUpdated();
 
         AddAudit("Completed", "Request completed.");
@@ -125,6 +129,7 @@ public class Request : BaseEntity
             throw new InvalidRequestStateException("Cancellation reason is required when request is in progress.");
 
         Status = RequestStatus.Cancelled;
+        RaiseDomainEvent(new RequestCancelledEvent(Id, RequesterId, Title));
         MarkAsUpdated();
 
         AddAudit("Cancelled",
