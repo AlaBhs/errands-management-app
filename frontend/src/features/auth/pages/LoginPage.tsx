@@ -131,17 +131,15 @@ export function LoginPage() {
       </nav>
       {/* ── Card ────────────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-md">
-        {/* Logo + headline */}
         <div className="mb-8 text-center">
-          <p className="mt-1.5 text-sm text-gray-400">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Sign in to access your workspace
           </p>
         </div>
 
-        {/* Form card */}
         <div
-          className="overflow-hidden rounded-2xl bg-white/95
-                        shadow-2xl backdrop-blur-sm"
+          className="overflow-hidden rounded-2xl bg-card/95 shadow-2xl
+                     backdrop-blur-sm border border-border/50"
         >
           <div className="p-8">
             <form
@@ -156,16 +154,16 @@ export function LoginPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-[#2E2E38]"
+                  className="block text-sm font-medium text-foreground"
                 >
                   Email Address
                 </label>
                 <div className="group relative">
                   <Mail
                     className="absolute left-4 top-1/2 h-5 w-5
-                                   -translate-y-1/2 text-gray-400
-                                   transition-colors
-                                   group-focus-within:text-[#2E2E38]"
+                               -translate-y-1/2 text-muted-foreground
+                               transition-colors
+                               group-focus-within:text-foreground"
                   />
                   <input
                     id="email"
@@ -174,18 +172,18 @@ export function LoginPage() {
                     placeholder="your.name@ey.com"
                     {...register("email")}
                     aria-invalid={!!errors.email}
-                    className="w-full rounded-xl border-2 border-gray-200
-                               bg-gray-50 py-3.5 pl-12 pr-4 text-sm
-                               text-[#2E2E38] transition-all
-                               placeholder:text-gray-400
-                               focus:border-[#2E2E38] focus:bg-white
+                    className="w-full rounded-xl border border-border
+                               bg-background py-3.5 pl-12 pr-4 text-sm
+                               text-foreground transition-all
+                               placeholder:text-muted-foreground
+                               focus:border-ring focus:ring-1 focus:ring-ring
                                focus:outline-none
-                               aria-invalid:border-red-400
-                               aria-invalid:bg-red-50"
+                               aria-invalid:border-destructive
+                               aria-invalid:bg-destructive/10"
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email.message}</p>
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
                 )}
               </div>
 
@@ -193,16 +191,16 @@ export function LoginPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-[#2E2E38]"
+                  className="block text-sm font-medium text-foreground"
                 >
                   Password
                 </label>
                 <div className="group relative">
                   <Lock
                     className="absolute left-4 top-1/2 h-5 w-5
-                                   -translate-y-1/2 text-gray-400
-                                   transition-colors
-                                   group-focus-within:text-[#2E2E38]"
+                               -translate-y-1/2 text-muted-foreground
+                               transition-colors
+                               group-focus-within:text-foreground"
                   />
                   <input
                     id="password"
@@ -211,50 +209,52 @@ export function LoginPage() {
                     placeholder="Enter your password"
                     {...register("password")}
                     aria-invalid={!!errors.password}
-                    className="w-full rounded-xl border-2 border-gray-200
-                               bg-gray-50 py-3.5 pl-12 pr-4 text-sm
-                               text-[#2E2E38] transition-all
-                               placeholder:text-gray-400
-                               focus:border-[#2E2E38] focus:bg-white
+                    className="w-full rounded-xl border border-border
+                               bg-background py-3.5 pl-12 pr-4 text-sm
+                               text-foreground transition-all
+                               placeholder:text-muted-foreground
+                               focus:border-ring focus:ring-1 focus:ring-ring
                                focus:outline-none
-                               aria-invalid:border-red-400
-                               aria-invalid:bg-red-50"
+                               aria-invalid:border-destructive
+                               aria-invalid:bg-destructive/10"
                   />
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {errors.password.message}
                   </p>
                 )}
               </div>
+
               {/* API error */}
               <div className="h-8 flex items-center mb-2">
                 {formError && (
                   <div
                     className="flex items-center gap-2 animate-in fade-in
-                    slide-in-from-top-1 duration-200"
+                               slide-in-from-top-1 duration-200"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                    <p className="text-sm text-red-600">{formError}</p>
+                    <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+                    <p className="text-sm text-destructive">{formError}</p>
                   </div>
                 )}
               </div>
+
               {/* Submit */}
               <button
                 type="submit"
                 disabled={isSubmitting || login.isPending}
                 className="group mt-2 flex w-full items-center justify-center
-                           gap-2 rounded-xl bg-[#2E2E38] py-4 text-sm
-                           font-semibold text-white shadow-lg transition-all
-                           hover:bg-[#1a1a24] hover:shadow-xl
+                           gap-2 rounded-xl bg-primary py-4 text-sm
+                           font-semibold text-primary-foreground shadow-lg
+                           transition-all hover:bg-primary/90 hover:shadow-xl
                            disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {login.isPending ? (
                   <>
                     <div
                       className="h-4 w-4 animate-spin rounded-full
-                                    border-2 border-white/30
-                                    border-t-white"
+                                 border-2 border-primary-foreground/30
+                                 border-t-primary-foreground"
                     />
                     Signing in…
                   </>
@@ -263,7 +263,7 @@ export function LoginPage() {
                     Sign In
                     <ArrowRight
                       className="h-4 w-4 transition-transform
-                                           group-hover:translate-x-1"
+                                 group-hover:translate-x-1"
                     />
                   </>
                 )}
@@ -273,13 +273,13 @@ export function LoginPage() {
             {/* Security note */}
             <div
               className="mt-6 flex items-center gap-2.5 rounded-lg
-                            bg-gray-50 px-3 py-2.5"
+                         bg-muted px-3 py-2.5"
             >
               <Shield
                 className="h-4 w-4 shrink-0 text-[#FFE600]
-                                  [filter:drop-shadow(0_0_6px_#FFE600)]"
+                           [filter:drop-shadow(0_0_6px_#FFE600)]"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Access is managed by your EY administrator
               </p>
             </div>
@@ -287,14 +287,13 @@ export function LoginPage() {
 
           {/* Card footer */}
           <div
-            className="border-t border-gray-100 bg-gray-50/80
-                          px-8 py-4"
+            className="border-t border-border bg-muted/80 px-8 py-4"
           >
             <Link
               to="/"
               className="mx-auto flex w-fit items-center gap-1.5
-                         text-sm text-gray-500 transition-colors
-                         hover:text-[#2E2E38]"
+                         text-sm text-muted-foreground transition-colors
+                         hover:text-foreground"
             >
               ← Back to home
             </Link>
@@ -302,7 +301,7 @@ export function LoginPage() {
         </div>
 
         {/* Copyright */}
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           © 2026 Ernst & Young. All rights reserved.
         </p>
       </div>

@@ -1,8 +1,14 @@
 import { useState }              from "react";
-import { X, Star, MessageSquare,
+import { Star, MessageSquare,
          Loader2 }               from "lucide-react";
 import { useSubmitSurvey }       from "../../hooks/useRequestMutations";
 import { isApiError }            from "@/shared/api/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/shared/utils/utils";
 
 interface QuickSurveyModalProps {
@@ -43,41 +49,23 @@ export function QuickSurveyModal({
   const activeRating = hovered || rating;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center
-                 bg-black/50 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl bg-white shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 p-6 pb-4">
-          <div>
-            <h2 className="text-base font-semibold text-[#2E2E38]">
-              Rate Your Experience
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-              {title}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-gray-400
-                       hover:bg-gray-100 hover:text-gray-600
-                       transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">
+            Rate Your Experience
+          </DialogTitle>
+          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+            {title}
+          </p>
+        </DialogHeader>
 
         {/* Body */}
-        <div className="space-y-5 px-6 pb-6">
+        <div className="space-y-5">
 
           {/* Star rating */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-[#2E2E38]">
+            <label className="text-xs font-medium text-foreground">
               Rating <span className="text-red-500">*</span>
             </label>
 
@@ -97,7 +85,7 @@ export function QuickSurveyModal({
                       "h-8 w-8 transition-colors",
                       n <= activeRating
                         ? "fill-amber-400 text-amber-400"
-                        : "fill-gray-100 text-gray-300"
+                        : "fill-gray-200 dark:fill-gray-700 text-gray-300 dark:text-gray-600"
                     )}
                   />
                 </button>
@@ -107,7 +95,7 @@ export function QuickSurveyModal({
               <span className={cn(
                 "ml-2 text-sm font-medium transition-colors",
                 activeRating > 0
-                  ? "text-[#2E2E38]"
+                  ? "text-foreground"
                   : "text-muted-foreground"
               )}>
                 {activeRating > 0 ? LABELS[activeRating] : "Select a rating"}
@@ -117,7 +105,7 @@ export function QuickSurveyModal({
 
           {/* Comment */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[#2E2E38]">
+            <label className="text-xs font-medium text-foreground">
               Comment
               <span className="ml-1 text-muted-foreground font-normal">
                 (optional)
@@ -131,10 +119,10 @@ export function QuickSurveyModal({
                 onChange={e => setComment(e.target.value)}
                 placeholder="Share your experience..."
                 rows={3}
-                className="w-full rounded-xl border border-gray-200
-                           bg-gray-50 py-2.5 pl-9 pr-4 text-sm
+                className="w-full rounded-lg border border-border
+                           bg-background dark:bg-card py-2.5 pl-9 pr-4 text-sm text-foreground
                            resize-none focus:border-[#2E2E38]
-                           focus:bg-white focus:outline-none
+                           focus:bg-background dark:focus:bg-card focus:outline-none
                            transition-colors"
               />
             </div>
@@ -153,8 +141,8 @@ export function QuickSurveyModal({
           <div className="flex gap-2 pt-1">
             <button
               onClick={onClose}
-              className="flex-1 rounded-xl border border-gray-200 py-2.5
-                         text-sm text-gray-600 hover:bg-gray-50
+              className="flex-1 rounded-lg border border-border py-2.5
+                         text-sm text-foreground hover:bg-muted dark:hover:bg-muted/40
                          transition-colors"
             >
               Cancel
@@ -163,9 +151,9 @@ export function QuickSurveyModal({
               onClick={handleSubmit}
               disabled={rating === 0 || survey.isPending}
               className="flex-1 flex items-center justify-center gap-2
-                         rounded-xl bg-amber-400 py-2.5 text-sm
-                         font-semibold text-amber-900
-                         hover:bg-amber-500 disabled:opacity-50
+                         rounded-lg bg-amber-400 dark:bg-amber-500 py-2.5 text-sm
+                         font-semibold text-amber-900 dark:text-amber-900
+                         hover:bg-amber-500 dark:hover:bg-amber-600 disabled:opacity-50
                          disabled:cursor-not-allowed transition-colors"
             >
               {survey.isPending ? (
@@ -182,7 +170,7 @@ export function QuickSurveyModal({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

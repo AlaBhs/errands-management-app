@@ -59,7 +59,7 @@ export function AttachmentList({
             <li
               key={att.id}
               className="flex items-center gap-3 rounded-lg border
-                         border-border bg-white px-3 py-2.5 text-sm"
+                         border-border bg-card dark:bg-muted/20 px-3 py-2.5 text-sm"
             >
               {/* Icon */}
               {isImg ? (
@@ -73,19 +73,19 @@ export function AttachmentList({
                 <button
                   type="button"
                   onClick={() => handleOpen(att)}
-                  className="truncate font-medium text-[#2E2E38]
+                  className="truncate font-medium text-foreground
                              hover:underline block text-left w-full"
                 >
                   {att.fileName}
                 </button>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {formatDateTime(att.uploadedAt)}
                   {isDischarge && (
                     <span
                       className="ml-2 inline-flex items-center
-                                     rounded-full bg-emerald-50 px-1.5
+                                     rounded-full bg-emerald-100 dark:bg-emerald-950/30 px-1.5
                                      py-0.5 text-[10px] font-medium
-                                     text-emerald-700"
+                                     text-emerald-700 dark:text-emerald-300"
                     >
                       Discharge
                     </span>
@@ -97,7 +97,7 @@ export function AttachmentList({
               <a
                 href={getFileUrl(att.uri)}
                 download={att.fileName}
-                className="shrink-0 text-gray-400 hover:text-[#2E2E38]
+                className="shrink-0 text-muted-foreground hover:text-foreground
              transition-colors"
                 title="Download"
               >
@@ -112,12 +112,12 @@ export function AttachmentList({
                     className="flex items-center gap-1.5 shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span className="text-xs text-gray-500">Delete?</span>
+                    <span className="text-xs text-muted-foreground">Delete?</span>
                     <button
                       onClick={() => handleDelete(att.id)}
                       disabled={!!deletingId}
                       className="rounded px-2 py-0.5 text-xs font-medium
-                   bg-red-100 text-red-600 hover:bg-red-200
+                   bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/40
                    transition-colors disabled:opacity-40"
                     >
                       Yes
@@ -125,7 +125,7 @@ export function AttachmentList({
                     <button
                       onClick={() => setConfirmingId(null)}
                       className="rounded px-2 py-0.5 text-xs font-medium
-                   bg-gray-100 text-gray-600 hover:bg-gray-200
+                   bg-muted text-foreground hover:bg-muted/80
                    transition-colors"
                     >
                       No
@@ -136,7 +136,7 @@ export function AttachmentList({
                     type="button"
                     disabled={!!deletingId}
                     onClick={() => setConfirmingId(att.id)}
-                    className="shrink-0 text-gray-400 hover:text-red-500
+                    className="shrink-0 text-muted-foreground hover:text-red-500 dark:hover:text-red-400
                  transition-colors disabled:opacity-40"
                   >
                     {deletingId === att.id ? (
@@ -165,8 +165,8 @@ export function AttachmentList({
             <button
               onClick={() => setLightboxUrl(null)}
               className="absolute -top-3 -right-3 z-10 rounded-full
-                         bg-white p-1 shadow-md text-gray-600
-                         hover:text-gray-900 transition-colors"
+                         bg-white dark:bg-card p-1 shadow-md text-gray-600 dark:text-gray-400
+                         hover:text-gray-900 dark:hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

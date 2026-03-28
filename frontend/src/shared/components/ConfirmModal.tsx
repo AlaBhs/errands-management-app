@@ -1,68 +1,65 @@
-import { X, Loader2 }        from "lucide-react";
-import type { ReactNode }     from "react";
+import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/shared/utils/utils";
 
 interface ConfirmModalProps {
-  title:       string;
+  title: string;
   description: string;
   confirmLabel: string;
   confirmClass?: string;
-  isPending:   boolean;
-  icon?:       ReactNode;
-  onConfirm:   () => void;
-  onClose:     () => void;
+  isPending: boolean;
+  icon?: ReactNode;
+  onConfirm: () => void;
+  onClose: () => void;
 }
 
 export function ConfirmModal({
   title,
   description,
   confirmLabel,
-  confirmClass = "bg-red-600 hover:bg-red-700 text-white",
+  confirmClass,
   isPending,
   icon,
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const defaultConfirmClass =
+    "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white";
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center
-                 bg-black/50 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start gap-4 p-6 pb-4">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-row items-start gap-4 space-y-0">
           {icon && (
-            <div className="flex h-10 w-10 shrink-0 items-center
-                            justify-center rounded-full bg-red-100">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center
+                         rounded-full bg-red-100 dark:bg-red-900/30"
+            >
               {icon}
             </div>
           )}
           <div className="flex-1">
-            <h2 className="text-base font-semibold text-[#2E2E38]">
+            <DialogTitle className="text-base font-semibold text-foreground">
               {title}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            </DialogTitle>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {description}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-gray-400
-                       hover:bg-gray-100 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Actions */}
-        <div className="flex gap-2 px-6 pb-6">
+        <div className="flex gap-2 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl border border-gray-200 py-2.5
-                       text-sm text-gray-600 hover:bg-gray-50
+            className="flex-1 rounded-lg border border-border py-2.5
+                       text-sm text-foreground hover:bg-muted
                        transition-colors"
           >
             Cancel
@@ -70,19 +67,22 @@ export function ConfirmModal({
           <button
             onClick={onConfirm}
             disabled={isPending}
-            className={`flex-1 flex items-center justify-center gap-2
-                        rounded-xl py-2.5 text-sm font-semibold
-                        disabled:opacity-50 transition-colors
-                        ${confirmClass}`}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 rounded-lg",
+              "py-2.5 text-sm font-semibold disabled:opacity-50",
+              confirmClass || defaultConfirmClass,
+            )}
           >
             {isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Processing…
+              </>
             ) : (
               confirmLabel
             )}
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

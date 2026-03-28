@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { X, AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useCancelRequest } from "../../hooks/useRequestMutations";
 import { isApiError } from "@/shared/api/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/shared/utils/utils";
 
 interface CancelRequestModalProps {
   requestId: string;
@@ -24,44 +31,29 @@ export function CancelRequestModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center
-                 bg-black/50 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start gap-4 p-6 pb-4">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-row items-start gap-4 space-y-0">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center
-                          rounded-full bg-red-100"
+                       rounded-full bg-red-100 dark:bg-red-900/30"
           >
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-base font-semibold text-[#2E2E38]">
+            <DialogTitle className="text-base font-semibold text-foreground">
               Cancel Request
-            </h2>
+            </DialogTitle>
             <p className="mt-0.5 text-sm text-muted-foreground">
               This action cannot be undone.
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-gray-400
-                       hover:bg-gray-100 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Body */}
-        <div className="space-y-4 px-6 pb-6">
+        <div className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[#2E2E38]">
+            <label className="text-xs font-medium text-foreground">
               Reason for cancellation
               {reasonRequired ? (
                 <span className="ml-1 text-red-500">*</span>
@@ -80,9 +72,9 @@ export function CancelRequestModal({
                   : "Optionally explain why you are cancelling..."
               }
               rows={3}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50
-                         px-4 py-2.5 text-sm resize-none
-                         focus:border-[#2E2E38] focus:bg-white
+              className="w-full rounded-lg border border-border bg-background
+                         px-4 py-2.5 text-sm text-foreground resize-none
+                         focus:border-[#2E2E38] focus:bg-background
                          focus:outline-none transition-colors"
             />
             {reasonRequired && !reason.trim() && (
@@ -103,8 +95,8 @@ export function CancelRequestModal({
           <div className="flex gap-2 pt-1">
             <button
               onClick={onClose}
-              className="flex-1 rounded-xl border border-gray-200 py-2.5
-                         text-sm text-gray-600 hover:bg-gray-50
+              className="flex-1 rounded-lg border border-border py-2.5
+                         text-sm text-foreground hover:bg-muted
                          transition-colors"
             >
               Keep Request
@@ -112,10 +104,12 @@ export function CancelRequestModal({
             <button
               onClick={handleConfirm}
               disabled={!canSubmit || cancel.isPending}
-              className="flex-1 flex items-center justify-center gap-2
-                         rounded-xl bg-red-600 py-2.5 text-sm font-semibold
-                         text-white hover:bg-red-700 disabled:opacity-50
-                         transition-colors"
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-lg",
+                "bg-red-600 dark:bg-red-700 py-2.5 text-sm font-semibold",
+                "text-white hover:bg-red-700 dark:hover:bg-red-800",
+                "disabled:opacity-50 disabled:cursor-not-allowed transition-colors",
+              )}
             >
               {cancel.isPending ? (
                 <>
@@ -127,7 +121,7 @@ export function CancelRequestModal({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

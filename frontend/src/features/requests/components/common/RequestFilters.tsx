@@ -1,5 +1,12 @@
 import { X, Search, SlidersHorizontal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/shared/utils/utils";
 import { RequestCategory, RequestStatus, type SortField } from "../../types";
 import { Switch } from "@/components/ui/switch";
@@ -100,7 +107,7 @@ export function RequestFilters({
                       rounded-xl border bg-card px-4 py-3 shadow-sm"
       >
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[180px] h-[stretch]">
           <Search
             className="absolute left-3 top-1/2 h-4 w-4
                              -translate-y-1/2 text-muted-foreground"
@@ -111,7 +118,7 @@ export function RequestFilters({
             value={value.search}
             onChange={(e) => onChange({ search: e.target.value })}
             className="w-full rounded-md border bg-background py-1.5
-                       pl-9 pr-3 text-sm focus:outline-none
+                       pl-9 pr-3 text-sm focus:outline-none h-[stretch]
                        focus:ring-2 focus:ring-ring transition-colors
                        hover:border-ring placeholder:text-muted-foreground"
           />
@@ -133,23 +140,21 @@ export function RequestFilters({
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Status
           </span>
-          <select
-            value={value.status}
-            onChange={(e) =>
-              onChange({ status: e.target.value as RequestStatus | "" })
-            }
-            className="rounded-md border bg-background px-2 py-1.5
-                       text-xs font-medium text-foreground
-                       focus:outline-none focus:ring-2 focus:ring-ring
-                       transition-colors hover:border-ring cursor-pointer"
+          <Select 
+            value={value.status || ""} 
+            onValueChange={(val) => onChange({ status: val as RequestStatus | "" })}
           >
-            <option value="">All</option>
-            {resolvedStatusOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="!rounded-lg w-40">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              {resolvedStatusOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator orientation="vertical" className="hidden h-5 sm:block" />
@@ -159,23 +164,21 @@ export function RequestFilters({
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Category
           </span>
-          <select
-            value={value.category}
-            onChange={(e) =>
-              onChange({ category: e.target.value as RequestCategory | "" })
-            }
-            className="rounded-md border bg-background px-2 py-1.5
-                       text-xs font-medium text-foreground
-                       focus:outline-none focus:ring-2 focus:ring-ring
-                       transition-colors hover:border-ring cursor-pointer"
+          <Select 
+            value={value.category || ""} 
+            onValueChange={(val) => onChange({ category: val as RequestCategory | "" })}
           >
-            <option value="">All</option>
-            {CATEGORY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="!rounded-lg w-40">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORY_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {role === "collaborator" ? (
           <>
@@ -232,29 +235,27 @@ export function RequestFilters({
         {/* Sort */}
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-          <select
-            value={value.sortBy}
-            onChange={(e) =>
-              onChange({ sortBy: e.target.value as SortField | "" })
-            }
-            className="rounded-md border bg-background px-2 py-1.5
-                       text-xs font-medium text-foreground
-                       focus:outline-none focus:ring-2 focus:ring-ring
-                       transition-colors hover:border-ring cursor-pointer"
+          <Select 
+            value={value.sortBy || ""} 
+            onValueChange={(val) => onChange({ sortBy: val as SortField | "" })}
           >
-            <option value="">Sort by...</option>
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="!rounded-lg w-40">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {value.sortBy && (
             <button
               onClick={() => onChange({ descending: !value.descending })}
               className={cn(
-                "rounded-md border px-2 py-1.5 text-xs font-medium",
+                "rounded-md border h-[stretch] px-2 py-1.5 text-xs font-medium",
                 "transition-colors hover:bg-accent hover:text-accent-foreground",
                 value.descending
                   ? "bg-muted text-muted-foreground"

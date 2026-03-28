@@ -47,46 +47,46 @@ const AUDIT_EVENT_CONFIG: Record<
 > = {
   Created: {
     icon: FileText,
-    color: "text-blue-600",
-    bg: "bg-blue-100",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-100 dark:bg-blue-950/30",
     label: "Created",
   },
   Assigned: {
     icon: UserCheck,
-    color: "text-purple-600",
-    bg: "bg-purple-100",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-100 dark:bg-purple-950/30",
     label: "Assigned",
   },
   Started: {
     icon: Play,
-    color: "text-orange-600",
-    bg: "bg-orange-100",
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-100 dark:bg-orange-950/30",
     label: "Started",
   },
   Completed: {
     icon: CheckCircle2,
-    color: "text-emerald-600",
-    bg: "bg-emerald-100",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-100 dark:bg-emerald-950/30",
     label: "Completed",
   },
   Cancelled: {
     icon: XCircle,
-    color: "text-red-600",
-    bg: "bg-red-100",
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-red-100 dark:bg-red-950/30",
     label: "Cancelled",
   },
   SurveySubmitted: {
     icon: Star,
-    color: "text-amber-600",
-    bg: "bg-amber-100",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-100 dark:bg-amber-950/30",
     label: "Survey Submitted",
   },
 };
 
 const DEFAULT_EVENT = {
   icon: Clock,
-  color: "text-gray-600",
-  bg: "bg-gray-100",
+  color: "text-gray-600 dark:text-gray-400",
+  bg: "bg-gray-100 dark:bg-gray-900/30",
   label: "Event",
 };
 
@@ -179,8 +179,8 @@ export function RequestDetailsPage() {
                     "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5",
                     "text-xs font-medium",
                     isOverdue
-                      ? "bg-red-100 text-red-700"
-                      : "bg-gray-100 text-gray-600",
+                      ? "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300"
+                      : "bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400",
                   )}
                 >
                   <Calendar className="h-3 w-3" />
@@ -192,7 +192,7 @@ export function RequestDetailsPage() {
                 <span
                   className="inline-flex items-center gap-1 rounded-full
                                  px-2.5 py-0.5 text-xs font-medium
-                                 bg-gray-100 text-gray-600"
+                                 bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
                 >
                   <DollarSign className="h-3 w-3" />
                   Est. ${request.estimatedCost}
@@ -217,16 +217,16 @@ export function RequestDetailsPage() {
           {/* Comment */}
           {request.comment && (
             <div
-              className="rounded-xl border border-amber-200
-                            bg-amber-50 p-5 shadow-sm"
+              className="rounded-xl border border-amber-200 dark:border-amber-900/50
+                            bg-amber-50 dark:bg-amber-950/20 p-5 shadow-sm"
             >
               <h3
                 className="mb-2 text-xs font-semibold uppercase
-                             tracking-wider text-amber-700"
+                             tracking-wider text-amber-700 dark:text-amber-300"
               >
                 Additional Comments
               </h3>
-              <p className="text-sm text-amber-800 leading-relaxed">
+              <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
                 {request.comment}
               </p>
             </div>
@@ -336,7 +336,7 @@ export function RequestDetailsPage() {
                         "h-6 w-6",
                         n <= request.survey!.rating
                           ? "fill-amber-400 text-amber-400"
-                          : "fill-gray-100 text-gray-300",
+                          : "fill-gray-200 dark:fill-gray-700 text-gray-300 dark:text-gray-600",
                       )}
                     />
                   ))}
@@ -368,14 +368,14 @@ export function RequestDetailsPage() {
         <div className="space-y-6">
           {/* Resubmit panel — Cancelled requests, Collaborator only */}
           {request.status === "Cancelled" && role === UserRole.Collaborator && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+            <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
               <div className="flex items-start gap-2">
-                <RotateCcw className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                <RotateCcw className="h-4 w-4 text-amber-700 dark:text-amber-300 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-900">
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                     This request was cancelled
                   </p>
-                  <p className="text-xs text-amber-700 mt-0.5">
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
                     You can resubmit it with the same details — review and
                     adjust before sending.
                   </p>
@@ -388,9 +388,9 @@ export function RequestDetailsPage() {
                   })
                 }
                 className="w-full inline-flex items-center justify-center gap-2
-                             rounded-lg border border-amber-300 bg-white px-4 py-2
-                             text-sm font-medium text-amber-800 shadow-sm
-                             hover:bg-amber-100 transition-colors"
+                             rounded-lg border border-amber-300 dark:border-amber-900/50 bg-white dark:bg-card px-4 py-2
+                             text-sm font-medium text-amber-800 dark:text-amber-300 shadow-sm
+                             hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Resubmit this Request

@@ -1,4 +1,4 @@
-import { Bell, Search, Plus } from "lucide-react";
+import { Bell, Search, Plus, Moon, Sun } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { UserRole } from "@/features/auth";
@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useTheme } from "@/shared/hooks/useTheme";
 
 // ── Page title map ────────────────────────────────────────────────────────────
 
@@ -73,20 +74,27 @@ export function Topbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { theme, toggle } = useTheme();
 
   const pageTitle = getPageTitle(location.pathname);
   const unreadCount = DUMMY_NOTIFICATIONS.filter((n) => !n.read).length;
 
   return (
     <header
-      className="h-16 bg-white border-b border-border flex
+      className="h-16 bg-white dark:bg-card border-b border-border flex
                        items-center justify-between px-6 gap-4"
     >
       {/* ── Left — page title ─────────────────────────────────────── */}
       <div className="flex items-center gap-2 text-sm min-w-0">
-        <span className="text-gray-400 hidden md:block">EY Errands</span>
-        <span className="text-gray-300 hidden md:block">/</span>
-        <span className="font-medium text-[#2E2E38] truncate">{pageTitle}</span>
+        <span className="text-gray-400 dark:text-gray-500 hidden md:block">
+          EY Errands
+        </span>
+        <span className="text-gray-300 dark:text-gray-600 hidden md:block">
+          /
+        </span>
+        <span className="font-medium text-[#2E2E38] dark:text-foreground truncate">
+          {pageTitle}
+        </span>{" "}
       </div>
 
       {/* ── Right — actions ───────────────────────────────────────── */}
@@ -94,9 +102,9 @@ export function Topbar() {
         {/* Search — placeholder for feat/request-filters */}
         <button
           className="flex items-center gap-2 rounded-lg border
-                     border-gray-200 bg-gray-50 px-3 py-1.5 text-sm
-                     text-gray-400 hover:bg-gray-100 transition-colors
-                     w-48 hidden md:flex"
+            border-border bg-muted/40 px-3 py-1.5 text-sm
+            text-muted-foreground hover:bg-muted transition-colors
+            w-48 hidden md:flex"
           onClick={() =>
             toast.info(
               "Global search coming soon — use filters on each page for now.",
@@ -107,9 +115,9 @@ export function Topbar() {
           <Search className="h-4 w-4 shrink-0" />
           <span className="text-xs">Search requests...</span>
           <kbd
-            className="ml-auto rounded border border-gray-200
-                          bg-white px-1.5 py-0.5 text-[10px]
-                          text-gray-400 font-mono hidden lg:block"
+            className="ml-auto rounded border border-border
+              bg-background px-1.5 py-0.5 text-[10px]
+              text-muted-foreground font-mono hidden lg:block"
           >
             ⌘K
           </kbd>
@@ -120,9 +128,9 @@ export function Topbar() {
           <button
             onClick={() => navigate("/requests/new")}
             className="flex items-center gap-1.5 rounded-lg
-                       bg-[#2E2E38] px-3 py-1.5 text-xs font-semibold
-                       text-white hover:bg-[#1a1a24] transition-colors
-                       hidden sm:flex"
+                        bg-[#2E2E38] px-3 py-1.5 text-xs font-semibold
+                        text-white hover:bg-[#1a1a24] transition-colors
+                        hidden sm:flex"
           >
             <Plus className="h-3.5 w-3.5" />
             New Request
@@ -134,8 +142,8 @@ export function Topbar() {
           <DropdownMenuTrigger asChild>
             <button
               className="relative flex h-9 w-9 items-center justify-center
-                         rounded-lg text-gray-500 hover:bg-gray-100
-                         transition-colors"
+                rounded-lg text-muted-foreground hover:bg-muted
+                transition-colors"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -156,15 +164,15 @@ export function Topbar() {
             {/* Header */}
             <div
               className="flex items-center justify-between
-                            border-b border-gray-100 px-4 py-3"
+                border-b border-border px-4 py-3"
             >
-              <p className="text-sm font-semibold text-[#2E2E38]">
+              <p className="text-sm font-semibold text-foreground">
                 Notifications
               </p>
               {unreadCount > 0 && (
                 <span
                   className="rounded-full bg-[#FFE600]/20 px-2 py-0.5
-                                 text-xs font-semibold text-[#2E2E38]"
+                    text-xs font-semibold text-[#2E2E38] dark:text-[#FFE600]"
                 >
                   {unreadCount} new
                 </span>
@@ -172,16 +180,13 @@ export function Topbar() {
             </div>
 
             {/* List */}
-            <div
-              className="max-h-80 overflow-y-auto divide-y
-                            divide-gray-50"
-            >
+            <div className="max-h-80 overflow-y-auto divide-y divide-border">
               {DUMMY_NOTIFICATIONS.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex gap-3 px-4 py-3 hover:bg-gray-50
-                              transition-colors cursor-pointer
-                              ${!n.read ? "bg-blue-50/50" : ""}`}
+                  className={`flex gap-3 px-4 py-3 hover:bg-muted/50
+                    transition-colors cursor-pointer
+                    ${!n.read ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}`}
                 >
                   {/* Unread dot */}
                   <div className="mt-1 shrink-0">
@@ -203,11 +208,11 @@ export function Topbar() {
                       >
                         {n.title}
                       </p>
-                      <span className="shrink-0 text-[10px] text-gray-400">
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
                         {n.time}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                       {n.message}
                     </p>
                   </div>
@@ -216,11 +221,10 @@ export function Topbar() {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-100 px-4 py-2.5">
+            <div className="border-t border-border px-4 py-2.5">
               <button
-                className="w-full text-center text-xs text-gray-400
-                                 hover:text-[#2E2E38] transition-colors
-                                 py-1"
+                className="w-full text-center text-xs text-muted-foreground
+                     hover:text-foreground transition-colors py-1"
               >
                 Mark all as read
               </button>
@@ -228,13 +232,28 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Theme toggle */}
+        <button
+          onClick={toggle}
+          className="flex h-9 w-9 items-center justify-center rounded-lg
+             text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10
+             dark:text-gray-400 transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </button>
+
         {/* Divider */}
-        <div className="h-6 w-px bg-gray-200 mx-1" />
+        <div className="h-6 w-px bg-border mx-1" />
 
         {/* User info — display only, no dropdown needed */}
         <div className="flex items-center gap-2.5">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-medium text-[#2E2E38] leading-tight">
+            <p className="text-xs font-medium text-foreground leading-tight">
               {user?.fullName ?? "—"}
             </p>
             <span
@@ -272,12 +291,12 @@ function getInitials(name?: string): string {
 function roleBadgeClass(role?: string): string {
   switch (role) {
     case "Admin":
-      return "text-purple-600";
+      return "text-purple-600 dark:text-purple-400";
     case "Collaborator":
-      return "text-blue-600";
+      return "text-blue-600 dark:text-blue-400";
     case "Courier":
-      return "text-amber-600";
+      return "text-amber-600 dark:text-amber-400";
     default:
-      return "text-gray-500";
+      return "text-gray-500 dark:text-gray-400";
   }
 }

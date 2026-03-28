@@ -131,8 +131,8 @@ export function MyRequestsPage() {
         <div className="flex items-center gap-2">
           {/* View toggle */}
           <div
-            className="flex items-center gap-1 rounded-lg border
-                          bg-card p-1 shadow-sm"
+            className="flex items-center gap-1 rounded-lg border border-border
+                          bg-white dark:bg-card p-1 shadow-sm"
           >
             <button
               onClick={() => setViewMode("table")}
@@ -141,8 +141,8 @@ export function MyRequestsPage() {
                 "flex h-8 w-8 items-center justify-center rounded-md",
                 "transition-colors",
                 viewMode === "table"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent",
+                  ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                  : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
               )}
             >
               <List className="h-4 w-4" />
@@ -154,8 +154,8 @@ export function MyRequestsPage() {
                 "flex h-8 w-8 items-center justify-center rounded-md",
                 "transition-colors",
                 viewMode === "card"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent",
+                  ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                  : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
               )}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -167,7 +167,8 @@ export function MyRequestsPage() {
             to="/requests/new"
             className="flex items-center gap-1.5 rounded-lg bg-[#2E2E38]
                        px-4 py-2 text-sm font-semibold text-white
-                       hover:bg-[#1a1a24] transition-colors"
+                       hover:bg-[#1a1a24] dark:bg-[#FFE600] dark:text-[#2E2E38]
+                       dark:hover:bg-yellow-400 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Request
@@ -325,8 +326,9 @@ export function MyRequestsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-lg border px-3 py-1.5 text-xs font-medium
-                           transition-colors hover:bg-accent
+                className="rounded-lg border border-border bg-background dark:bg-card
+                           px-3 py-1.5 text-xs font-medium text-foreground
+                           transition-colors hover:bg-muted dark:hover:bg-muted/40
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Previous
@@ -334,8 +336,9 @@ export function MyRequestsPage() {
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * PAGE_SIZE >= data.totalCount}
-                className="rounded-lg border px-3 py-1.5 text-xs font-medium
-                           transition-colors hover:bg-accent
+                className="rounded-lg border border-border bg-background dark:bg-card
+                           px-3 py-1.5 text-xs font-medium text-foreground
+                           transition-colors hover:bg-muted dark:hover:bg-muted/40
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next
@@ -424,11 +427,11 @@ function CollaboratorRequestCard({ request }: { request: RequestListItemDto }) {
               setShowSurveyModal(true);
             }}
             className="absolute -top-px left-0 right-0 flex items-center
-                       justify-center gap-1 rounded-t-xl bg-amber-400
-                       py-1.5 text-[10px] font-bold text-amber-900
-                       hover:bg-amber-500 transition-colors"
+                       justify-center gap-1 rounded-t-xl bg-amber-400 dark:bg-amber-600
+                       py-1.5 text-[10px] font-bold text-amber-900 dark:text-amber-100
+                       hover:bg-amber-500 dark:hover:bg-amber-700 transition-colors"
           >
-            <Star className="h-3 w-3 fill-amber-900" />
+            <Star className="h-3 w-3 fill-amber-900 dark:fill-amber-100" />
             Rate your experience — tap to review
           </button>
         )}
@@ -467,9 +470,9 @@ function CollaboratorRequestCard({ request }: { request: RequestListItemDto }) {
               navigate(`/requests/${request.id}`);
             }}
             className="mt-auto flex w-full items-center justify-center gap-1.5
-                       rounded-lg border border-amber-200 bg-amber-50 py-2
-                       text-xs font-medium text-amber-800
-                       hover:bg-amber-100 transition-colors"
+                       rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 py-2
+                       text-xs font-medium text-amber-800 dark:text-amber-300
+                       hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
           >
             <RotateCcw className="h-3 w-3" />
             View &amp; Resubmit
@@ -557,9 +560,9 @@ function CollaboratorTableRow({
             {needsSurvey && (
               <span
                 className="inline-flex items-center gap-1 text-[10px]
-                               font-semibold text-amber-600"
+                               font-semibold text-amber-600 dark:text-amber-400"
               >
-                <Star className="h-2.5 w-2.5 fill-amber-600" />
+                <Star className="h-2.5 w-2.5 fill-amber-600 dark:fill-amber-400" />
                 Awaiting your review
               </span>
             )}
@@ -587,8 +590,8 @@ function CollaboratorTableRow({
         {needsSurvey && (
           <span
             className="inline-flex items-center gap-1 rounded-full
-                           bg-amber-50 px-2 py-0.5 text-[10px] font-semibold
-                           text-amber-700"
+                           bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-[10px] font-semibold
+                           text-amber-700 dark:text-amber-300"
           >
             <Star className="h-2.5 w-2.5" />
             Rate
@@ -601,9 +604,9 @@ function CollaboratorTableRow({
               navigate(`/requests/${request.id}`);
             }}
             className="inline-flex items-center gap-1 rounded-full
-                       bg-amber-50 border border-amber-200 px-2 py-0.5
-                       text-[10px] font-semibold text-amber-700
-                       hover:bg-amber-100 transition-colors"
+                       bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5
+                       text-[10px] font-semibold text-amber-700 dark:text-amber-300
+                       hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
           >
             <RotateCcw className="h-2.5 w-2.5" />
             Resubmit
@@ -641,7 +644,8 @@ function MyRequestsEmptyState({ hasFilters }: { hasFilters: boolean }) {
           to="/requests/new"
           className="mt-4 flex items-center gap-1.5 rounded-lg
                      bg-[#2E2E38] px-4 py-2 text-sm font-semibold
-                     text-white hover:bg-[#1a1a24] transition-colors"
+                     text-white hover:bg-[#1a1a24] dark:bg-[#FFE600] dark:text-[#2E2E38]
+                     dark:hover:bg-yellow-400 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Create Request

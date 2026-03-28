@@ -22,7 +22,7 @@ export function FieldGroup({
     <div className={cn("space-y-1.5", className)}>
       <label
         htmlFor={htmlFor}
-        className="block text-sm font-medium text-[#2E2E38]"
+        className="block text-sm font-medium text-foreground"
       >
         {label}
         {optional && (

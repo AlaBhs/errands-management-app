@@ -98,17 +98,18 @@ export function MySchedulePage() {
 
         {/* View toggle */}
         <div
-          className="flex items-center gap-1 rounded-lg border
-                        bg-card p-1 shadow-sm"
+          className="flex items-center gap-1 rounded-lg border border-border
+                          bg-white dark:bg-card p-1 shadow-sm"
         >
           <button
             onClick={() => setViewMode("table")}
             aria-label="Table view"
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+              "flex h-8 w-8 items-center justify-center rounded-md",
+              "transition-colors",
               viewMode === "table"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent",
+                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
             <List className="h-4 w-4" />
@@ -117,10 +118,11 @@ export function MySchedulePage() {
             onClick={() => setViewMode("card")}
             aria-label="Card view"
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+              "flex h-8 w-8 items-center justify-center rounded-md",
+              "transition-colors",
               viewMode === "card"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent",
+                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -193,11 +195,13 @@ export function MySchedulePage() {
           className={cn(
             "rounded-xl border bg-card p-4 text-left shadow-sm",
             "transition-all hover:shadow-md hover:-translate-y-0.5",
-            urgentCount > 0 && "border-red-200 bg-red-50/50",
+            urgentCount > 0 &&
+              "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30",
+            filters.status === RequestStatus.Assigned && "ring-2 ring-primary", // keep ring if needed
           )}
         >
           <div className="flex items-center gap-2 mb-1">
-            <Zap className="h-4 w-4 text-red-500" />
+            <Zap className="h-4 w-4 text-red-500 dark:text-red-400" />
             <span className="text-xs font-medium text-muted-foreground">
               Urgent
             </span>
@@ -205,7 +209,9 @@ export function MySchedulePage() {
           <p
             className={cn(
               "text-2xl font-black",
-              urgentCount > 0 ? "text-red-600" : "text-foreground",
+              urgentCount > 0
+                ? "text-red-600 dark:text-red-400"
+                : "text-foreground",
             )}
           >
             {urgentCount}
@@ -260,7 +266,6 @@ export function MySchedulePage() {
                       "Priority",
                       "Status",
                       "Deadline",
-                      "",
                     ].map((h) => (
                       <th
                         key={h}
@@ -284,8 +289,14 @@ export function MySchedulePage() {
                       <tr
                         key={req.id}
                         onClick={() => navigate(`/requests/${req.id}`)}
-                        className="group cursor-pointer transition-colors
-                                   hover:bg-muted/40"
+                        className={cn(
+                          "group cursor-pointer transition-colors hover:bg-muted/40",
+                          // Urgent styling (same as card)
+                          req.priority === "Urgent" &&
+                            req.status !== "Completed" &&
+                            req.status !== "Cancelled" &&
+                            "bg-red-50/50 dark:bg-red-950/20 ring-1 ring-red-200 dark:ring-red-800",
+                        )}
                       >
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
@@ -293,28 +304,22 @@ export function MySchedulePage() {
                               className={cn(
                                 "h-full w-0.5 rounded-full shrink-0 self-stretch",
                                 {
-                                  "bg-gray-300": req.priority === "Low",
-                                  "bg-blue-400": req.priority === "Normal",
-                                  "bg-orange-400": req.priority === "High",
-                                  "bg-red-500": req.priority === "Urgent",
+                                  "bg-gray-300 dark:bg-gray-600":
+                                    req.priority === "Low",
+                                  "bg-blue-400 dark:bg-blue-500":
+                                    req.priority === "Normal",
+                                  "bg-orange-400 dark:bg-orange-500":
+                                    req.priority === "High",
+                                  "bg-red-500 dark:bg-red-500":
+                                    req.priority === "Urgent",
                                 },
                               )}
                             />
                             <div>
-                              <p
-                                className="font-medium text-foreground
-                                            truncate max-w-[200px]"
-                              >
+                              <p className="font-medium text-foreground truncate max-w-[200px]">
                                 {req.title}
                               </p>
-                              {req.priority === "Urgent" && (
-                                <span
-                                  className="inline-flex items-center gap-1
-                                                 text-[10px] font-bold text-red-500"
-                                >
-                                  <Zap className="h-2.5 w-2.5" /> Urgent
-                                </span>
-                              )}
+                              {/* Removed the Urgent badge span */}
                             </div>
                           </div>
                         </td>
@@ -341,18 +346,7 @@ export function MySchedulePage() {
                             ? `${isOverdue ? "⚠ " : ""}${formatDate(req.deadline)}`
                             : "—"}
                         </td>
-                        <td className="px-4 py-3.5 text-right">
-                          {req.status === "Assigned" && (
-                            <span className="text-xs font-medium text-blue-600">
-                              Ready to start →
-                            </span>
-                          )}
-                          {req.status === "InProgress" && (
-                            <span className="text-xs font-medium text-emerald-600">
-                              In progress →
-                            </span>
-                          )}
-                        </td>
+                      
                       </tr>
                     );
                   })}

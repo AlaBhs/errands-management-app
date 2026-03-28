@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserMinus, UserCheck, Search } from "lucide-react";
@@ -11,12 +11,19 @@ import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserRole } from "@/features/auth";
 import { cn } from "@/shared/utils/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const createUserSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  email: z.email("Invalid email address"),
+  email: z.string().email("Invalid email address"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -35,8 +42,8 @@ const PAGE_SIZE = 10;
 export function UserManagementPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Confirm modal state
   const [deactivateTarget, setDeactivateTarget] = useState<{
@@ -55,14 +62,15 @@ export function UserManagementPage() {
     page,
     pageSize: PAGE_SIZE,
     search: search || undefined,
-    role: roleFilter || undefined,
-    isActive: statusFilter === "" ? undefined : statusFilter === "true",
+    role: roleFilter === "all" ? undefined : roleFilter,
+    isActive: statusFilter === "all" ? undefined : statusFilter === "true",
   });
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
@@ -130,40 +138,44 @@ export function UserManagementPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Role</span>
-              <select
+              <Select
                 value={roleFilter}
-                onChange={(e) => {
-                  setRoleFilter(e.target.value);
+                onValueChange={(val) => {
+                  setRoleFilter(val);
                   setPage(1);
                 }}
-                className="rounded-md border bg-background px-2 py-1.5
-                           text-xs font-medium focus:outline-none
-                           focus:ring-2 focus:ring-ring transition-colors
-                           hover:border-ring cursor-pointer"
               >
-                <option value="">All</option>
-                <option value={UserRole.Admin}>Admin</option>
-                <option value={UserRole.Collaborator}>Collaborator</option>
-                <option value={UserRole.Courier}>Courier</option>
-              </select>
+                <SelectTrigger className="w-[130px] h-8 text-xs !rounded-lg">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value={UserRole.Admin}>Admin</SelectItem>
+                  <SelectItem value={UserRole.Collaborator}>
+                    Collaborator
+                  </SelectItem>
+                  <SelectItem value={UserRole.Courier}>Courier</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Status</span>
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
+                onValueChange={(val) => {
+                  setStatusFilter(val);
                   setPage(1);
                 }}
-                className="rounded-md border bg-background px-2 py-1.5
-                           text-xs font-medium focus:outline-none
-                           focus:ring-2 focus:ring-ring transition-colors
-                           hover:border-ring cursor-pointer"
               >
-                <option value="">All</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
+                <SelectTrigger className="w-[110px] h-8 text-xs !rounded-lg">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -239,8 +251,8 @@ export function UserManagementPage() {
                             "inline-flex items-center rounded-full px-2 py-0.5",
                             "text-xs font-medium",
                             user.isActive
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-gray-100 text-gray-500",
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
                           )}
                         >
                           {user.isActive ? "Active" : "Inactive"}
@@ -258,6 +270,7 @@ export function UserManagementPage() {
                             disabled={user.id === currentUserId}
                             className="inline-flex items-center gap-1
                                        text-xs text-red-500 hover:text-red-700
+                                       dark:text-red-400 dark:hover:text-red-300
                                        disabled:opacity-40
                                        disabled:cursor-not-allowed
                                        transition-colors"
@@ -276,6 +289,7 @@ export function UserManagementPage() {
                             className="inline-flex items-center gap-1
                                        text-xs text-emerald-600
                                        hover:text-emerald-800
+                                       dark:text-emerald-400 dark:hover:text-emerald-300
                                        transition-colors"
                           >
                             <UserCheck className="h-3.5 w-3.5" />
@@ -365,10 +379,10 @@ export function UserManagementPage() {
                   {...register(field.name)}
                   type={field.type}
                   placeholder={field.placeholder}
-                  className="w-full rounded-xl border border-gray-200
-                             bg-gray-50 px-3 py-2.5 text-sm
-                             focus:border-[#2E2E38] focus:bg-white
-                             focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-border
+                             bg-background px-3 py-2.5 text-sm text-foreground
+                             focus:border-ring focus:outline-none
+                             focus:ring-2 focus:ring-ring transition-colors"
                 />
                 {errors[field.name] && (
                   <p className="mt-1 text-xs text-red-500">
@@ -379,22 +393,26 @@ export function UserManagementPage() {
             ))}
 
             <div>
-              <label
-                className="block text-xs font-medium
-                                text-muted-foreground mb-1.5"
-              >
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Role
               </label>
-              <select
-                {...register("role")}
-                className="w-full rounded-xl border border-gray-200
-                           bg-gray-50 px-3 py-2.5 text-sm
-                           focus:border-[#2E2E38] focus:bg-white
-                           focus:outline-none transition-colors"
-              >
-                <option value={UserRole.Collaborator}>Collaborator</option>
-                <option value={UserRole.Courier}>Courier</option>
-              </select>
+              <Controller
+                name="role"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full !rounded-lg">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UserRole.Collaborator}>
+                        Collaborator
+                      </SelectItem>
+                      <SelectItem value={UserRole.Courier}>Courier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {create.isError && (
@@ -410,9 +428,9 @@ export function UserManagementPage() {
             <button
               onClick={onCreateUser}
               disabled={create.isPending}
-              className="w-full rounded-xl bg-[#2E2E38] px-4 py-2.5
-                         text-sm font-semibold text-white
-                         hover:bg-[#1a1a24] disabled:opacity-50
+              className="w-full rounded-xl bg-primary px-4 py-2.5
+                         text-sm font-semibold text-primary-foreground
+                         hover:bg-primary/90 disabled:opacity-50
                          transition-colors"
             >
               {create.isPending ? "Creating…" : "Create User"}
@@ -455,15 +473,19 @@ export function UserManagementPage() {
 
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, string> = {
-    Admin: "bg-purple-100 text-purple-700",
-    Collaborator: "bg-blue-100 text-blue-700",
-    Courier: "bg-yellow-100 text-yellow-700",
+    Admin:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    Collaborator:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    Courier:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
   };
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        colors[role] ?? "bg-gray-100 text-gray-600",
+        colors[role] ??
+          "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
       )}
     >
       {role}

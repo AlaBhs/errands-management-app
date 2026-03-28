@@ -5,6 +5,7 @@ import { PriorityBadge }      from "@/shared/components/PriorityBadge";
 import { formatDate }         from "@/shared/utils/date";
 import type { RequestListItemDto } from "../../types";
 import type { PriorityLevel }      from "../../types";
+import { cn } from "@/shared/utils/utils";
 
 const PRIORITY_BORDER: Record<PriorityLevel, string> = {
   Low:    "border-l-gray-300",
@@ -23,11 +24,17 @@ export function RequestCard({ request }: RequestCardProps) {
   return (
     <div
       onClick={() => navigate(`/requests/${request.id}`)}
-      className={`group relative flex flex-col rounded-xl border-l-4
-                  border border-gray-100 bg-card p-5 shadow-sm
-                  transition-all duration-150 cursor-pointer
-                  hover:-translate-y-0.5 hover:shadow-md
-                  ${PRIORITY_BORDER[request.priority as PriorityLevel]}`}
+      className={cn(
+        "group relative flex flex-col rounded-xl border-l-4",
+        "border border-border bg-card p-5 shadow-sm",
+        "transition-all duration-150 cursor-pointer",
+        "hover:-translate-y-0.5 hover:shadow-md",
+        PRIORITY_BORDER[request.priority as PriorityLevel],
+        request.priority === "Urgent" &&
+          request.status !== "Completed" &&
+          request.status !== "Cancelled" &&
+          "bg-red-50/50 dark:bg-red-950/20 ring-1 ring-red-200 dark:ring-red-800",
+      )}
     >
       {/* Top row — status + category */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -52,7 +59,7 @@ export function RequestCard({ request }: RequestCardProps) {
 
       {/* Footer — deadline + cost */}
       <div className="flex items-center justify-between
-                      border-t border-gray-100 pt-3 mt-auto">
+                      border-t border-border pt-3 mt-auto">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="h-3.5 w-3.5" />
           {request.deadline ? formatDate(request.deadline) : "No deadline"}

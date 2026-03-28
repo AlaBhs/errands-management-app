@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LayoutGrid, List } from "lucide-react";
 import { useRequests } from "../hooks";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
@@ -88,8 +85,8 @@ export function RequestsListPage() {
 
         {/* View toggle */}
         <div
-          className="flex items-center gap-1 rounded-lg border
-                        bg-card p-1 shadow-sm"
+          className="flex items-center gap-1 rounded-lg border border-border
+                          bg-white dark:bg-card p-1 shadow-sm"
         >
           <button
             onClick={() => setViewMode("table")}
@@ -98,8 +95,8 @@ export function RequestsListPage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "table"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent",
+                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
             <List className="h-4 w-4" />
@@ -111,8 +108,8 @@ export function RequestsListPage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "card"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent",
+                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -187,8 +184,13 @@ export function RequestsListPage() {
                     <tr
                       key={req.id}
                       onClick={() => navigate(`/requests/${req.id}`)}
-                      className="group cursor-pointer transition-colors
-                                 hover:bg-muted/40"
+                      className={cn(
+                        "group cursor-pointer transition-colors hover:bg-muted/40",
+                        req.priority === "Urgent" &&
+                          req.status !== "Completed" &&
+                          req.status !== "Cancelled" &&
+                          "bg-red-50/50 dark:bg-red-950/20 ring-1 ring-red-200 dark:ring-red-800",
+                      )}
                     >
                       {/* Left border accent via box-shadow trick */}
                       <td className="px-4 py-3.5">

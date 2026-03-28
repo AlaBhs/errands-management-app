@@ -1,12 +1,28 @@
 import { useState, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/shared/utils/utils";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { AnalyticsFilter } from "../types/analytics.types";
 
 interface DateRangeFilterProps {
-  filter:   AnalyticsFilter;
+  filter: AnalyticsFilter;
   onPreset: (filter: AnalyticsFilter) => void;
-  onApply:  (filter: AnalyticsFilter) => void;
+  onApply: (filter: AnalyticsFilter) => void;
 }
 
 type Preset = { label: string; from: string | null; to: string | null };
@@ -18,18 +34,22 @@ const buildPresets = (): Preset[] => {
   return [
     {
       label: "Last 30 days",
-      from:  toIsoDate(new Date(Date.now() - 30 * 86_400_000)),
-      to:    toIsoDate(today),
+      from: toIsoDate(new Date(Date.now() - 30 * 86_400_000)),
+      to: toIsoDate(today),
     },
     {
       label: "Last 3 months",
-      from:  toIsoDate(new Date(today.getFullYear(), today.getMonth() - 3, today.getDate())),
-      to:    toIsoDate(today),
+      from: toIsoDate(
+        new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()),
+      ),
+      to: toIsoDate(today),
     },
     {
       label: "Last 6 months",
-      from:  toIsoDate(new Date(today.getFullYear(), today.getMonth() - 6, today.getDate())),
-      to:    toIsoDate(today),
+      from: toIsoDate(
+        new Date(today.getFullYear(), today.getMonth() - 6, today.getDate()),
+      ),
+      to: toIsoDate(today),
     },
     { label: "All time", from: null, to: null },
   ];
@@ -44,7 +64,7 @@ const buildYearOptions = (): number[] => {
 
 const yearToFilter = (y: number): AnalyticsFilter => ({
   from: `${y}-01-01`,
-  to:   `${y}-12-31`,
+  to: `${y}-12-31`,
 });
 
 const filterMatchesYear = (f: AnalyticsFilter, y: number): boolean =>
@@ -53,34 +73,49 @@ const filterMatchesYear = (f: AnalyticsFilter, y: number): boolean =>
 const isActivePreset = (p: Preset, f: AnalyticsFilter): boolean =>
   p.from === f.from && p.to === f.to;
 
-export const DateRangeFilter = ({ filter, onPreset, onApply }: DateRangeFilterProps) => {
-  const presets     = buildPresets();
+export const DateRangeFilter = ({
+  filter,
+  onPreset,
+  onApply,
+}: DateRangeFilterProps) => {
+  const presets = buildPresets();
   const yearOptions = buildYearOptions();
   const [draft, setDraft] = useState<AnalyticsFilter>(filter);
-  useEffect(() => { setDraft(filter); }, [filter]);
+  useEffect(() => {
+    setDraft(filter);
+  }, [filter]);
 
   const selectedYear =
     yearOptions.find((y) => filterMatchesYear(filter, y))?.toString() ?? "";
 
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl
-                    border bg-card px-4 py-3 shadow-sm">
+  const parseDate = (iso: string | null): Date | undefined =>
+    iso ? new Date(iso) : undefined;
 
+  const formatDate = (iso: string | null): string =>
+    iso ? format(new Date(iso), "dd/MM/yyyy") : "";
+
+  const updateDraftFrom = (date: Date | undefined) =>
+    setDraft({ ...draft, from: date ? toIsoDate(date) : null });
+  const updateDraftTo = (date: Date | undefined) =>
+    setDraft({ ...draft, to: date ? toIsoDate(date) : null });
+
+  return (
+    <div
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg
+                    border bg-card px-4 py-3 shadow-sm"
+    >
       {/* Preset buttons */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5 h-[stretch]">
         {presets.map((p) => (
-          <button
+          <Button
             key={p.label}
+            variant={isActivePreset(p, filter) ? "default" : "outline"}
+            size="sm"
             onClick={() => onPreset({ from: p.from, to: p.to })}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150",
-              isActivePreset(p, filter)
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
+            className="h-[stretch] text-xs rounded-md"
           >
             {p.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -89,57 +124,96 @@ export const DateRangeFilter = ({ filter, onPreset, onApply }: DateRangeFilterPr
       {/* Year dropdown */}
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">Year</span>
-        <select
+        <Select
           value={selectedYear}
-          onChange={(e) =>
-            e.target.value === ""
+          onValueChange={(val) =>
+            val === ""
               ? onPreset({ from: null, to: null })
-              : onPreset(yearToFilter(Number(e.target.value)))
+              : onPreset(yearToFilter(Number(val)))
           }
-          className="rounded-md border bg-background px-2 py-1.5 text-xs
-                     font-medium text-foreground focus:outline-none
-                     focus:ring-2 focus:ring-ring transition-colors
-                     hover:border-ring cursor-pointer"
         >
-          <option value="">Select year...</option>
-          {yearOptions.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+          <SelectTrigger className="h-7 w-28 text-xs rounded-md">
+            <SelectValue placeholder="Select year…" />
+          </SelectTrigger>
+          <SelectContent>
+            {yearOptions.map((y) => (
+              <SelectItem key={y} value={y.toString()}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Separator orientation="vertical" className="hidden h-5 sm:block" />
 
       {/* Custom range */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 h-[stretch]">
         <span className="text-xs text-muted-foreground">From</span>
-        <input
-          type="date"
-          value={draft.from ?? ""}
-          max={draft.to ?? undefined}
-          onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value || null }))}
-          className="rounded-md border bg-background px-2 py-1.5 text-xs
-                     font-medium focus:outline-none focus:ring-2 focus:ring-ring
-                     hover:border-ring transition-colors cursor-pointer"
-        />
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-[stretch] w-28 justify-start text-left text-xs font-normal rounded-md",
+                !draft.from && "text-muted-foreground",
+              )}
+            >
+              <CalendarIcon className="mr-1 h-3 w-3" />
+              {formatDate(draft.from) || "Pick date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={parseDate(draft.from)}
+              onSelect={updateDraftFrom}
+              disabled={(date) =>
+                draft.to ? date > parseDate(draft.to)! : false
+              }
+              autoFocus
+            />
+          </PopoverContent>
+        </Popover>
+
         <span className="text-xs text-muted-foreground">To</span>
-        <input
-          type="date"
-          value={draft.to ?? ""}
-          min={draft.from ?? undefined}
-          onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value || null }))}
-          className="rounded-md border bg-background px-2 py-1.5 text-xs
-                     font-medium focus:outline-none focus:ring-2 focus:ring-ring
-                     hover:border-ring transition-colors cursor-pointer"
-        />
-        <button
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-[stretch] w-28 justify-start text-left text-xs font-normal rounded-md",
+                !draft.to && "text-muted-foreground",
+              )}
+            >
+              <CalendarIcon className="mr-1 h-3 w-3" />
+              {formatDate(draft.to) || "Pick date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={parseDate(draft.to)}
+              onSelect={updateDraftTo}
+              disabled={(date) =>
+                draft.from ? date < parseDate(draft.from)! : false
+              }
+              autoFocus
+            />
+          </PopoverContent>
+        </Popover>
+
+        <Button
           onClick={() => onApply(draft)}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium
-                     text-primary-foreground shadow-sm hover:bg-primary/90
-                     transition-colors active:scale-95"
+          size="sm"
+          className="h-[stretch] px-3 text-xs rounded-md"
         >
           Apply
-        </button>
+        </Button>
       </div>
     </div>
   );

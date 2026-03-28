@@ -8,6 +8,14 @@ import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormSection } from "@/shared/components/FormSection";
 import { FieldGroup } from "@/shared/components/FieldGroup";
+import { DatePicker } from "@/shared/components/DatePicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
 import { useRef, useState } from "react";
@@ -130,8 +138,7 @@ function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
 // ── Shared input className ────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full px-4 py-2 border border-border rounded-lg text-sm " +
-  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "w-full px-4 py-2 border border-border rounded-lg text-sm " +  "bg-background dark:bg-card text-foreground " +  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
   "placeholder:text-muted-foreground";
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -264,7 +271,7 @@ export function CreateRequestPage() {
         }
         actions={
           isResubmit ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
               <RotateCcw className="h-3 w-3" />
               Resubmitting cancelled request
             </span>
@@ -280,7 +287,7 @@ export function CreateRequestPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         {/* ── General Info ─────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-border p-6 mb-4 space-y-5">
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
           <FormSection
             title="General Info"
             description="Describe your request in detail so it can be processed accurately."
@@ -331,22 +338,30 @@ export function CreateRequestPage() {
         </div>
         <div className="flex flex-col lg:flex-row gap-6 space-y-5">
           {/* ── Classification ───────────────────────────────────────────────── */}
-          <div className="flex-1 bg-white rounded-xl border border-border p-6 mb-5">
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
             <FormSection
               title="Classification"
               description="Helps route your request to the right team."
             >
               <FieldGroup label="Category" error={errors.category?.message}>
-                <select {...register("category")} className={inputCls}>
-                  <option value="" disabled>
-                    Select a category…
-                  </option>
-                  {CATEGORY_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full !rounded-lg">
+                        <SelectValue placeholder="Select a category…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </FieldGroup>
 
               <FieldGroup
@@ -355,12 +370,17 @@ export function CreateRequestPage() {
                 optional
                 error={errors.deadline?.message}
               >
-                <input
-                  id="deadline"
-                  type="date"
-                  min={minDeadlineDate()}
-                  {...register("deadline")}
-                  className={inputCls}
+                <Controller
+                  name="deadline"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      minDate={minDeadlineDate()}
+                      placeholder="Pick a date"
+                    />
+                  )}
                 />
               </FieldGroup>
 
@@ -372,19 +392,23 @@ export function CreateRequestPage() {
                   name="priority"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      value={field.value}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value, 10))
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(parseInt(value, 10))
                       }
-                      className={inputCls}
                     >
-                      {PRIORITY_LEVELS.map((label, idx) => (
-                        <option key={label} value={idx}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full !rounded-lg">
+                        <SelectValue placeholder="Select priority…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_LEVELS.map((label, idx) => (
+                          <SelectItem key={label} value={String(idx)}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
               </FieldGroup>
@@ -414,7 +438,7 @@ export function CreateRequestPage() {
           </div>
 
           {/* ── Contact & Address ────────────────────────────────────────────── */}
-          <div className="flex-1 bg-white rounded-xl border border-border p-6 mb-5">
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
             <FormSection
               title="Contact & Address"
               description="Who to meet on-site and where to deliver."
@@ -519,7 +543,7 @@ export function CreateRequestPage() {
           </div>
         </div>
         {/* ── Attachments ──────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-border p-6 mb-4 space-y-5">
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
           <FormSection
             title="Attachments"
             description="Images or PDF documents up to 10 MB each."
@@ -531,16 +555,16 @@ export function CreateRequestPage() {
                 e.preventDefault();
                 if (canAddMore) addFiles(e.dataTransfer.files);
               }}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
                 ${
                   canAddMore
-                    ? "cursor-pointer hover:border-[#2E2E38] hover:bg-gray-50"
+                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
                     : "cursor-not-allowed opacity-50"
                 } border-border`}
             >
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-1">
-                <span className="font-medium text-[#2E2E38]">
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-1">
+                <span className="font-medium text-foreground">
                   Click to upload
                 </span>{" "}
                 or drag and drop
@@ -575,11 +599,11 @@ export function CreateRequestPage() {
                 {selectedFiles.map((file) => (
                   <li
                     key={file.name}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-gray-50 px-3 py-2 text-sm"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm"
                   >
-                    <FileIcon className="w-4 h-4 shrink-0 text-gray-400" />
+                    <FileIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
                     <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-gray-700">
+                      <p className="truncate font-medium text-foreground">
                         {file.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -589,7 +613,7 @@ export function CreateRequestPage() {
                     <button
                       type="button"
                       onClick={() => removeFile(file.name)}
-                      className="shrink-0 text-gray-400 hover:text-red-500 transition-colors"
+                      className="shrink-0 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -606,8 +630,8 @@ export function CreateRequestPage() {
             type="button"
             onClick={() => navigate("/requests/mine")}
             disabled={isSubmitting}
-            className="px-6 py-2 border border-border rounded-lg text-sm text-gray-700
-                       hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-6 py-2 border border-border rounded-lg text-sm text-foreground
+                       hover:bg-muted dark:hover:bg-muted/40 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

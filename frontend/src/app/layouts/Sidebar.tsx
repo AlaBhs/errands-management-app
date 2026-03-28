@@ -238,9 +238,10 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`relative flex flex-col bg-[#2E2E38] text-white
-                  transition-all duration-300 ease-in-out
-                  ${collapsed ? "w-[68px]" : "w-64"}`}
+      className={`relative flex flex-col bg-[#252930] text-white
+              transition-all duration-300 ease-in-out
+              border-r border-transparent dark:border-white/10
+              ${collapsed ? "w-[68px]" : "w-64"}`}
       onMouseEnter={() => collapsed && setIsHoveringLogo(true)}
       onMouseLeave={() => collapsed && setIsHoveringLogo(false)}
     >
