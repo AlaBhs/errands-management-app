@@ -8,10 +8,12 @@ namespace ErrandsManagement.Application.Requests.Commands.CancelRequest;
 public sealed class CancelRequestHandler : IRequestHandler<CancelRequestCommand>
 {
     private readonly IRequestRepository _requestRepository;
+    private readonly IMediator _mediator;
 
-    public CancelRequestHandler(IRequestRepository requestRepository)
+    public CancelRequestHandler(IRequestRepository requestRepository, IMediator mediator)
     {
         _requestRepository = requestRepository;
+        _mediator = mediator;
     }
 
     public async Task Handle(
@@ -30,5 +32,10 @@ public sealed class CancelRequestHandler : IRequestHandler<CancelRequestCommand>
         request.Cancel(command.Reason);
 
         await _requestRepository.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in request.DomainEvents)
+            await _mediator.Publish(domainEvent, cancellationToken);
+
+        request.ClearDomainEvents();
     }
 }

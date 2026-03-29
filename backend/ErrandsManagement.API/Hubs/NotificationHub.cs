@@ -18,6 +18,8 @@ public class NotificationHub : Hub
         var userId = Context.UserIdentifier
             ?? throw new HubException("User is not authenticated.");
 
+        Console.WriteLine($"[Hub] User connected: {userId}, ConnectionId: {Context.ConnectionId}");
+
         await Groups.AddToGroupAsync(Context.ConnectionId, userId);
         await base.OnConnectedAsync();
     }

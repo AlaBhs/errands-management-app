@@ -67,6 +67,7 @@ public class Request : BaseEntity
 
         Status = RequestStatus.Pending;
         AddAudit("Created", "Request created.");
+        RaiseDomainEvent(new RequestCreatedEvent(Id, Title));
     }
     private void AddAudit(string eventType, string detail)
     {

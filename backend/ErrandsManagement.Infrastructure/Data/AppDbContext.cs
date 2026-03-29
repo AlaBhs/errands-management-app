@@ -30,7 +30,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information)
-                      .EnableSensitiveDataLogging();
+        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Warning);
     }
 }

@@ -1,0 +1,48 @@
+﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.Notifications.Commands.MarkNotificationRead;
+using ErrandsManagement.Application.Notifications.DTOs;
+using ErrandsManagement.Application.Notifications.Queries.GetNotifications;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace ErrandsManagement.API.Controllers;
+
+[ApiController]
+[Route("api/notifications")]
+[Authorize]
+public class NotificationsController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public NotificationsController(IMediator mediator)
+        => _mediator = mediator;
+
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _mediator.Send(new GetNotificationsQuery(userId), cancellationToken);
+
+        return Ok(ApiResponse<NotificationListDto>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
+    }
+
+    [HttpPost("{id:guid}/read")]
+    public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        await _mediator.Send(new MarkNotificationReadCommand(id, userId), cancellationToken);
+        return NoContent();
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("User ID not found in token.");
+        return Guid.Parse(claim);
+    }
+}

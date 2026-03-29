@@ -4,23 +4,23 @@ using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Commands.CompleteRequest;
 
-public sealed class CompleteRequestHandler
-    : IRequestHandler<CompleteRequestCommand>
+public sealed class CompleteRequestHandler : IRequestHandler<CompleteRequestCommand>
 {
     private readonly IRequestRepository _requestRepository;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IMediator _mediator;
 
     public CompleteRequestHandler(
         IRequestRepository requestRepository,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        IMediator mediator)
     {
         _requestRepository = requestRepository;
         _fileStorageService = fileStorageService;
+        _mediator = mediator;
     }
 
-    public async Task Handle(
-        CompleteRequestCommand command,
-        CancellationToken cancellationToken)
+    public async Task Handle(CompleteRequestCommand command, CancellationToken cancellationToken)
     {
         var request = await _requestRepository
             .GetByIdAsync(command.RequestId, cancellationToken)
@@ -28,7 +28,6 @@ public sealed class CompleteRequestHandler
 
         request.Complete(command.ActualCost, command.Note);
 
-        // Handle optional discharge photo in same transaction
         if (command.DischargePhotoStream is not null &&
             command.DischargePhotoFileName is not null &&
             command.DischargePhotoContentType is not null)
@@ -48,12 +47,16 @@ public sealed class CompleteRequestHandler
             }
             catch
             {
-                // Roll back saved file if domain validation fails
                 await _fileStorageService.DeleteAsync(uri, cancellationToken);
                 throw;
             }
         }
 
         await _requestRepository.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in request.DomainEvents)
+            await _mediator.Publish(domainEvent, cancellationToken);
+
+        request.ClearDomainEvents();
     }
 }

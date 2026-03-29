@@ -57,6 +57,7 @@ public sealed class AnalyticsController : ControllerBase
     }
 
     [HttpGet("cost-breakdown")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetCostBreakdown(
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to,

@@ -9,10 +9,12 @@ namespace ErrandsManagement.Application.Requests.Commands.AssignRequest
     : IRequestHandler<AssignRequestCommand>
     {
         private readonly IRequestRepository _requestRepository;
+        private readonly IMediator _mediator;
 
-        public AssignRequestHandler(IRequestRepository requestRepository)
+        public AssignRequestHandler(IRequestRepository requestRepository, IMediator mediator)
         {
             _requestRepository = requestRepository;
+            _mediator = mediator;
         }
 
         public async Task Handle(
@@ -28,6 +30,11 @@ namespace ErrandsManagement.Application.Requests.Commands.AssignRequest
             request.Assign(command.CourierId);
 
             await _requestRepository.SaveChangesAsync(cancellationToken);
+
+            foreach (var domainEvent in request.DomainEvents)
+                await _mediator.Publish(domainEvent, cancellationToken);
+
+            request.ClearDomainEvents();
         }
     }
 }

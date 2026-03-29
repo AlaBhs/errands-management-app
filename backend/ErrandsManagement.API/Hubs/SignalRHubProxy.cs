@@ -12,8 +12,12 @@ public class SignalRHubProxy : INotificationHubProxy
 
     public async Task SendToUserAsync(Guid userId, object payload, CancellationToken ct = default)
     {
+        Console.WriteLine($"[HubProxy] Sending to group {userId}");
+
         await _hubContext.Clients
             .Group(userId.ToString())
             .SendAsync("ReceiveNotification", payload, ct);
+
+        Console.WriteLine($"[HubProxy] Done");
     }
 }
