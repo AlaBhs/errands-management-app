@@ -2,6 +2,7 @@
 using ErrandsManagement.Application.Notifications.Commands.MarkNotificationRead;
 using ErrandsManagement.Application.Notifications.DTOs;
 using ErrandsManagement.Application.Notifications.Queries.GetNotifications;
+using ErrandsManagement.Application.Notifications.Queries.GetUnreadCount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,18 @@ public class NotificationsController : ControllerBase
         var userId = GetCurrentUserId();
         await _mediator.Send(new MarkNotificationReadCommand(id, userId), cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        var count = await _mediator.Send(new GetUnreadCountQuery(userId), cancellationToken);
+
+        return Ok(ApiResponse<int>.SuccessResponse(
+            count,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
     }
 
     private Guid GetCurrentUserId()
