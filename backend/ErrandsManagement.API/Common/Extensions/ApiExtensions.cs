@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using ErrandsManagement.API.Hubs;
+using ErrandsManagement.Application.Interfaces;
+using System.Text.Json.Serialization;
 
 namespace ErrandsManagement.API.Common.Extensions;
 
@@ -16,6 +18,7 @@ public static class ApiExtensions
                 options.JsonSerializerOptions.Converters.Add(
                     new JsonStringEnumConverter());
             });
+        services.AddScoped<INotificationHubProxy, SignalRHubProxy>();
 
         return services;
     }

@@ -1,5 +1,5 @@
-﻿using ErrandsManagement.Application.Notifications.Events;
-using ErrandsManagement.Application.Notifications.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Notifications.Events;
 using MediatR;
 
 namespace ErrandsManagement.Application.Notifications.Handlers;

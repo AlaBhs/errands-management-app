@@ -1,6 +1,7 @@
 using ErrandsManagement.API.Common.Extensions;
 using ErrandsManagement.API.Common.Middleware;
 using ErrandsManagement.API.Extensions;
+using ErrandsManagement.API.Hubs;
 using ErrandsManagement.Application;
 using ErrandsManagement.Infrastructure;
 
@@ -12,6 +13,7 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddCorsPolicy(builder.Configuration);
 builder.Services.AddOpenApiDocumentation();
 builder.Services.AddApiServices();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -26,6 +28,7 @@ app.UseCors(CorsExtensions.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
 

@@ -1,6 +1,6 @@
 ﻿using ErrandsManagement.Domain.Entities;
 
-namespace ErrandsManagement.Application.Notifications.Interfaces;
+namespace ErrandsManagement.Application.Interfaces;
 
 public interface INotificationRepository
 {

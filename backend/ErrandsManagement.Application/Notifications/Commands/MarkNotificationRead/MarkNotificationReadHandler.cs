@@ -1,5 +1,5 @@
 ﻿using ErrandsManagement.Application.Common.Exceptions;
-using ErrandsManagement.Application.Notifications.Interfaces;
+using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Entities;
 using MediatR;
 

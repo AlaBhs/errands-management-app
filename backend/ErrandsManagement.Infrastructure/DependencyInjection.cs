@@ -1,9 +1,9 @@
 ﻿using ErrandsManagement.Application.Interfaces;
-using ErrandsManagement.Application.Notifications.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
 using ErrandsManagement.Infrastructure.Repositories;
+using ErrandsManagement.Infrastructure.RealTime;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -78,7 +78,7 @@ public static class DependencyInjection
     private static IServiceCollection AddServices(
     this IServiceCollection services)
     {
-        services.AddScoped<INotificationRealtimeService, NotificationRealtimeService>();
+        services.AddScoped<INotificationRealtimeService, SignalRNotificationService>();
         return services;
     }
 

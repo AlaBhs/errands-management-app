@@ -1,4 +1,4 @@
-﻿using ErrandsManagement.Application.Notifications.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

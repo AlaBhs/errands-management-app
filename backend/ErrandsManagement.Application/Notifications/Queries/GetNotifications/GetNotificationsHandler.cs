@@ -1,5 +1,5 @@
-﻿using ErrandsManagement.Application.Notifications.DTOs;
-using ErrandsManagement.Application.Notifications.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Notifications.DTOs;
 using MediatR;
 
 namespace ErrandsManagement.Application.Notifications.Queries.GetNotifications;
