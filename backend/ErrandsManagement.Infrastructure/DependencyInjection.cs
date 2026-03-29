@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Notifications.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddIdentityConfiguration();
         services.AddRepositories();
         services.AddStorage();
+        services.AddServices();
 
         return services;
     }
@@ -61,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         return services;
     }
@@ -71,4 +74,13 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
+
+    private static IServiceCollection AddServices(
+    this IServiceCollection services)
+    {
+        services.AddScoped<INotificationRealtimeService, NotificationRealtimeService>();
+        return services;
+    }
+
+    
 }
