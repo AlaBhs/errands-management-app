@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.API.Common.Responses;
+using ErrandsManagement.Application.Notifications.Commands.MarkAllNotificationsRead;
 using ErrandsManagement.Application.Notifications.Commands.MarkNotificationRead;
 using ErrandsManagement.Application.Notifications.DTOs;
 using ErrandsManagement.Application.Notifications.Queries.GetNotifications;
@@ -40,6 +41,14 @@ public class NotificationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         await _mediator.Send(new MarkNotificationReadCommand(id, userId), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("read-all")]
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        await _mediator.Send(new MarkAllNotificationsReadCommand(userId), cancellationToken);
         return NoContent();
     }
 

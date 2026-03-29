@@ -48,6 +48,13 @@ public class NotificationRepository : INotificationRepository
         => await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead, cancellationToken);
 
+    public async Task<List<Notification>> GetAllUnreadAsync(
+    Guid userId,
+    CancellationToken cancellationToken = default)
+    => await _context.Notifications
+        .Where(n => n.UserId == userId && !n.IsRead)
+        .ToListAsync(cancellationToken);
+
     public async Task<int> GetTotalCountAsync(
         Guid userId,
         bool? unreadOnly,

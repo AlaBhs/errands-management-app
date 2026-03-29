@@ -18,48 +18,71 @@ public class GetNotificationsHandlerTests
         _handler = new GetNotificationsHandler(_repositoryMock.Object);
     }
 
+    private static NotificationQueryParameters DefaultParameters() =>
+        new() { Page = 1, PageSize = 10 };
+
     [Fact]
     public async Task Handle_Should_Return_Notifications_With_Correct_UnreadCount()
     {
         var userId = Guid.NewGuid();
+        var parameters = DefaultParameters();
 
         var notifications = new List<Notification>
         {
-            Notification.Create(userId, "First notification", NotificationType.RequestCreated),
-            Notification.Create(userId, "Second notification", NotificationType.RequestAssigned),
-            Notification.Create(userId, "Third notification", NotificationType.RequestCompleted),
+            Notification.Create(userId, "First", NotificationType.RequestCreated),
+            Notification.Create(userId, "Second", NotificationType.RequestAssigned),
+            Notification.Create(userId, "Third", NotificationType.RequestCompleted),
         };
 
-        // Mark one as read
         notifications[2].MarkAsRead();
 
         _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(userId, parameters, It.IsAny<CancellationToken>()))
             .ReturnsAsync(notifications);
 
-        var query = new GetNotificationsQuery(userId);
+        _repositoryMock
+            .Setup(r => r.GetUnreadCountAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
 
-        var result = await _handler.Handle(query, CancellationToken.None);
+        _repositoryMock
+            .Setup(r => r.GetTotalCountAsync(userId, parameters.UnreadOnly, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(3);
+
+        var result = await _handler.Handle(
+            new GetNotificationsQuery(userId, parameters), CancellationToken.None);
 
         result.Notifications.Should().HaveCount(3);
         result.UnreadCount.Should().Be(2);
+        result.TotalCount.Should().Be(3);
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(10);
     }
 
     [Fact]
     public async Task Handle_Should_Return_Empty_List_When_No_Notifications()
     {
         var userId = Guid.NewGuid();
+        var parameters = DefaultParameters();
 
         _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(userId, parameters, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Notification>());
 
-        var query = new GetNotificationsQuery(userId);
+        _repositoryMock
+            .Setup(r => r.GetUnreadCountAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
 
-        var result = await _handler.Handle(query, CancellationToken.None);
+        _repositoryMock
+            .Setup(r => r.GetTotalCountAsync(userId, parameters.UnreadOnly, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var result = await _handler.Handle(
+            new GetNotificationsQuery(userId, parameters), CancellationToken.None);
 
         result.Notifications.Should().BeEmpty();
         result.UnreadCount.Should().Be(0);
+        result.TotalCount.Should().Be(0);
+        result.TotalPages.Should().Be(0);
     }
 
     [Fact]
@@ -67,20 +90,25 @@ public class GetNotificationsHandlerTests
     {
         var userId = Guid.NewGuid();
         var referenceId = Guid.NewGuid();
+        var parameters = DefaultParameters();
 
         var notification = Notification.Create(
-            userId,
-            "Test message",
-            NotificationType.RequestAssigned,
-            referenceId);
+            userId, "Test message", NotificationType.RequestAssigned, referenceId);
 
         _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(userId, parameters, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Notification> { notification });
 
-        var query = new GetNotificationsQuery(userId);
+        _repositoryMock
+            .Setup(r => r.GetUnreadCountAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
-        var result = await _handler.Handle(query, CancellationToken.None);
+        _repositoryMock
+            .Setup(r => r.GetTotalCountAsync(userId, parameters.UnreadOnly, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var result = await _handler.Handle(
+            new GetNotificationsQuery(userId, parameters), CancellationToken.None);
 
         var dto = result.Notifications.Single();
         dto.Message.Should().Be("Test message");
@@ -90,25 +118,28 @@ public class GetNotificationsHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_Return_Zero_UnreadCount_When_All_Read()
+    public async Task Handle_Should_Calculate_TotalPages_Correctly()
     {
         var userId = Guid.NewGuid();
-
-        var notifications = new List<Notification>
-        {
-            Notification.Create(userId, "First", NotificationType.RequestCreated),
-            Notification.Create(userId, "Second", NotificationType.RequestCompleted),
-        };
-
-        notifications.ForEach(n => n.MarkAsRead());
+        var parameters = new NotificationQueryParameters { Page = 1, PageSize = 5 };
 
         _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(notifications);
+            .Setup(r => r.GetPagedAsync(userId, parameters, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Notification>());
+
+        _repositoryMock
+            .Setup(r => r.GetUnreadCountAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _repositoryMock
+            .Setup(r => r.GetTotalCountAsync(userId, parameters.UnreadOnly, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(13);
 
         var result = await _handler.Handle(
-            new GetNotificationsQuery(userId), CancellationToken.None);
+            new GetNotificationsQuery(userId, parameters), CancellationToken.None);
 
-        result.UnreadCount.Should().Be(0);
+        // 13 items / 5 per page = 3 pages (ceil)
+        result.TotalPages.Should().Be(3);
+        result.PageSize.Should().Be(5);
     }
 }
