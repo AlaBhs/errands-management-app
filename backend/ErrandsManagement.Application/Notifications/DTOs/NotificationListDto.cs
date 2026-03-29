@@ -2,4 +2,8 @@
 
 public sealed record NotificationListDto(
     IReadOnlyList<NotificationDto> Notifications,
-    int UnreadCount);
+    int UnreadCount,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages);

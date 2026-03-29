@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Notifications.Queries.GetNotifications;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,16 +13,28 @@ public class NotificationRepository : INotificationRepository
     public NotificationRepository(AppDbContext context)
         => _context = context;
 
-    public async Task AddAsync(Notification notification, CancellationToken cancellationToken = default)
+    public async Task AddAsync(
+        Notification notification,
+        CancellationToken cancellationToken = default)
         => await _context.Notifications.AddAsync(notification, cancellationToken);
 
-    public async Task<List<Notification>> GetByUserIdAsync(
+    public async Task<List<Notification>> GetPagedAsync(
         Guid userId,
+        NotificationQueryParameters parameters,
         CancellationToken cancellationToken = default)
-        => await _context.Notifications
-            .Where(n => n.UserId == userId)
+    {
+        var query = _context.Notifications
+            .Where(n => n.UserId == userId);
+
+        if (parameters.UnreadOnly == true)
+            query = query.Where(n => !n.IsRead);
+
+        return await query
             .OrderByDescending(n => n.CreatedAt)
+            .Skip((parameters.Page - 1) * parameters.PageSize)
+            .Take(parameters.PageSize)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<Notification?> GetByIdAsync(
         Guid id,
@@ -34,6 +47,19 @@ public class NotificationRepository : INotificationRepository
         CancellationToken cancellationToken = default)
         => await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead, cancellationToken);
+
+    public async Task<int> GetTotalCountAsync(
+        Guid userId,
+        bool? unreadOnly,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Notifications.Where(n => n.UserId == userId);
+
+        if (unreadOnly == true)
+            query = query.Where(n => !n.IsRead);
+
+        return await query.CountAsync(cancellationToken);
+    }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         => await _context.SaveChangesAsync(cancellationToken);

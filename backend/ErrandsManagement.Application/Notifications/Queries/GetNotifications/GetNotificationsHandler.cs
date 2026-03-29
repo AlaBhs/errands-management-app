@@ -16,8 +16,21 @@ public sealed class GetNotificationsHandler
         GetNotificationsQuery request,
         CancellationToken cancellationToken)
     {
-        var notifications = await _repository
-            .GetByUserIdAsync(request.UserId, cancellationToken);
+        var notifications = await _repository.GetPagedAsync(
+            request.UserId,
+            request.Parameters,
+            cancellationToken);
+
+        var unreadCount = await _repository.GetUnreadCountAsync(
+            request.UserId,
+            cancellationToken);
+
+        var totalCount = await _repository.GetTotalCountAsync(
+            request.UserId,
+            request.Parameters.UnreadOnly,
+            cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)request.Parameters.PageSize);
 
         var dtos = notifications
             .Select(n => new NotificationDto(
@@ -25,8 +38,12 @@ public sealed class GetNotificationsHandler
                 n.ReferenceId, n.IsRead, n.CreatedAt))
             .ToList();
 
-        var unreadCount = dtos.Count(n => !n.IsRead);
-
-        return new NotificationListDto(dtos, unreadCount);
+        return new NotificationListDto(
+            dtos,
+            unreadCount,
+            request.Parameters.Page,
+            request.Parameters.PageSize,
+            totalCount,
+            totalPages);
     }
 }

@@ -20,10 +20,13 @@ public class NotificationsController : ControllerBase
         => _mediator = mediator;
 
     [HttpGet]
-    public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetNotifications(
+        [FromQuery] NotificationQueryParameters parameters,
+        CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
-        var result = await _mediator.Send(new GetNotificationsQuery(userId), cancellationToken);
+        var result = await _mediator.Send(
+            new GetNotificationsQuery(userId, parameters), cancellationToken);
 
         return Ok(ApiResponse<NotificationListDto>.SuccessResponse(
             result,
