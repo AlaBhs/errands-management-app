@@ -13,12 +13,10 @@ import { NotificationDropdown } from "./NotificationDropdown";
 export function NotificationBell() {
   const { unreadCount, appendRealtime, fetchUnreadCount } = useNotificationStore();
 
-  // Fetch fresh unread count on mount
   useEffect(() => {
     fetchUnreadCount();
   }, [fetchUnreadCount]);
 
-  // Subscribe to real-time notifications from SignalR
   useEffect(() => {
     const unsub = signalr.onNotification((notification) => {
       appendRealtime(notification);
@@ -28,7 +26,7 @@ export function NotificationBell() {
   }, [appendRealtime]);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className="relative flex h-9 w-9 items-center justify-center
@@ -48,7 +46,11 @@ export function NotificationBell() {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="p-0 overflow-hidden">
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-80 p-0 overflow-hidden rounded-xl shadow-lg border border-border"
+      >
         <NotificationDropdown />
       </DropdownMenuContent>
     </DropdownMenu>

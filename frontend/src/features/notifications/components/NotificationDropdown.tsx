@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BellOff } from "lucide-react";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 import { NotificationItem } from "./NotificationItem";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,39 +22,43 @@ export function NotificationDropdown() {
   }, [fetchInitial]);
 
   return (
-    <div className="w-80">
+    <div className="flex flex-col w-full">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <p className="text-sm font-semibold text-foreground">Notifications</p>
-        {unreadCount > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#FFE600]/20 px-2 py-0.5 text-xs font-semibold text-[#2E2E38] dark:text-[#FFE600]">
-              {unreadCount} new
+      <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-foreground">Notifications</p>
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-[#FFE600] px-2 py-0.5 text-[10px] font-bold text-[#2E2E38]">
+              {unreadCount}
             </span>
-            <button
-              onClick={markAllAsRead}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Mark all read
-            </button>
-          </div>
+          )}
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllAsRead}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Mark all read
+          </button>
         )}
       </div>
 
       {/* ── List ───────────────────────────────────────────────────── */}
-      <div className="max-h-80 overflow-y-auto divide-y divide-border">
+      <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
         {isLoading ? (
           <LoadingSkeleton />
         ) : notifications.length === 0 ? (
           <EmptyState />
         ) : (
-          notifications.map((n) => <NotificationItem key={n.id} notification={n} />)
+          notifications.map((n) => (
+            <NotificationItem key={n.id} notification={n} />
+          ))
         )}
       </div>
 
       {/* ── Load more ──────────────────────────────────────────────── */}
       {!isLoading && page < totalPages && (
-        <div className="border-t border-border px-4 py-2.5">
+        <div className="border-t border-border px-4 py-2.5 bg-muted/20">
           <button
             onClick={fetchMore}
             disabled={isLoadingMore}
@@ -86,9 +91,10 @@ function LoadingSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+      <BellOff className="h-8 w-8 text-muted-foreground/40" />
       <p className="text-sm font-medium text-foreground">All caught up</p>
-      <p className="mt-1 text-xs text-muted-foreground">No notifications yet.</p>
+      <p className="text-xs text-muted-foreground">No notifications yet.</p>
     </div>
   );
 }

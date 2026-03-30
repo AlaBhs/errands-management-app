@@ -1,14 +1,10 @@
-import { Bell, Search, Plus, Moon, Sun } from "lucide-react";
+import { Search, Plus, Moon, Sun } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { UserRole } from "@/features/auth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useTheme } from "@/shared/hooks/useTheme";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 // ── Page title map ────────────────────────────────────────────────────────────
 
@@ -24,49 +20,11 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 function getPageTitle(pathname: string): string {
-  // Exact match first
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  // Request details
   if (pathname.startsWith("/requests/") && pathname !== "/requests/new")
     return "Request Details";
   return "EY Errands";
 }
-
-// ── Dummy notifications — replaced by real data in feat/notifications ─────────
-
-const DUMMY_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: "assignment" as const,
-    title: "New Assignment",
-    message: "REQ-002: IT Equipment Request has been assigned to you",
-    time: "5 min ago",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "completion" as const,
-    title: "Request Completed",
-    message: "REQ-001: Office Supplies has been delivered",
-    time: "1 hour ago",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "info" as const,
-    title: "Survey Reminder",
-    message: "Please rate your experience with REQ-003",
-    time: "2 hours ago",
-    read: true,
-  },
-];
-
-const notifIconColor = {
-  assignment: "text-blue-500",
-  completion: "text-emerald-500",
-  request: "text-orange-500",
-  info: "text-gray-400",
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -77,7 +35,6 @@ export function Topbar() {
   const { theme, toggle } = useTheme();
 
   const pageTitle = getPageTitle(location.pathname);
-  const unreadCount = DUMMY_NOTIFICATIONS.filter((n) => !n.read).length;
 
   return (
     <header
@@ -137,100 +94,8 @@ export function Topbar() {
           </button>
         )}
 
-        {/* Notifications dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="relative flex h-9 w-9 items-center justify-center
-                rounded-lg text-muted-foreground hover:bg-muted
-                transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span
-                  className="absolute right-1.5 top-1.5 flex h-4 w-4
-                                 items-center justify-center rounded-full
-                                 bg-[#FFE600] text-[9px] font-bold
-                                 text-[#2E2E38]"
-                >
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
-            {/* Header */}
-            <div
-              className="flex items-center justify-between
-                border-b border-border px-4 py-3"
-            >
-              <p className="text-sm font-semibold text-foreground">
-                Notifications
-              </p>
-              {unreadCount > 0 && (
-                <span
-                  className="rounded-full bg-[#FFE600]/20 px-2 py-0.5
-                    text-xs font-semibold text-[#2E2E38] dark:text-[#FFE600]"
-                >
-                  {unreadCount} new
-                </span>
-              )}
-            </div>
-
-            {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-border">
-              {DUMMY_NOTIFICATIONS.map((n) => (
-                <div
-                  key={n.id}
-                  className={`flex gap-3 px-4 py-3 hover:bg-muted/50
-                    transition-colors cursor-pointer
-                    ${!n.read ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}`}
-                >
-                  {/* Unread dot */}
-                  <div className="mt-1 shrink-0">
-                    <div
-                      className={`h-2 w-2 rounded-full mt-1
-                                    ${
-                                      !n.read
-                                        ? "bg-[#FFE600]"
-                                        : "bg-transparent"
-                                    }`}
-                    />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p
-                        className={`text-xs font-semibold
-                                    ${notifIconColor[n.type]}`}
-                      >
-                        {n.title}
-                      </p>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {n.time}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                      {n.message}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-border px-4 py-2.5">
-              <button
-                className="w-full text-center text-xs text-muted-foreground
-                     hover:text-foreground transition-colors py-1"
-              >
-                Mark all as read
-              </button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Notifications */}
+        <NotificationBell />
 
         {/* Theme toggle */}
         <button
@@ -250,7 +115,7 @@ export function Topbar() {
         {/* Divider */}
         <div className="h-6 w-px bg-border mx-1" />
 
-        {/* User info — display only, no dropdown needed */}
+        {/* User info */}
         <div className="flex items-center gap-2.5">
           <div className="text-right hidden sm:block">
             <p className="text-xs font-medium text-foreground leading-tight">
