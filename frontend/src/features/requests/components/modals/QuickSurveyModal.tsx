@@ -1,11 +1,11 @@
-import { useState }              from "react";
-import { Star, MessageSquare,
-         Loader2 }               from "lucide-react";
-import { useSubmitSurvey }       from "../../hooks/useRequestMutations";
-import { isApiError }            from "@/shared/api/client";
+import { useState } from "react";
+import { Star, MessageSquare, Loader2 } from "lucide-react";
+import { useSubmitSurvey } from "../../hooks/useRequestMutations";
+import { isApiError } from "@/shared/api/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -13,8 +13,8 @@ import { cn } from "@/shared/utils/utils";
 
 interface QuickSurveyModalProps {
   requestId: string;
-  title:     string;
-  onClose:   () => void;
+  title: string;
+  onClose: () => void;
 }
 
 export function QuickSurveyModal({
@@ -22,7 +22,7 @@ export function QuickSurveyModal({
   title,
   onClose,
 }: QuickSurveyModalProps) {
-  const [rating,  setRating]  = useState<number>(0);
+  const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState("");
   const [hovered, setHovered] = useState<number>(0);
   const survey = useSubmitSurvey(requestId);
@@ -55,14 +55,13 @@ export function QuickSurveyModal({
           <DialogTitle className="text-foreground">
             Rate Your Experience
           </DialogTitle>
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+          <DialogDescription className="mt-1 text-xs text-muted-foreground line-clamp-2">
             {title}
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* Body */}
         <div className="space-y-5">
-
           {/* Star rating */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-foreground">
@@ -70,7 +69,7 @@ export function QuickSurveyModal({
             </label>
 
             <div className="flex items-center gap-2">
-              {[1, 2, 3, 4, 5].map(n => (
+              {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
@@ -85,19 +84,21 @@ export function QuickSurveyModal({
                       "h-8 w-8 transition-colors",
                       n <= activeRating
                         ? "fill-amber-400 text-amber-400"
-                        : "fill-gray-200 dark:fill-gray-700 text-gray-300 dark:text-gray-600"
+                        : "fill-gray-200 dark:fill-gray-700 text-gray-300 dark:text-gray-600",
                     )}
                   />
                 </button>
               ))}
 
               {/* Label */}
-              <span className={cn(
-                "ml-2 text-sm font-medium transition-colors",
-                activeRating > 0
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}>
+              <span
+                className={cn(
+                  "ml-2 text-sm font-medium transition-colors",
+                  activeRating > 0
+                    ? "text-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
                 {activeRating > 0 ? LABELS[activeRating] : "Select a rating"}
               </span>
             </div>
@@ -112,11 +113,13 @@ export function QuickSurveyModal({
               </span>
             </label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 h-4 w-4
-                                        text-muted-foreground" />
+              <MessageSquare
+                className="absolute left-3 top-3 h-4 w-4
+                                        text-muted-foreground"
+              />
               <textarea
                 value={comment}
-                onChange={e => setComment(e.target.value)}
+                onChange={(e) => setComment(e.target.value)}
                 placeholder="Share your experience..."
                 rows={3}
                 className="w-full rounded-lg border border-border

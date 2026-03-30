@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -48,9 +49,9 @@ export function ConfirmModal({
             <DialogTitle className="text-base font-semibold text-foreground">
               {title}
             </DialogTitle>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <DialogDescription className="mt-0.5 text-sm text-muted-foreground">
               {description}
-            </p>
+            </DialogDescription>
           </div>
         </DialogHeader>
 
