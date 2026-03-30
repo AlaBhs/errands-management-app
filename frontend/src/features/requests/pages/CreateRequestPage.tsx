@@ -138,7 +138,9 @@ function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
 // ── Shared input className ────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full px-4 py-2 border border-border rounded-lg text-sm " +  "bg-background dark:bg-card text-foreground " +  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "w-full px-4 py-2 border border-border rounded-lg text-sm " +
+  "bg-background dark:bg-card text-foreground " +
+  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
   "placeholder:text-muted-foreground";
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -261,7 +263,7 @@ export function CreateRequestPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title={isResubmit ? "Resubmit Request" : "Create New Request"}
         subtitle={
@@ -285,9 +287,9 @@ export function CreateRequestPage() {
         />
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         {/* ── General Info ─────────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
           <FormSection
             title="General Info"
             description="Describe your request in detail so it can be processed accurately."
@@ -336,9 +338,11 @@ export function CreateRequestPage() {
             </FieldGroup>
           </FormSection>
         </div>
-        <div className="flex flex-col lg:flex-row gap-6 space-y-5">
-          {/* ── Classification ───────────────────────────────────────────────── */}
-          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
+
+        {/* ── Classification + Contact & Address (side by side on lg) ──────── */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* ── Classification ─────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6">
             <FormSection
               title="Classification"
               description="Helps route your request to the right team."
@@ -437,8 +441,8 @@ export function CreateRequestPage() {
             </FormSection>
           </div>
 
-          {/* ── Contact & Address ────────────────────────────────────────────── */}
-          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
+          {/* ── Contact & Address ───────────────────────────────────────────── */}
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6">
             <FormSection
               title="Contact & Address"
               description="Who to meet on-site and where to deliver."
@@ -476,7 +480,7 @@ export function CreateRequestPage() {
                 </FieldGroup>
               </div>
 
-              {/* Address grid – 2 columns, fields: City, Postal Code, Country, Street */}
+              {/* Address grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FieldGroup
                   label="City"
@@ -542,8 +546,9 @@ export function CreateRequestPage() {
             </FormSection>
           </div>
         </div>
+
         {/* ── Attachments ──────────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
           <FormSection
             title="Attachments"
             description="Images or PDF documents up to 10 MB each."
