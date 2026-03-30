@@ -1,25 +1,32 @@
 import { useEffect } from "react";
-import { BellOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BellOff, ArrowRight } from "lucide-react";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 import { NotificationItem } from "./NotificationItem";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function NotificationDropdown() {
+interface NotificationDropdownProps {
+  onClose: () => void;
+}
+
+export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
     isLoading,
-    isLoadingMore,
-    page,
-    totalPages,
     fetchInitial,
-    fetchMore,
     markAllAsRead,
   } = useNotificationStore();
 
   useEffect(() => {
     fetchInitial();
   }, [fetchInitial]);
+
+  function handleViewAll() {
+    onClose();
+    navigate("/notifications");
+  }
 
   return (
     <div className="flex flex-col w-full">
@@ -44,31 +51,34 @@ export function NotificationDropdown() {
       </div>
 
       {/* ── List ───────────────────────────────────────────────────── */}
-      <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
+      <div className="divide-y divide-border">
         {isLoading ? (
           <LoadingSkeleton />
         ) : notifications.length === 0 ? (
           <EmptyState />
         ) : (
           notifications.map((n) => (
-            <NotificationItem key={n.id} notification={n} />
+            <NotificationItem
+              key={n.id}
+              notification={n}
+              onNavigate={onClose}
+            />
           ))
         )}
       </div>
 
-      {/* ── Load more ──────────────────────────────────────────────── */}
-      {!isLoading && page < totalPages && (
-        <div className="border-t border-border px-4 py-2.5 bg-muted/20">
-          <button
-            onClick={fetchMore}
-            disabled={isLoadingMore}
-            className="w-full text-center text-xs text-muted-foreground
-              hover:text-foreground transition-colors py-1 disabled:opacity-50"
-          >
-            {isLoadingMore ? "Loading..." : "Load more"}
-          </button>
-        </div>
-      )}
+      {/* ── Footer — View all ──────────────────────────────────────── */}
+      <div className="border-t border-border bg-muted/20">
+        <button
+          onClick={handleViewAll}
+          className="flex w-full items-center justify-center gap-1.5 py-3
+            text-xs font-medium text-muted-foreground hover:text-foreground
+            transition-colors group"
+        >
+          View all notifications
+          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -91,7 +101,7 @@ function LoadingSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
       <BellOff className="h-8 w-8 text-muted-foreground/40" />
       <p className="text-sm font-medium text-foreground">All caught up</p>
       <p className="text-xs text-muted-foreground">No notifications yet.</p>

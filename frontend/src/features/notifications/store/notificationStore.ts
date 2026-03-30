@@ -2,22 +2,14 @@ import { create } from "zustand";
 import { notificationsApi } from "@/features/notifications/api/notifications.api";
 import type { NotificationDto } from "@/features/notifications/types";
 
-// ── State shape ───────────────────────────────────────────────────────────────
-
 interface NotificationStore {
-  // Data
   notifications: NotificationDto[];
   unreadCount: number;
-
-  // Pagination
   page: number;
   totalPages: number;
-
-  // Flags
   isLoading: boolean;
   isLoadingMore: boolean;
-
-  // Actions
+  hasFetched: boolean;
   fetchInitial: () => Promise<void>;
   fetchMore: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
@@ -26,8 +18,6 @@ interface NotificationStore {
   appendRealtime: (notification: NotificationDto) => void;
 }
 
-// ── Store ─────────────────────────────────────────────────────────────────────
-
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
   notifications: [],
   unreadCount: 0,
@@ -35,14 +25,19 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   totalPages: 1,
   isLoading: false,
   isLoadingMore: false,
+  hasFetched: false,
 
   // ── Fetch first page ────────────────────────────────────────────────────────
   fetchInitial: async () => {
+    // Skip if already fetched — prevents re-fetch on every dropdown open.
+    // Realtime pushes via appendRealtime keep the list fresh between opens.
+    if (get().hasFetched) return;
+
     set({ isLoading: true });
     try {
-      const res = await notificationsApi.getAll({ page: 1, pageSize: 10 });
+      const res = await notificationsApi.getAll({ page: 1, pageSize: 5 });
       const { notifications, unreadCount, totalPages } = res.data;
-      set({ notifications, unreadCount, totalPages, page: 1 });
+      set({ notifications, unreadCount, totalPages, page: 1, hasFetched: true });
     } finally {
       set({ isLoading: false });
     }
@@ -58,7 +53,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     try {
       const res = await notificationsApi.getAll({
         page: nextPage,
-        pageSize: 10,
+        pageSize: 5,
       });
       set({
         notifications: [...notifications, ...res.data.notifications],
@@ -78,7 +73,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
   // ── Mark one notification as read ───────────────────────────────────────────
   markAsRead: async (id: string) => {
-    // Optimistic update
     set((state) => ({
       notifications: state.notifications.map((n) =>
         n.id === id ? { ...n, isRead: true } : n,
@@ -88,7 +82,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     try {
       await notificationsApi.markAsRead(id);
     } catch {
-      // Rollback on failure
       set((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id ? { ...n, isRead: false } : n,
@@ -100,7 +93,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
   // ── Mark all notifications as read ──────────────────────────────────────────
   markAllAsRead: async () => {
-    // Optimistic update
     set((state) => ({
       notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
       unreadCount: 0,
@@ -108,7 +100,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     try {
       await notificationsApi.markAllAsRead();
     } catch {
-      // Rollback — re-fetch to restore correct state
       await get().fetchInitial();
     }
   },
@@ -116,7 +107,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   // ── Prepend a real-time notification from SignalR ────────────────────────────
   appendRealtime: (notification: NotificationDto) => {
     set((state) => ({
-      notifications: [notification, ...state.notifications],
+      // Keep only the 5 most recent in the dropdown slice
+      notifications: [notification, ...state.notifications].slice(0, 5),
       unreadCount: state.unreadCount + 1,
     }));
   },

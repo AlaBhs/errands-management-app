@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import { useNotificationStore } from "@/features/notifications/store/notificatio
 import { NotificationDropdown } from "./NotificationDropdown";
 
 export function NotificationBell() {
+  const [open, setOpen] = useState(false);
   const { unreadCount, appendRealtime, fetchUnreadCount } = useNotificationStore();
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function NotificationBell() {
   }, [appendRealtime]);
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           className="relative flex h-9 w-9 items-center justify-center
@@ -51,7 +52,7 @@ export function NotificationBell() {
         sideOffset={8}
         className="w-80 p-0 overflow-hidden rounded-xl shadow-lg border border-border"
       >
-        <NotificationDropdown />
+        <NotificationDropdown onClose={() => setOpen(false)} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

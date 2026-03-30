@@ -58,7 +58,7 @@ export function Topbar() {
       <div className="flex items-center gap-2 shrink-0">
         {/* Search — placeholder for feat/request-filters */}
         <button
-          className="flex items-center gap-2 rounded-lg border
+          className="flex items-center h-[stretch] gap-2 rounded-lg border
             border-border bg-muted/40 px-3 py-1.5 text-sm
             text-muted-foreground hover:bg-muted transition-colors
             w-48 hidden md:flex"
@@ -84,7 +84,7 @@ export function Topbar() {
         {user?.role === UserRole.Collaborator && (
           <button
             onClick={() => navigate("/requests/new")}
-            className="flex items-center gap-1.5 rounded-lg
+            className="flex items-center gap-1.5 rounded-lg h-[stretch]
                         bg-[#2E2E38] px-3 py-1.5 text-xs font-semibold
                         text-white hover:bg-[#1a1a24] transition-colors
                         hidden sm:flex"
