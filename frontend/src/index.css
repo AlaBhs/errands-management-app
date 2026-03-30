@@ -139,6 +139,11 @@
   }
 }
 
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
 @keyframes shake {
   0%,
   100% {
