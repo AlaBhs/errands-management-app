@@ -4,8 +4,8 @@ import { authApi } from "../api/auth.api";
 import type { LoginPayload, RegisterPayload } from "../types";
 import { useAuthStore } from "../store/authStore";
 import { extractUserFromToken } from "../utils/jwtUtils";
-import { toast } from "sonner";
 import { signalr } from "@/shared/api/signalr";
+import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -24,15 +24,16 @@ export function useLogin() {
 
 export function useLogout() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const resetNotifications = useNotificationStore((s) => s.reset);
   const navigate = useNavigate();
 
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSuccess: () => {
-      toast.success("Signed out successfully.");
     },
     onSettled: () => {
       signalr.disconnect();
+      resetNotifications();
       clearAuth();
       navigate("/login", { replace: true, state: null });
     },

@@ -16,9 +16,10 @@ interface NotificationStore {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   appendRealtime: (notification: NotificationDto) => void;
+  reset: () => void;
 }
 
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
+const INITIAL_STATE = {
   notifications: [],
   unreadCount: 0,
   page: 1,
@@ -26,11 +27,13 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   isLoading: false,
   isLoadingMore: false,
   hasFetched: false,
+};
+
+export const useNotificationStore = create<NotificationStore>((set, get) => ({
+  ...INITIAL_STATE,
 
   // ── Fetch first page ────────────────────────────────────────────────────────
   fetchInitial: async () => {
-    // Skip if already fetched — prevents re-fetch on every dropdown open.
-    // Realtime pushes via appendRealtime keep the list fresh between opens.
     if (get().hasFetched) return;
 
     set({ isLoading: true });
@@ -65,13 +68,13 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  // ── Refresh badge count only (lightweight) ──────────────────────────────────
+  // ── Refresh badge count only ────────────────────────────────────────────────
   fetchUnreadCount: async () => {
     const res = await notificationsApi.getUnreadCount();
     set({ unreadCount: res.data });
   },
 
-  // ── Mark one notification as read ───────────────────────────────────────────
+  // ── Mark one as read ────────────────────────────────────────────────────────
   markAsRead: async (id: string) => {
     set((state) => ({
       notifications: state.notifications.map((n) =>
@@ -91,7 +94,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  // ── Mark all notifications as read ──────────────────────────────────────────
+  // ── Mark all as read ────────────────────────────────────────────────────────
   markAllAsRead: async () => {
     set((state) => ({
       notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
@@ -104,12 +107,14 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  // ── Prepend a real-time notification from SignalR ────────────────────────────
+  // ── Prepend real-time notification ──────────────────────────────────────────
   appendRealtime: (notification: NotificationDto) => {
     set((state) => ({
-      // Keep only the 5 most recent in the dropdown slice
       notifications: [notification, ...state.notifications].slice(0, 5),
       unreadCount: state.unreadCount + 1,
     }));
   },
+
+  // ── Reset — called on logout to prevent data leak between users ─────────────
+  reset: () => set(INITIAL_STATE),
 }));

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { notificationsApi } from "@/features/notifications/api/notifications.api";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
+import { signalr } from "@/shared/api/signalr";
 import type { NotificationDto } from "@/features/notifications/types";
 
 const PAGE_SIZE = 10;
@@ -29,7 +30,6 @@ export function useNotifications(): UseNotificationsReturn {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [unreadOnly, setUnreadOnlyState] = useState(false);
 
-  // Keep badge in sync with the global store
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
 
   const fetchPage = useCallback(
@@ -44,7 +44,7 @@ export function useNotifications(): UseNotificationsReturn {
     [],
   );
 
-  // Fetch first page whenever the filter changes
+  // Fetch first page whenever filter changes
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
@@ -65,6 +65,17 @@ export function useNotifications(): UseNotificationsReturn {
       cancelled = true;
     };
   }, [unreadOnly, fetchPage]);
+
+  // Subscribe to real-time pushes — prepend and keep page list fresh
+  useEffect(() => {
+    const unsub = signalr.onNotification((notification) => {
+      // If filtering unread only, new notifications always qualify
+      // If showing all, prepend unconditionally
+      setNotifications((prev) => [notification, ...prev]);
+      setTotalCount((prev) => prev + 1);
+    });
+    return unsub;
+  }, []);
 
   function setUnreadOnly(value: boolean) {
     setUnreadOnlyState(value);

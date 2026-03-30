@@ -139,7 +139,8 @@
   }
 }
 
-html, body {
+html,
+body {
   overflow: hidden;
   height: 100%;
 }
@@ -218,4 +219,28 @@ html, body {
 .dark [data-sonner-toast][data-type="info"] {
   background-color: var(--ey-gray);
   border-left-color: var(--ey-yellow);
+}
+
+[data-sonner-toast] button[data-close-button="true"] {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.2s ease;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-sonner-toast] button[data-close-button="true"]:hover {
+  background: var(--muted) !important;
+  border-color: var(--muted-foreground) !important;
+}
+
+.dark [data-sonner-toast][data-type="success"] {
+  background-color: var(--ey-dark);
+  border-left: 4px solid var(--ey-green);
+  color: var(--foreground);
 }
