@@ -44,25 +44,25 @@ apiClient.interceptors.response.use(
         const { data } = await axios.post<{ accessToken: string }>(
           `${apiClient.defaults.baseURL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
-        const { extractUserFromToken } = await import(
-          "@/features/auth/utils/jwtUtils"
-        );
-        const { useAuthStore } = await import(
-          "@/features/auth/store/authStore"
-        );
+        const { extractUserFromToken } =
+          await import("@/features/auth/utils/jwtUtils");
+        const { useAuthStore } =
+          await import("@/features/auth/store/authStore");
 
         const user = extractUserFromToken(data.accessToken);
         useAuthStore.getState().setAuth(user, data.accessToken);
 
+        const { signalr } = await import("@/shared/api/signalr");
+        signalr.reconnect(() => useAuthStore.getState().accessToken ?? "");
+
         originalConfig.headers.Authorization = `Bearer ${data.accessToken}`;
         return apiClient(originalConfig);
       } catch {
-        const { useAuthStore } = await import(
-          "@/features/auth/store/authStore"
-        );
+        const { useAuthStore } =
+          await import("@/features/auth/store/authStore");
         useAuthStore.getState().clearAuth();
         window.location.href = "/login";
         return Promise.reject(normalizeError(error));
@@ -70,11 +70,13 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(normalizeError(error));
-  }
+  },
 );
 
 // ─── Error normalization ───────────────────────────────────────────────────────
-function normalizeError(error: AxiosError<ApiErrorResponse>): NormalizedApiError {
+function normalizeError(
+  error: AxiosError<ApiErrorResponse>,
+): NormalizedApiError {
   // Cast to any to access both camelCase and PascalCase
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const apiError = error.response?.data as any;
@@ -125,7 +127,7 @@ function cleanParams(params?: Record<string, unknown>) {
 
   return Object.fromEntries(
     Object.entries(params).filter(
-      ([, v]) => v !== undefined && v !== null && v !== ""
-    )
+      ([, v]) => v !== undefined && v !== null && v !== "",
+    ),
   );
 }
