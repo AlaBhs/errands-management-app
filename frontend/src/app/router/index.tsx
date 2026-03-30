@@ -53,6 +53,11 @@ const UserManagementPage = lazy(() =>
     default: m.UserManagementPage,
   })),
 );
+const NotificationsPage = lazy(() =>
+  import("@/features/notifications/pages/NotificationsPage").then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
 const PublicOrDashboard = lazy(() =>
   import("@/app/router/PublicOrDashboard").then((m) => ({
     default: m.PublicOrDashboard,
@@ -76,7 +81,8 @@ export function AppRouter() {
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/requests/:id" element={<RequestDetailsPage />} />
-
+            <Route path="/notifications" element={<NotificationsPage />} />
+            
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
               <Route path="/requests" element={<RequestsListPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
