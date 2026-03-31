@@ -1,114 +1,95 @@
 # Errands Management App
 
-This branch delivers a comprehensive UI/UX overhaul across the entire
-application — redesigned pages, dark mode, improved navigation, and
-a more professional enterprise feel throughout.
+This branch adds a real-time notification system — admins are notified
+when new requests arrive, couriers are notified when they are assigned,
+and all users receive updates as their requests progress through the
+lifecycle.
 
-## What's New — `feature/ux-improvements`
+## What's New — `feature/notifications`
 
-### Authentication & Routing
-- Redesigned login page with EY branding, animated error feedback,
-  and human-friendly error messages mapped from backend responses
-- Landing page for unauthenticated users at `/` with hero, features
-  grid, benefits section, and request lifecycle timeline
-- Fixed post-logout URL redirect — next login always lands on dashboard
-- Fixed role-based redirect after login — collaborators and couriers
-  no longer hit a 403
+### Real-Time Notifications (Backend)
+- SignalR hub at `/hubs/notifications` — JWT authenticated, each user
+  joins a group named after their UserId for targeted delivery
+- Two-step flow: domain event → persist notification to database →
+  real-time push via SignalR — persistence and delivery are fully
+  decoupled
+- `INotificationRealtimeService` abstraction in Application — SignalR
+  is only referenced in the API layer, never in handlers
+- `INotificationHubProxy` abstraction — Infrastructure never references
+  the hub type, eliminating the Infrastructure → API dependency violation
 
-### Navigation Shell
-- Collapsible sidebar — icon-only mode at 68px, expanded at 256px,
-  persisted across sessions
-- Nested sub-navigation for Admin Panel — User Management and future
-  admin pages expand inline with chevron toggle
-- Topbar with dynamic breadcrumb, role-based quick action, notifications
-  dropdown, and theme toggle
-- Logout moved to sidebar footer — consistent session action placement
+### Notification Domain Model
+- `Notification` entity: `Id`, `UserId`, `Message`, `Type` (enum),
+  `ReferenceId` (optional, links to the related request), `IsRead`,
+  `CreatedAt`
+- `NotificationType` enum: `RequestCreated`, `RequestAssigned`,
+  `RequestStarted`, `RequestCompleted`, `RequestCancelled`, `General`
+- EF Core configuration with compound index on `(UserId, IsRead)` for
+  fast per-user queries
 
-### Dark Mode
-- Full dark mode support across all pages and components
-- Persisted to localStorage, respects system preference on first visit
-- Sun/Moon toggle in topbar
-- EY brand colors (`#2E2E38`, `#FFE600`) preserved in both modes
+### Domain Events
+Five domain events trigger notifications automatically — command
+handlers never create notifications directly:
+- `RequestCreatedEvent` → all Admin users notified of new request
+- `RequestAssignedEvent` → assigned courier notified
+- `RequestStartedEvent` → requester notified work has started
+- `RequestCompletedEvent` → requester notified of completion
+- `RequestCancelledEvent` → requester notified of cancellation
 
-### Request List Pages
-- Table and card view toggle — preference persisted to localStorage
-- Unified filter toolbar matching analytics page style with active
-  filter chips and clear all button
-- Skeleton loading states matching content shape — no blank flash
-- Clickable rows — no more "View" link at end of each row
-- Priority color accent on table rows and card left border
-- Contextual empty states — different message when filters are active
+### Notification API Endpoints
+- `GET /api/notifications` — paginated list with optional `unreadOnly`
+  filter, returns notifications + unread count + pagination metadata
+- `GET /api/notifications/unread-count` — lightweight count-only
+  endpoint for navbar badge refresh
+- `POST /api/notifications/{id}/read` — mark single notification as read
+- `POST /api/notifications/read-all` — mark all as read in one call
 
-### My Schedule (Courier)
-- Renamed from "My Assignments" — more human language
-- Summary strip — Awaiting Start, In Progress, Urgent counters,
-  each clickable to filter the list instantly
-- Inline Start button on Assigned cards
-- Quick complete modal — actual cost, note, and discharge photo
-  submitted without navigating to details page
-- Overdue indicator in red on deadline
-- Urgent requests show Zap badge and red ring
+### Extensibility
+Adding a new delivery channel (email, Teams, push) requires one new
+handler implementing `INotificationHandler<NotificationCreatedEvent>`
+— zero changes to existing code. The `NotificationCreatedEvent` is the
+extension point.
 
-### My Requests (Collaborator)
-- Status summary strip — Pending, Active, Completed, Cancelled
-- Survey prompt banner on completed cards missing a review
-- Quick survey modal — star rating with hover labels, optional comment,
-  submitted directly from the list without opening details
-- Overdue indicator on active requests past their deadline
-- New Request button always visible in page header
+### Real-Time Notifications (Frontend)
+- SignalR connection service at `shared/api/signalr.ts` — app-wide
+  singleton at the same architectural level as the Axios client
+- Connection starts on login and app load, stops on logout,
+  reconnects automatically after silent token refresh
+- Zustand notification store — optimistic mark-as-read with rollback,
+  `hasFetched` guard prevents redundant API calls on every dropdown open
+- `NotificationBell` in the topbar — unread badge, opens dropdown,
+  subscribes to SignalR and fires a toast on incoming push
+- `NotificationDropdown` — 5 most recent notifications, color-coded
+  by type, mark all read, "View all" footer link
+- `NotificationItem` — click marks as read and navigates to the related
+  request if a `referenceId` exists
+- `/notifications` full page — paginated list (15 per page), All /
+  Unread toggle, load more, real-time updates via SignalR subscription,
+  skeleton loading, contextual empty states
+- Dummy bell and hardcoded `DUMMY_NOTIFICATIONS` in `Topbar.tsx`
+  replaced entirely
 
-### Request Details Page
-- Two-column layout — main content left, actions and info right
-- Visual activity timeline with icons and color per event type
-- Skeleton loading state matching two-column layout
-- Cancel request modal — replaces inline form, destructive action pattern
-- Star rating in survey section — replaces number circles
-- Actions panel redesigned with cleaner visual hierarchy
+### Notification Type Colors
+| Type | Color | Meaning |
+|---|---|---|
+| RequestCreated | Blue | New request submitted |
+| RequestAssigned | Yellow | Courier assigned |
+| RequestStarted | Orange | Work in progress |
+| RequestCompleted | Green | Request completed |
+| RequestCancelled | Red | Request cancelled |
+| General | Gray | General notification |
 
-### Dashboard
-- KPI stat cards restored for all three roles
-- Status distribution chart visible for Admin, Collaborator, and Courier
-- Skeleton loading on all stat cards
-- Overdue panel for Admin, pending surveys panel for Collaborator,
-  avg rating for Courier in the insights section
-- Last 30 days filter on all stat queries — numbers stay meaningful
-  over time
-
-### User Management
-- Confirm modal before deactivating a user
-- Confirm modal before activating a user
-- Skeleton rows instead of page spinner
-- Filter toolbar matching analytics style
-
-### Confirm Dialogs
-- Reusable `ConfirmModal` component — configurable label, color, icon
-- Deactivate user — modal with name and access warning
-- Delete attachment — inline Yes/No confirmation, no modal overlay
-
-### 404 Page
-- EY branded dark background matching login and landing pages
-- Go back and Back to Dashboard/Home actions
-- Authenticated users go to `/dashboard`, guests go to `/`
-
-### PageErrorBoundary
-- Wraps every page route — sidebar stays functional when a page crashes
-- Error detail shown in development only
-
-### Performance
-- Route-level code splitting with `React.lazy` and `Suspense`
-- Vendor chunk splitting — react, query, radix-ui, icons, forms
-  each in separate cached chunks
-- Initial bundle reduced from 655 kB to ~200 kB core chunk
-
-### Architecture
-- Moved layouts to `src/app/layouts/`
-- Added `src/app/pages/` for app-level pages
-- Converted all default exports to named exports
-- Moved `StatusBadge`, `PriorityBadge`, `CategoryBadge` to
-  `src/shared/components/` — used across features
-- Removed direct API calls from pages — all go through hooks
-- Removed `requestsApi` and `usersApi` from barrel exports
-- Standardized all router imports to `react-router-dom`
+### Architecture Decisions
+- `INotificationHubProxy` defined in Application, implemented in API —
+  keeps Infrastructure free of any API-layer dependency
+- `tokenFactory` parameter on SignalR connect — avoids circular import
+  between auth store and SignalR service
+- `handlers` stored as a `Set` — bell toast and notifications page can
+  both subscribe without one overwriting the other
+- Dropdown shows 5 items, full page shows 15 — different purposes,
+  different page sizes, separate local state to avoid interference
+- `reset()` on logout wipes notification store — prevents data leak
+  between users on shared browser sessions
 
 ## How to Test with Docker
 
@@ -122,6 +103,14 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
+### Testing Real-Time Notifications
+1. Log in as Admin in one browser tab
+2. Log in as Collaborator in another tab or incognito window
+3. Create a request as Collaborator — Admin receives a bell badge
+   and a toast instantly
+4. Assign the request as Admin — the Courier receives a notification
+5. Start, complete, or cancel — the requester is notified at each step
+
 ## Demo Credentials
 
 | Role | Email | Password |
@@ -134,7 +123,8 @@ docker-compose up --build
 
 ## Notes
 
-- All 265 tests pass with 0 failures (`dotnet test` from the `backend`
-  directory). No new backend changes in this branch.
-- Dark mode preference persists across sessions via localStorage.
+- All 297 tests pass with 0 failures (`dotnet test` from the `backend`
+  directory).
+- SignalR requires `AllowCredentials()` in the CORS policy and JWT
+  passed as `?access_token=` query string — both are configured.
 - This branch includes all features from all previous branches.
