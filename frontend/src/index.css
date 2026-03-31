@@ -244,3 +244,32 @@ body {
   border-left: 4px solid var(--ey-green);
   color: var(--foreground);
 }
+
+/* Custom scrollbar styling – modern, no arrows */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--background);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+*::-webkit-scrollbar-button {
+  display: none;  /* hide the arrows */
+}
