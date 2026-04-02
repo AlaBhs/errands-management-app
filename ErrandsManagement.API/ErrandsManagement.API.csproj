@@ -8,15 +8,19 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.12.50" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ErrandsManagement.Application\ErrandsManagement.Application.csproj" />
+    <ProjectReference Include="..\ErrandsManagement.Infrastructure\ErrandsManagement.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Middleware\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
 

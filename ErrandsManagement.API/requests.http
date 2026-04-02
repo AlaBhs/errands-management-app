@@ -1,0 +1,23 @@
+@baseUrl = http://localhost:5164
+
+### Create Request
+POST {{baseUrl}}/api/requests
+Content-Type: application/json
+
+{
+  "requesterId": "11111111-1111-1111-1111-111111111111",
+  "title": "Buy documents",
+  "description": "Pickup documents",
+  "street": "123 Main Street",
+  "city": "Tunis",
+  "postalCode": "1000",
+  "country": "Tunisia",
+  "note": "Leave at reception",
+  "priority": 1,
+  "deadline": null,
+  "estimatedCost": 20
+}
+
+### Get Request by ID
+GET {{baseUrl}}/api/requests/26b96ac6-9ca8-4270-a54a-c48ce7f95a4a
+Content-Type: application/json
