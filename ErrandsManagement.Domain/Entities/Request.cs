@@ -62,6 +62,9 @@ public class Request : BaseEntity
         if (Status != RequestStatus.Pending)
             throw new InvalidRequestStateException("Only pending requests can be assigned.");
 
+        if (_assignments.Any(a => a.IsActive))
+            throw new InvalidRequestStateException("Request already has an active assignment.");
+
         var assignment = new Assignment(Id, courierId);
         _assignments.Add(assignment);
 
@@ -75,41 +78,68 @@ public class Request : BaseEntity
         if (Status != RequestStatus.Assigned)
             throw new InvalidRequestStateException("Only assigned requests can start.");
 
+        var assignment = GetActiveAssignment();
+        assignment.Start();
+
         Status = RequestStatus.InProgress;
         MarkAsUpdated();
 
         AddAudit("Started", "Request marked as in progress.");
     }
-    public void Complete(decimal? actualCost = null)
+    public void Complete(decimal? actualCost = null, string? note = null)
     {
         if (Status != RequestStatus.InProgress)
             throw new InvalidRequestStateException("Only in-progress requests can be completed.");
+
+        var assignment = GetActiveAssignment();
+        assignment.Complete(actualCost, note);
 
         Status = RequestStatus.Completed;
         MarkAsUpdated();
 
         AddAudit("Completed", "Request completed.");
     }
-    public void Cancel()
+    public void Cancel(string? reason)
     {
         if (Status == RequestStatus.Completed)
             throw new InvalidRequestStateException("Completed requests cannot be cancelled.");
 
+        if (Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException("Request is already cancelled.");
+
+        if (Status == RequestStatus.InProgress && string.IsNullOrWhiteSpace(reason))
+            throw new InvalidRequestStateException("Cancellation reason is required when request is in progress.");
+
         Status = RequestStatus.Cancelled;
         MarkAsUpdated();
 
-        AddAudit("Cancelled", "Request cancelled.");
+        AddAudit("Cancelled",
+            string.IsNullOrWhiteSpace(reason)
+                ? "Request cancelled."
+                : $"Request cancelled. Reason: {reason}");
     }
     public void SubmitSurvey(int rating, string? comment)
     {
         if (Status != RequestStatus.Completed)
-            throw new SurveyNotAllowedException("Survey can only be submitted after completion.");
+            throw new SurveyNotAllowedException(
+                "Survey can only be submitted for completed requests.");
 
-        if (Survey != null)
-            throw new SurveyNotAllowedException("Survey already submitted.");
+        if (Survey is not null)
+            throw new SurveyNotAllowedException(
+                "Survey has already been submitted for this request.");
 
-        Survey = new Survey(Id, rating, comment);
+        Survey = new Survey(rating, comment);
 
-        AddAudit("SurveySubmitted", "Satisfaction survey submitted.");
+        AddAudit("SurveySubmitted", "Survey submitted by requester.");
     }
+    private Assignment GetActiveAssignment()
+    {
+        var assignment = _assignments.LastOrDefault(a => a.IsActive);
+
+        if (assignment == null)
+            throw new InvalidRequestStateException("No active assignment found.");
+
+        return assignment;
+    }
+
 }

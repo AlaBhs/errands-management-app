@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.Common.Interfaces;
+﻿using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,23 +14,36 @@ public sealed class RequestRepository : IRequestRepository
     {
         _context = context;
     }
-
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+    }
     public async Task AddAsync(Request request, CancellationToken cancellationToken)
     {
         await _context.Requests.AddAsync(request, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Requests
-            .AsNoTracking()
+            .Include(r => r.Assignments)
+            .Include(r => r.AuditLogs)
+            .Include(r => r.Survey)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
-    public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<List<RequestListItemDto>> GetAllAsync(
+        CancellationToken cancellationToken)
     {
         return await _context.Requests
-            .OrderByDescending(r => r.CreatedAt)
+            .AsNoTracking()
+            .Select(r => new RequestListItemDto(
+                r.Id,
+                r.Title,
+                r.Description,
+                r.Status.ToString(),
+                r.Priority.ToString(),
+                r.EstimatedCost,
+                r.Deadline))
             .ToListAsync(cancellationToken);
     }
 }

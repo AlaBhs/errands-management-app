@@ -1,6 +1,10 @@
 using ErrandsManagement.API.Middleware;
 using ErrandsManagement.Application;
+using ErrandsManagement.Application.Common.Behaviors;
+using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Infrastructure;
+using FluentValidation;
+using MediatR;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +15,17 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(
+        typeof(CreateRequestCommand).Assembly));
+
+builder.Services.AddValidatorsFromAssembly(
+    typeof(CreateRequestCommand).Assembly);
+
+builder.Services.AddTransient(
+    typeof(IPipelineBehavior<,>),
+    typeof(ValidationBehavior<,>));
 
 // Controller
 builder.Services.AddControllers();

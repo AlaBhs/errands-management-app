@@ -53,5 +53,27 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
             address.Property(a => a.Note)
                 .HasMaxLength(500);
         });
+        builder
+            .HasMany(r => r.Assignments)
+            .WithOne()
+            .HasForeignKey(a => a.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Navigation(r => r.Assignments)
+            .HasField("_assignments")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder
+            .HasMany(r => r.AuditLogs)
+            .WithOne()
+            .HasForeignKey(a => a.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Navigation(r => r.AuditLogs)
+            .HasField("_auditLogs")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
+
 }
