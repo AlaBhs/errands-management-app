@@ -36,4 +36,6 @@ public interface IUserRepository
     Task<PagedResult<UserListItemDto>> GetPagedAsync(UserQueryParameters parameters, CancellationToken ct = default);
 
     Task SetIsActiveAsync(Guid userId, bool isActive, CancellationToken ct = default);
+
+    Task UpdateLocationAsync(UpdateLocationDto location, CancellationToken ct = default);
 }

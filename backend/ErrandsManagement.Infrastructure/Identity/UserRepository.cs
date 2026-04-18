@@ -239,6 +239,20 @@ public sealed class UserRepository : IUserRepository
         await _userManager.UpdateAsync(user);
     }
 
+    public async Task UpdateLocationAsync(
+        Guid userId,
+        double? latitude,
+        double? longitude,
+        string? city,
+        CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        user.Latitude = latitude;
+        user.Longitude = longitude;
+        user.City = city;
+        await _userManager.UpdateAsync(user);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindUserByIdAsync(Guid userId)
