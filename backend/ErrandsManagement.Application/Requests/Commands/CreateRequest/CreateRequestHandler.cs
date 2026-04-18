@@ -27,7 +27,9 @@ public sealed class CreateRequestHandler
             command.DeliveryAddress.City,
             command.DeliveryAddress.PostalCode,
             command.DeliveryAddress.Country,
-            command.DeliveryAddress.Note);
+            command.DeliveryAddress.Note,
+            command.DeliveryAddress.Latitude,
+            command.DeliveryAddress.Longitude);
 
         var request = new Request(
             command.Title,
@@ -36,7 +38,7 @@ public sealed class CreateRequestHandler
             address,
             command.Priority,
             command.Category,
-            command.ContactPerson,  
+            command.ContactPerson,
             command.ContactPhone,
             command.Comment,
             command.Deadline,

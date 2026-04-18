@@ -5,5 +5,7 @@
         string City,
         string PostalCode,
         string Country,
-        string? Note = null);
+        string? Note = null,
+        double? Latitude = null,
+        double? Longitude = null);
 }
