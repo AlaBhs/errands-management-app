@@ -55,6 +55,10 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
 
             address.Property(a => a.Note)
                 .HasMaxLength(500);
+
+            address.Property(a => a.Latitude);
+
+            address.Property(a => a.Longitude);
         });
         builder
             .HasMany(r => r.Assignments)

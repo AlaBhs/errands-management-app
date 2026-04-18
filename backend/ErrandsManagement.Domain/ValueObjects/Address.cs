@@ -10,6 +10,10 @@ public sealed class Address : IEquatable<Address>
     public double? Latitude { get; }
     public double? Longitude { get; }
 
+#pragma warning disable CS8618 // EF Core private parameterless constructor
+    private Address() { }
+#pragma warning restore CS8618
+
     public Address(
         string street,
         string city,
