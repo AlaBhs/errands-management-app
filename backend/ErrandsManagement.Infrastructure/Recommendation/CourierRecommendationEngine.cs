@@ -1,10 +1,10 @@
-﻿using ErrandsManagement.Application.Analytics.DTOs;
-using ErrandsManagement.Application.CourierRecommendation.DTOs;
+﻿using ErrandsManagement.Application.CourierRecommendation.DTOs;
 using ErrandsManagement.Application.CourierRecommendation.Interfaces;
 using ErrandsManagement.Application.CourierRecommendation.Models;
 using ErrandsManagement.Application.CourierRecommendation.Settings;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Enums;
+using ErrandsManagement.Domain.ValueObjects;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -78,13 +78,16 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
             var activeCount = activeCountsByCourier.GetValueOrDefault(courier.Id, 0);
             perfByCourier.TryGetValue(courier.Id, out var perf);
 
-            var availScore = ComputeAvailabilityScore(activeCount, _settings.MaxActiveAssignments);
-            var proxScore = ComputeProximityScore(
+            var availScore = CourierScoring.ComputeAvailabilityScore(activeCount, _settings.MaxActiveAssignments);
+            var proxScore = CourierScoring.ComputeProximityScore(
                 courier.Latitude, courier.Longitude,
                 request.DeliveryLatitude, request.DeliveryLongitude,
                 _settings.MaxScoringDistanceKm,
                 out var distanceKm);
-            var perfScore = ComputePerformanceScore(perf);
+            var perfScore = CourierScoring.ComputePerformanceScore(
+                perf?.TotalAssignments ?? 0,
+                perf?.Completed ?? 0,
+                perf?.AvgRating);
 
             var total =
                 availScore * weights.AvailabilityWeight +
@@ -115,70 +118,4 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
 
         return scores;
     }
-
-    // ── Pure scoring helpers — no EF, fully unit-testable ─────────────────
-
-    internal static double ComputeAvailabilityScore(int activeCount, int maxActive)
-    {
-        if (maxActive <= 0) return 0;
-        return Math.Max(0, (1.0 - (double)activeCount / maxActive) * 100.0);
-    }
-
-    internal static double ComputeProximityScore(
-        double? courierLat, double? courierLng,
-        double? deliveryLat, double? deliveryLng,
-        double maxDistanceKm,
-        out double? distanceKm)
-    {
-        // No delivery coords → neutral score, no distance
-        if (deliveryLat is null || deliveryLng is null)
-        {
-            distanceKm = null;
-            return 50.0;
-        }
-
-        // Courier has no location → score 0, distance unknown
-        if (courierLat is null || courierLng is null)
-        {
-            distanceKm = null;
-            return 0.0;
-        }
-
-        distanceKm = Haversine(courierLat.Value, courierLng.Value,
-                               deliveryLat.Value, deliveryLng.Value);
-
-        return Math.Max(0, (1.0 - distanceKm.Value / maxDistanceKm) * 100.0);
-    }
-
-    internal static double ComputePerformanceScore(CourierPerformanceDto? perf)
-    {
-        if (perf is null || perf.TotalAssignments == 0)
-            return 50.0; // new courier — neutral
-
-        var normalizedRating = perf.AvgRating.HasValue
-            ? (perf.AvgRating.Value / 5.0) * 100.0
-            : 50.0;
-
-        var completionRate = perf.TotalAssignments == 0
-            ? 0.0
-            : (double)perf.Completed / perf.TotalAssignments * 100.0;
-
-        return normalizedRating * 0.5 + completionRate * 0.5;
-    }
-
-    /// <summary>Haversine formula — returns distance in km.</summary>
-    internal static double Haversine(
-        double lat1, double lon1,
-        double lat2, double lon2)
-    {
-        const double R = 6371.0; // Earth radius in km
-        var dLat = ToRad(lat2 - lat1);
-        var dLon = ToRad(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-              + Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2))
-              * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-    }
-
-    private static double ToRad(double degrees) => degrees * Math.PI / 180.0;
 }
