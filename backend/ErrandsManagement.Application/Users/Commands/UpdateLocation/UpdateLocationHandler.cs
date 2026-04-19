@@ -22,6 +22,6 @@ public sealed class UpdateLocationHandler : IRequestHandler<UpdateLocationComman
             throw new NotFoundException("User not found.");
 
         var location = new UpdateLocationDto(command.Latitude, command.Longitude, command.City);
-        await _userRepository.UpdateLocationAsync(location, cancellationToken);
+        await _userRepository.UpdateLocationAsync(command.UserId, location, cancellationToken);
     }
 }

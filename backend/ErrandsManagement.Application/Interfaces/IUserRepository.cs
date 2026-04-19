@@ -37,5 +37,5 @@ public interface IUserRepository
 
     Task SetIsActiveAsync(Guid userId, bool isActive, CancellationToken ct = default);
 
-    Task UpdateLocationAsync(UpdateLocationDto location, CancellationToken ct = default);
+    Task UpdateLocationAsync(Guid userId, UpdateLocationDto location, CancellationToken ct = default);
 }

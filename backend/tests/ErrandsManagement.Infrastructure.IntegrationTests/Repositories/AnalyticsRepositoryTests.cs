@@ -621,6 +621,12 @@ internal sealed class StubUserRepository : IUserRepository
         CancellationToken ct = default)
         => Task.CompletedTask;
 
+    public Task UpdateLocationAsync(
+    Guid userId,
+    UpdateLocationDto location,
+    CancellationToken ct = default)
+    => Task.CompletedTask;
+
     public Task SaveChangesAsync(
         CancellationToken ct = default)
         => Task.CompletedTask;
