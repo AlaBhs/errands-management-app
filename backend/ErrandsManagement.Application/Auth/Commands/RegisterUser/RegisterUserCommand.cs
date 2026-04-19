@@ -7,5 +7,8 @@ public sealed record RegisterUserCommand(
     string FullName,
     string Email,
     string Password,
-    string Role
+    string Role,
+    double? Latitude = null,
+    double? Longitude = null,
+    string? City = null
 ) : IRequest<AuthResponseDto>;
