@@ -22,6 +22,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
 import type { RequestDetailsDto } from "../types";
+import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -92,11 +93,13 @@ const schema = z.object({
       "Estimated cost must be a valid number",
     ),
   deliveryAddress: z.object({
-    street: z.string().min(1, "Street is required"),
-    city: z.string().min(1, "City is required"),
-    postalCode: z.string().min(1, "Postal code is required"),
-    country: z.string().min(1, "Country is required"),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    postalCode: z.string().optional(),
+    country: z.string().optional(),
     note: z.string().optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
   }),
 });
 
@@ -130,8 +133,9 @@ function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
       postalCode: prefill.deliveryAddress.postalCode,
       country: prefill.deliveryAddress.country,
       note: prefill.deliveryAddress.note ?? "",
+      latitude: prefill.deliveryAddress.latitude,
+      longitude: prefill.deliveryAddress.longitude,
     },
-    // deadline intentionally omitted — old deadline is likely stale
   };
 }
 
@@ -168,6 +172,7 @@ export function CreateRequestPage() {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -225,7 +230,15 @@ export function CreateRequestPage() {
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
           : undefined,
-        deliveryAddress: values.deliveryAddress,
+        deliveryAddress: {
+          street: values.deliveryAddress.street || "",
+          city: values.deliveryAddress.city || "",
+          postalCode: values.deliveryAddress.postalCode || "",
+          country: values.deliveryAddress.country || "",
+          note: values.deliveryAddress.note,
+          latitude: values.deliveryAddress.latitude,
+          longitude: values.deliveryAddress.longitude,
+        },
       },
       {
         onSuccess: async (response) => {
@@ -341,108 +354,195 @@ export function CreateRequestPage() {
 
         {/* ── Classification + Contact & Address (side by side on lg) ──────── */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ── Classification ─────────────────────────────────────────────── */}
-          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6">
-            <FormSection
-              title="Classification"
-              description="Helps route your request to the right team."
-            >
-              <FieldGroup label="Category" error={errors.category?.message}>
-                <Controller
-                  name="category"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full !rounded-lg">
-                        <SelectValue placeholder="Select a category…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORY_OPTIONS.map(({ value, label }) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FieldGroup>
-
-              <FieldGroup
-                label="Due Date"
-                htmlFor="deadline"
-                optional
-                error={errors.deadline?.message}
+          <div className="flex flex-col gap-6 min-w-0">
+            {/* ── Classification ─────────────────────────────────────────────── */}
+            <div className="bg-white dark:bg-card rounded-xl border border-border p-6">
+              <FormSection
+                title="Classification"
+                description="Helps route your request to the right team."
               >
-                <Controller
-                  name="deadline"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      minDate={minDeadlineDate()}
-                      placeholder="Pick a date"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <FieldGroup label="Category" error={errors.category?.message}>
+                    <Controller
+                      name="category"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full !rounded-lg">
+                            <SelectValue placeholder="Select a category…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORY_OPTIONS.map(({ value, label }) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
-                  )}
-                />
-              </FieldGroup>
-
-              <FieldGroup
-                label="Priority Level"
-                error={errors.priority?.message}
-              >
-                <Controller
-                  name="priority"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(parseInt(value, 10))
-                      }
-                    >
-                      <SelectTrigger className="w-full !rounded-lg">
-                        <SelectValue placeholder="Select priority…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIORITY_LEVELS.map((label, idx) => (
-                          <SelectItem key={label} value={String(idx)}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FieldGroup>
-
-              <FieldGroup
-                label="Estimated Cost"
-                htmlFor="estimatedCost"
-                optional
-                error={errors.estimatedCost?.message}
-              >
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
-                    $
-                  </span>
-                  <input
-                    id="estimatedCost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...register("estimatedCost")}
-                    placeholder="0.00"
-                    className={`${inputCls} pl-7`}
-                  />
+                  </FieldGroup>
+                  <FieldGroup
+                    label="Priority Level"
+                    error={errors.priority?.message}
+                  >
+                    <Controller
+                      name="priority"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={String(field.value)}
+                          onValueChange={(value) =>
+                            field.onChange(parseInt(value, 10))
+                          }
+                        >
+                          <SelectTrigger className="w-full !rounded-lg">
+                            <SelectValue placeholder="Select priority…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRIORITY_LEVELS.map((label, idx) => (
+                              <SelectItem key={label} value={String(idx)}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </FieldGroup>
                 </div>
-              </FieldGroup>
-            </FormSection>
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <FieldGroup
+                    label="Due Date"
+                    htmlFor="deadline"
+                    optional
+                    error={errors.deadline?.message}
+                  >
+                    <Controller
+                      name="deadline"
+                      control={control}
+                      render={({ field }) => (
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          minDate={minDeadlineDate()}
+                          placeholder="Pick a date"
+                        />
+                      )}
+                    />
+                  </FieldGroup>
 
+                  <FieldGroup
+                    label="Estimated Cost"
+                    htmlFor="estimatedCost"
+                    optional
+                    error={errors.estimatedCost?.message}
+                  >
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+                        tnd
+                      </span>
+                      <input
+                        id="estimatedCost"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...register("estimatedCost")}
+                        placeholder="0.00"
+                        className={`${inputCls} pl-10`}
+                      />
+                    </div>
+                  </FieldGroup>
+                </div>
+              </FormSection>
+            </div>
+            {/* ── Attachments ──────────────────────────────────────────────────── */}
+            <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
+              <FormSection
+                title="Attachments"
+                description="Images or PDF documents up to 10 MB each."
+              >
+                <div
+                  onClick={() => canAddMore && inputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (canAddMore) addFiles(e.dataTransfer.files);
+                  }}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
+                ${
+                  canAddMore
+                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
+                    : "cursor-not-allowed opacity-50"
+                } border-border`}
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-1">
+                    <span className="font-medium text-foreground">
+                      Click to upload
+                    </span>{" "}
+                    or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Images or PDF · Max 10 MB · Up to {MAX_FILES} files
+                  </p>
+                  {!canAddMore && (
+                    <p className="text-xs text-amber-600 mt-1 font-medium">
+                      Maximum {MAX_FILES} files reached
+                    </p>
+                  )}
+                </div>
+
+                <input
+                  ref={inputRef}
+                  type="file"
+                  multiple
+                  accept={ALLOWED_TYPES.join(",")}
+                  className="hidden"
+                  onChange={(e) => e.target.files && addFiles(e.target.files)}
+                />
+
+                {Object.entries(fileErrors).map(([name, err]) => (
+                  <p key={name} className="text-xs text-red-500">
+                    {name}: {err}
+                  </p>
+                ))}
+
+                {selectedFiles.length > 0 && (
+                  <ul className="space-y-2">
+                    {selectedFiles.map((file) => (
+                      <li
+                        key={file.name}
+                        className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm"
+                      >
+                        <FileIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium text-foreground">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatBytes(file.size)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.name)}
+                          className="shrink-0 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </FormSection>
+            </div>
+          </div>
           {/* ── Contact & Address ───────────────────────────────────────────── */}
-          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6">
+          <div className="flex-1 min-w-0 bg-white dark:bg-card rounded-xl border border-border p-6">
             <FormSection
               title="Contact & Address"
               description="Who to meet on-site and where to deliver."
@@ -480,61 +580,52 @@ export function CreateRequestPage() {
                 </FieldGroup>
               </div>
 
-              {/* Address grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FieldGroup
-                  label="City"
-                  htmlFor="city"
-                  error={errors.deliveryAddress?.city?.message}
-                >
-                  <input
-                    id="city"
-                    {...register("deliveryAddress.city")}
-                    placeholder="City"
-                    className={inputCls}
-                  />
-                </FieldGroup>
-
-                <FieldGroup
-                  label="Postal Code"
-                  htmlFor="postalCode"
-                  error={errors.deliveryAddress?.postalCode?.message}
-                >
-                  <input
-                    id="postalCode"
-                    {...register("deliveryAddress.postalCode")}
-                    placeholder="Postal code"
-                    className={inputCls}
-                  />
-                </FieldGroup>
-
-                <FieldGroup
-                  label="Country"
-                  htmlFor="country"
-                  error={errors.deliveryAddress?.country?.message}
-                >
-                  <input
-                    id="country"
-                    {...register("deliveryAddress.country")}
-                    placeholder="Country"
-                    className={inputCls}
-                  />
-                </FieldGroup>
-
-                <FieldGroup
-                  label="Street"
-                  htmlFor="street"
-                  error={errors.deliveryAddress?.street?.message}
-                >
-                  <input
-                    id="street"
-                    {...register("deliveryAddress.street")}
-                    placeholder="123 Main Street"
-                    className={inputCls}
-                  />
-                </FieldGroup>
+              {/* Address Map Picker */}
+              <div className="space-y-3">
+                <label className="text-xs font-medium text-foreground">
+                  Delivery Location
+                </label>
+                <Controller
+                  name="deliveryAddress.latitude"
+                  control={control}
+                  render={({ field: latField }) => (
+                    <Controller
+                      name="deliveryAddress.longitude"
+                      control={control}
+                      render={({ field: lngField }) => (
+                        <AddressMapPicker
+                          latitude={latField.value}
+                          longitude={lngField.value}
+                          onCoordinatesChange={(lat, lng) => {
+                            latField.onChange(lat);
+                            lngField.onChange(lng);
+                          }}
+                          onAddressChange={(address) => {
+                            // Update address fields from reverse geocoding
+                            if (address.street)
+                              setValue(
+                                "deliveryAddress.street",
+                                address.street,
+                              );
+                            if (address.city)
+                              setValue("deliveryAddress.city", address.city);
+                            if (address.postalCode)
+                              setValue(
+                                "deliveryAddress.postalCode",
+                                address.postalCode,
+                              );
+                            if (address.country)
+                              setValue(
+                                "deliveryAddress.country",
+                                address.country,
+                              );
+                          }}
+                        />
+                      )}
+                    />
+                  )}
+                />
               </div>
-
               <FieldGroup label="Address Note" htmlFor="addressNote" optional>
                 <input
                   id="addressNote"
@@ -545,88 +636,6 @@ export function CreateRequestPage() {
               </FieldGroup>
             </FormSection>
           </div>
-        </div>
-
-        {/* ── Attachments ──────────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
-          <FormSection
-            title="Attachments"
-            description="Images or PDF documents up to 10 MB each."
-          >
-            <div
-              onClick={() => canAddMore && inputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (canAddMore) addFiles(e.dataTransfer.files);
-              }}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
-                ${
-                  canAddMore
-                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
-                    : "cursor-not-allowed opacity-50"
-                } border-border`}
-            >
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground mb-1">
-                <span className="font-medium text-foreground">
-                  Click to upload
-                </span>{" "}
-                or drag and drop
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Images or PDF · Max 10 MB · Up to {MAX_FILES} files
-              </p>
-              {!canAddMore && (
-                <p className="text-xs text-amber-600 mt-1 font-medium">
-                  Maximum {MAX_FILES} files reached
-                </p>
-              )}
-            </div>
-
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept={ALLOWED_TYPES.join(",")}
-              className="hidden"
-              onChange={(e) => e.target.files && addFiles(e.target.files)}
-            />
-
-            {Object.entries(fileErrors).map(([name, err]) => (
-              <p key={name} className="text-xs text-red-500">
-                {name}: {err}
-              </p>
-            ))}
-
-            {selectedFiles.length > 0 && (
-              <ul className="space-y-2">
-                {selectedFiles.map((file) => (
-                  <li
-                    key={file.name}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm"
-                  >
-                    <FileIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-foreground">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatBytes(file.size)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(file.name)}
-                      className="shrink-0 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </FormSection>
         </div>
 
         {/* ── Form Actions ─────────────────────────────────────────────────── */}

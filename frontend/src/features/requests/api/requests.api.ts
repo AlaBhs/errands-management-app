@@ -9,6 +9,7 @@ import type {
   CompleteRequestPayload,
   SubmitSurveyPayload,
   RequestQueryParams,
+  CourierScoreDto,
 } from "@/features/requests/types";
 
 export const requestsApi = {
@@ -79,4 +80,9 @@ export const requestsApi = {
     apiClient
       .post<ApiResponse<null>>(`/requests/${id}/survey`, payload)
       .then((res) => res.data),
+  
+  getCandidates: (id: string) =>
+  apiClient
+    .get<ApiResponse<CourierScoreDto[]>>(`/requests/${id}/candidates`)
+    .then((res) => res.data),
 };

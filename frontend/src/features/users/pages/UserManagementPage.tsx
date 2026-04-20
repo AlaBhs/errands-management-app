@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,12 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const createUserSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -31,6 +32,9 @@ const createUserSchema = z.object({
     .regex(/[0-9]/, "Must contain at least one digit")
     .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
   role: z.enum([UserRole.Collaborator, UserRole.Courier]),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  city: z.string().nullable().optional(),
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
@@ -71,14 +75,40 @@ export function UserManagementPage() {
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: { role: UserRole.Collaborator },
+    defaultValues: {
+      role: UserRole.Collaborator,
+      latitude: null,
+      longitude: null,
+      city: null,
+    },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const roleValue = watch("role");
+  const [isCourier, setIsCourier] = useState(roleValue === UserRole.Courier);
+
+  useEffect(() => {
+    setIsCourier(roleValue === UserRole.Courier);
+  }, [roleValue]);
+
   const onCreateUser = handleSubmit((values) => {
-    create.mutate(values, { onSuccess: () => reset() });
+    create.mutate(
+      {
+        fullName: values.fullName,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+        latitude: values.latitude ?? null,
+        longitude: values.longitude ?? null,
+        city: values.city ?? null,
+      },
+      { onSuccess: () => reset() },
+    );
   });
 
   const handleDeactivateConfirm = () => {
@@ -414,6 +444,36 @@ export function UserManagementPage() {
                 )}
               />
             </div>
+            {isCourier && (
+              <div className="space-y-3 border-t border-border pt-4">
+                <label className="text-xs font-medium text-foreground">
+                  Courier Location
+                </label>
+                <Controller
+                  name="latitude"
+                  control={control}
+                  render={({ field: latField }) => (
+                    <Controller
+                      name="longitude"
+                      control={control}
+                      render={({ field: lngField }) => (
+                        <AddressMapPicker
+                          latitude={latField.value ?? undefined}
+                          longitude={lngField.value ?? undefined}
+                          onCoordinatesChange={(lat, lng) => {
+                            latField.onChange(lat);
+                            lngField.onChange(lng);
+                          }}
+                          onAddressChange={(address) => {
+                            if (address.city) setValue("city", address.city);
+                          }}
+                        />
+                      )}
+                    />
+                  )}
+                />
+              </div>
+            )}
 
             {create.isError && (
               <ErrorMessage

@@ -321,8 +321,8 @@ export const AnalyticsPage = () => {
                   s.totalEstimatedCost === 0
                     ? "No estimates set"
                     : s.totalActualCost <= s.totalEstimatedCost
-                      ? `Saved ${(s.totalEstimatedCost - s.totalActualCost).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
-                      : `Over by ${(s.totalActualCost - s.totalEstimatedCost).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
+                      ? `Saved ${(s.totalEstimatedCost - s.totalActualCost).toLocaleString("en-US", { style: "currency", currency: "TND", maximumFractionDigits: 0 })}`
+                      : `Over by ${(s.totalActualCost - s.totalEstimatedCost).toLocaleString("en-US", { style: "currency", currency: "TND", maximumFractionDigits: 0 })}`
                 }
                 subVariant={
                   s.totalEstimatedCost === 0
@@ -476,7 +476,7 @@ export const AnalyticsPage = () => {
                     .reduce((s, r) => s + r.actualCost, 0)
                     .toLocaleString("en-US", {
                       style: "currency",
-                      currency: "USD",
+                      currency: "TND",
                       maximumFractionDigits: 0,
                     })}
                 </p>

@@ -28,6 +28,14 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
+      '/nominatim': {
+        target: 'https://nominatim.openstreetmap.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/nominatim/, ''),
+        headers: {
+          'User-Agent': 'ErrandsManagementApp/1.0',
+        },
+      },
     },
   },
   build: {
