@@ -2,7 +2,7 @@
 
 public sealed class Address : IEquatable<Address>
 {
-    public string Street { get; }
+    public string? Street { get; }
     public string City { get; }
     public string PostalCode { get; }
     public string Country { get; }
@@ -15,10 +15,10 @@ public sealed class Address : IEquatable<Address>
 #pragma warning restore CS8618
 
     public Address(
-        string street,
         string city,
         string postalCode,
         string country,
+        string? street = null,
         string? note = null,
         double? latitude = null,
         double? longitude = null)
@@ -38,7 +38,7 @@ public sealed class Address : IEquatable<Address>
     public bool Equals(Address? other)
     {
         if (other is null) return false;
-
+        
         return Street == other.Street
             && City == other.City
             && PostalCode == other.PostalCode

@@ -21,7 +21,6 @@ public sealed class CreateRequestValidator : AbstractValidator<CreateRequestComm
             .NotNull();
 
         RuleFor(x => x.DeliveryAddress.Street)
-            .NotEmpty()
             .MaximumLength(200);
 
         RuleFor(x => x.DeliveryAddress.City)

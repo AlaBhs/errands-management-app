@@ -23,10 +23,10 @@ public sealed class CreateRequestHandler
         CancellationToken cancellationToken)
     {
         var address = new Address(
-            command.DeliveryAddress.Street,
             command.DeliveryAddress.City,
             command.DeliveryAddress.PostalCode,
             command.DeliveryAddress.Country,
+            command.DeliveryAddress.Street,
             command.DeliveryAddress.Note,
             command.DeliveryAddress.Latitude,
             command.DeliveryAddress.Longitude);

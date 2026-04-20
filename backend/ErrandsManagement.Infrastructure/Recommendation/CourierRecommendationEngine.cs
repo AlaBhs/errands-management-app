@@ -57,11 +57,11 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
         var courierIds = couriers.Select(c => c.Id).ToList();
 
         var activeCountsByCourier = await _db.Set<Domain.Entities.Request>()
-            .SelectMany(r => r.Assignments)
-            .Where(a => !a.IsCompleted && courierIds.Contains(a.CourierId))
-            .GroupBy(a => a.CourierId)
-            .Select(g => new { CourierId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.CourierId, x => x.Count, ct);
+         .SelectMany(r => r.Assignments)
+         .Where(a => a.CompletedAt == null && courierIds.Contains(a.CourierId))
+         .GroupBy(a => a.CourierId)
+         .Select(g => new { CourierId = g.Key, Count = g.Count() })
+         .ToDictionaryAsync(x => x.CourierId, x => x.Count, ct);
 
         // ── 3. Performance data (reuse existing analytics logic) ──────────
         var performanceData = await _analytics

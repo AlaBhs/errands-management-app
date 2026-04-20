@@ -69,11 +69,14 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
             requesterName,
             request.CreatedAt,
             new AddressDto(
-                request.DeliveryAddress.Street,
                 request.DeliveryAddress.City,
                 request.DeliveryAddress.PostalCode,
                 request.DeliveryAddress.Country,
-                request.DeliveryAddress.Note),
+                request.DeliveryAddress.Street,
+                request.DeliveryAddress.Note,
+                request.DeliveryAddress.Latitude,
+                request.DeliveryAddress.Longitude
+                ),
             assignmentDto,
             request.AuditLogs
                 .OrderByDescending(a => a.OccurredAt)
