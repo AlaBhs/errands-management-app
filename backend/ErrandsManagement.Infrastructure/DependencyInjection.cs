@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IRequestMessageRepository, RequestMessageRepository>();
         services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
 
         return services;
@@ -84,6 +85,7 @@ public static class DependencyInjection
     this IServiceCollection services)
     {
         services.AddScoped<INotificationRealtimeService, SignalRNotificationService>();
+        services.AddScoped<IRequestMessagingRealtimeService, SignalRRequestMessagingService>();
         return services;
     }
 
