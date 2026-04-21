@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { DollarSign, FileText, Camera, Loader2, X } from "lucide-react";
+import { FileText, Camera, Loader2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -85,10 +85,7 @@ export function QuickCompleteModal({
               </span>
             </label>
             <div className="relative">
-              <DollarSign
-                className="absolute left-3 top-1/2 h-4 w-4
-                                     -translate-y-1/2 text-muted-foreground"
-              />
+              tnd
               <input
                 type="number"
                 step="0.01"
@@ -97,7 +94,7 @@ export function QuickCompleteModal({
                 onChange={(e) => setActualCost(e.target.value)}
                 placeholder="0.00"
                 className="w-full rounded-lg border border-border
-                           bg-background dark:bg-muted/50 py-2.5 pl-9 pr-4 text-sm
+                           bg-background dark:bg-muted/50 py-2.5 pl-12 pr-4 text-sm
                            text-foreground focus:border-foreground focus:bg-background
                            dark:focus:bg-muted/70 focus:outline-none transition-colors"
               />

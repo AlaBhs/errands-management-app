@@ -9,6 +9,7 @@ const TYPE_COLOR: Record<number, string> = {
   [NotificationType.RequestStarted]:   "bg-orange-500",
   [NotificationType.RequestCompleted]: "bg-green-500",
   [NotificationType.RequestCancelled]: "bg-red-500",
+  [NotificationType.NewMessageReceived]: "bg-indigo-500",
   [NotificationType.General]:          "bg-gray-400",
 };
 
@@ -18,6 +19,7 @@ const TYPE_LABEL: Record<number, string> = {
   [NotificationType.RequestStarted]:   "Request Started",
   [NotificationType.RequestCompleted]: "Request Completed",
   [NotificationType.RequestCancelled]: "Request Cancelled",
+  [NotificationType.NewMessageReceived]: "New Message",
   [NotificationType.General]:          "General",
 };
 

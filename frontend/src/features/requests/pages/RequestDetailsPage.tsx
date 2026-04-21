@@ -21,7 +21,6 @@ import {
   User,
   Clock,
   Calendar,
-  DollarSign,
   CheckCircle2,
   UserCheck,
   Play,
@@ -34,6 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { LocationMap } from "@/shared/components/LocationMap";
+import { RequestMessagesPanel } from "@/features/messaging";
 
 // ── Audit log config ──────────────────────────────────────────────────────────
 
@@ -98,6 +98,7 @@ export function RequestDetailsPage() {
   const { data: request, isLoading, isError, error } = useRequest(id!);
   const role = useAuthStore((s) => s.user?.role);
   const navigate = useNavigate();
+  const userId = useAuthStore((s) => s.user?.id);
 
   const backLink =
     role === UserRole.Courier
@@ -121,6 +122,11 @@ export function RequestDetailsPage() {
       />
     );
   if (!request) return null;
+
+  const isParticipant =
+    role === UserRole.Admin ||
+    request.requesterId === userId ||
+    request.currentAssignment?.courierId === userId;
 
   const canAddAttachments =
     (request.status === "Pending" || request.status === "Assigned") &&
@@ -195,8 +201,7 @@ export function RequestDetailsPage() {
                                  px-2.5 py-0.5 text-xs font-medium
                                  bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
                 >
-                  <DollarSign className="h-3 w-3" />
-                  Est. tnd {" "+request.estimatedCost}
+                  Est. tnd {" " + request.estimatedCost}
                 </span>
               )}
             </div>
@@ -363,6 +368,7 @@ export function RequestDetailsPage() {
               )}
             </Section>
           )}
+          {isParticipant && <RequestMessagesPanel requestId={request.id} />}
         </div>
 
         {/* ── Right column ────────────────────────────────────────── */}
