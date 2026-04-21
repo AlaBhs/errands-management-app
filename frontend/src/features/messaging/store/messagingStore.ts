@@ -45,15 +45,10 @@ export const useMessagingStore = create<MessagingStore>((set, get) => ({
         import.meta.env.DEV ? LogLevel.Information : LogLevel.Error,
       )
       .build();
-
-    // ── Register handler BEFORE starting ──────────────────────────────────────
-    // Mirrors the pattern used in src/shared/api/signalr.ts for the
-    // notifications hub. Handler updates React Query cache, never local state.
     conn.on("ReceiveRequestMessage", (message: RequestMessageDto) => {
       queryClient.setQueryData<RequestMessageDto[]>(
         ["requestMessages", message.requestId],
         (old = []) => {
-          // Deduplicate: ignore if already present (e.g. own message echoed back)
           if (old.some((m) => m.id === message.id)) return old;
           return [...old, message].sort(
             (a, b) =>
@@ -97,7 +92,7 @@ export const useMessagingStore = create<MessagingStore>((set, get) => ({
       if (import.meta.env.DEV) {
         console.error("[SignalR:messaging] JoinRequestGroup failed.", err);
       }
-      throw err; // Caller catches this to hide messaging UI on HubException
+      throw err; 
     }
   },
 
