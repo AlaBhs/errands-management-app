@@ -49,6 +49,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.RemoveAll<IDbContextFactory<AppDbContext>>();
             services.RemoveAll<INotificationHubProxy>();
             services.AddScoped<INotificationHubProxy, StubNotificationHubProxy>();
+            services.RemoveAll<IRequestMessagingHubProxy>();
+            services.AddScoped<IRequestMessagingHubProxy, StubRequestMessagingHubProxy>();
 
             // Remove provider-specific services so SQL Server internals don't leak
             var efCoreServices = services
