@@ -29,6 +29,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<RequestMessagingHub>("/hubs/request-messaging");
 
 app.Run();
 

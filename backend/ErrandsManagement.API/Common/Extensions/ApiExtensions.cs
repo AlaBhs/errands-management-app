@@ -18,7 +18,10 @@ public static class ApiExtensions
                 options.JsonSerializerOptions.Converters.Add(
                     new JsonStringEnumConverter());
             });
+
         services.AddScoped<INotificationHubProxy, SignalRHubProxy>();
+
+        services.AddScoped<IRequestMessagingHubProxy, RequestMessagingHubProxy>();
 
         return services;
     }
