@@ -6,6 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import { extractUserFromToken } from "../utils/jwtUtils";
 import { signalr } from "@/shared/api/signalr";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
+import { useMessagingStore } from "@/features/messaging/store/messagingStore";
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -33,6 +34,8 @@ export function useLogout() {
     },
     onSettled: () => {
       signalr.disconnect();
+      const { stopConnection } = useMessagingStore.getState();
+      stopConnection();
       resetNotifications();
       clearAuth();
       navigate("/login", { replace: true, state: null });
