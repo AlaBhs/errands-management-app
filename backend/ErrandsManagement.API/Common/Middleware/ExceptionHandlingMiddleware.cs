@@ -59,6 +59,14 @@ public sealed class ExceptionHandlingMiddleware
                 new { message = ex.Message },
                 StatusCodes.Status400BadRequest);
         }
+        catch (ForbiddenAccessException ex)
+        {
+            _logger.LogWarning(ex, "Forbidden access.");
+            await WriteErrorResponse(
+                context,
+                new { message = ex.Message },
+                StatusCodes.Status403Forbidden);
+        }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized access.");

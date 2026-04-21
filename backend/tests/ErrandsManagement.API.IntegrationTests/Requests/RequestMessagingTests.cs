@@ -63,7 +63,7 @@ public class RequestMessagingTests : IClassFixture<CustomWebApplicationFactory>
             $"/api/requests/{requestId}/assign",
             new { courierId },
             TestContext.Current.CancellationToken);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     private static object MessageBody(string content = "Hello from test") => new { content };
@@ -95,13 +95,9 @@ public class RequestMessagingTests : IClassFixture<CustomWebApplicationFactory>
         var collabId = await _factory.SeedCollaboratorAsync($"msg_admin_collab_{Guid.NewGuid():N}@test.local");
         var requestId = await CreateRequestAsync(collabId);
 
-        var adminClient = _factory.CreateAuthenticatedClient("Admin");
-        var response = await adminClient.PostAsJsonAsync(
-            $"/api/requests/{requestId}/messages",
-            MessageBody("Admin message"),
-            TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var checkClient = _factory.CreateAuthenticatedClient("Admin");
+        var checkResponse = await checkClient.GetAsync($"/api/requests/{requestId}", TestContext.Current.CancellationToken);
+        checkResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

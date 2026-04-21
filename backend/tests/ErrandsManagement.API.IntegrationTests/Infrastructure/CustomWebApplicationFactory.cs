@@ -1,6 +1,7 @@
 ﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -71,6 +72,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.PostConfigure<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>(_ => { });
 
             services.AddScoped<IFileStorageService, StubFileStorageService>();
+
+            services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = TestJwtIssuer,
+                    ValidAudience = TestJwtAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestJwtSecret))
+                };
+            });
         });
     }
 

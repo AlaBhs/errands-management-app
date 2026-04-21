@@ -27,6 +27,12 @@ public class NotificationsControllerTests : IClassFixture<CustomWebApplicationFa
             "/api/notifications",
             TestContext.Current.CancellationToken);
 
+        var collabB = Guid.NewGuid();
+
+        var strangerClient = _factory.CreateAuthenticatedClient("Collaborator", collabB);
+        var testResponse = await strangerClient.GetAsync("/api/notifications", TestContext.Current.CancellationToken);
+        testResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(

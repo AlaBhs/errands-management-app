@@ -54,7 +54,7 @@ public sealed class SendRequestMessageHandler : IRequestHandler<SendRequestMessa
 
         var isParticipant = IsRequestParticipant(request, command.SenderId, senderRole);
         if (!isParticipant)
-            throw new UnauthorizedAccessException(
+            throw new ForbiddenAccessException(
                 "You are not a participant of this request and cannot send messages.");
 
         // 3. Create immutable message entity (raises RequestMessageCreatedEvent internally)

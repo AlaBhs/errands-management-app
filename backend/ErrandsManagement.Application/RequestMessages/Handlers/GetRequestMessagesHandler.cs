@@ -50,7 +50,7 @@ public sealed class GetRequestMessagesHandler
 
         var isParticipant = IsRequestParticipant(request, query.RequestingUserId, userRole);
         if (!isParticipant)
-            throw new UnauthorizedAccessException(
+            throw new ForbiddenAccessException(
                 "You are not a participant of this request and cannot read its messages.");
 
         // 3. Load messages (already ordered ascending by repository)
