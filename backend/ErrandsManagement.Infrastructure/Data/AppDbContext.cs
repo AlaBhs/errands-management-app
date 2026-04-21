@@ -20,6 +20,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<RequestMessage> RequestMessages => Set<RequestMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
