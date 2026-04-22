@@ -22,4 +22,8 @@ public interface IRequestRepository
     Guid courierId,
     RequestQueryParameters parameters,
     CancellationToken cancellationToken);
+
+    Task<List<AtRiskRequestDto>> GetAtRiskRequestsAsync(
+    DateTime now,
+    CancellationToken cancellationToken);
 }
