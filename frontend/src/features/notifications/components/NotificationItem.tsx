@@ -1,27 +1,27 @@
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { NotificationType, type NotificationDto } from "@/features/notifications/types";
+import { type NotificationDto } from "@/features/notifications/types";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 import { parseUtc } from "@/shared/utils/date";
 
-const TYPE_COLOR: Record<number, string> = {
-  [NotificationType.RequestCreated]:   "bg-blue-500",
-  [NotificationType.RequestAssigned]:  "bg-yellow-400",
-  [NotificationType.RequestStarted]:   "bg-orange-500",
-  [NotificationType.RequestCompleted]: "bg-green-500",
-  [NotificationType.RequestCancelled]: "bg-red-500",
-  [NotificationType.NewMessageReceived]: "bg-indigo-500",
-  [NotificationType.General]:          "bg-gray-400",
+const TYPE_COLOR: Record<string, string> = {
+  RequestCreated: "bg-blue-500",
+  RequestAssigned: "bg-yellow-400",
+  RequestStarted: "bg-orange-500",
+  RequestCompleted: "bg-green-500",
+  RequestCancelled: "bg-red-500",
+  NewMessageReceived: "bg-purple-500",
+  General: "bg-gray-400",
 };
 
-const TYPE_LABEL: Record<number, string> = {
-  [NotificationType.RequestCreated]:   "Request Created",
-  [NotificationType.RequestAssigned]:  "Request Assigned",
-  [NotificationType.RequestStarted]:   "Request Started",
-  [NotificationType.RequestCompleted]: "Request Completed",
-  [NotificationType.RequestCancelled]: "Request Cancelled",
-  [NotificationType.NewMessageReceived]: "New Message",
-  [NotificationType.General]:          "General",
+const TYPE_LABEL: Record<string, string> = {
+  RequestCreated: "Request Created",
+  RequestAssigned: "Request Assigned",
+  RequestStarted: "Request Started",
+  RequestCompleted: "Request Completed",
+  RequestCancelled: "Request Cancelled",
+  NewMessageReceived: "New Message",
+  General: "General",
 };
 
 function getDestination(notification: NotificationDto): string | null {

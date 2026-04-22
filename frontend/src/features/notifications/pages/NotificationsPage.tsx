@@ -3,31 +3,35 @@ import { formatDistanceToNow } from "date-fns";
 import { BellOff, CheckCheck } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NotificationType } from "@/features/notifications/types";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { parseUtc } from "@/shared/utils/date";
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
 
-const TYPE_COLOR: Record<number, string> = {
-  [NotificationType.RequestCreated]:   "bg-blue-500",
-  [NotificationType.RequestAssigned]:  "bg-yellow-400",
-  [NotificationType.RequestStarted]:   "bg-orange-500",
-  [NotificationType.RequestCompleted]: "bg-green-500",
-  [NotificationType.RequestCancelled]: "bg-red-500",
-  [NotificationType.General]:          "bg-gray-400",
+const TYPE_COLOR: Record<string, string> = {
+  RequestCreated: "bg-blue-500",
+  RequestAssigned: "bg-yellow-400",
+  RequestStarted: "bg-orange-500",
+  RequestCompleted: "bg-green-500",
+  RequestCancelled: "bg-red-500",
+  NewMessageReceived: "bg-purple-500",
+  General: "bg-gray-400",
 };
 
-const TYPE_LABEL: Record<number, string> = {
-  [NotificationType.RequestCreated]:   "Request Created",
-  [NotificationType.RequestAssigned]:  "Request Assigned",
-  [NotificationType.RequestStarted]:   "Request Started",
-  [NotificationType.RequestCompleted]: "Request Completed",
-  [NotificationType.RequestCancelled]: "Request Cancelled",
-  [NotificationType.General]:          "General",
+const TYPE_LABEL: Record<string, string> = {
+  RequestCreated: "Request Created",
+  RequestAssigned: "Request Assigned",
+  RequestStarted: "Request Started",
+  RequestCompleted: "Request Completed",
+  RequestCancelled: "Request Cancelled",
+  NewMessageReceived: "New Message",
+  General: "General",
 };
 
-function getDestination(notification: { type: number; referenceId: string | null }): string | null {
+function getDestination(notification: {
+  type: number;
+  referenceId: string | null;
+}): string | null {
   if (notification.referenceId) return `/requests/${notification.referenceId}`;
   return null;
 }
@@ -51,11 +55,24 @@ export function NotificationsPage() {
     markAllAsRead,
   } = useNotifications();
 
-  function handleItemClick(notification: Parameters<typeof getDestination>[0] & { id: string; isRead: boolean }) {
+  function handleItemClick(
+    notification: Parameters<typeof getDestination>[0] & {
+      id: string;
+      isRead: boolean;
+    },
+  ) {
     if (!notification.isRead) markAsRead(notification.id);
     const destination = getDestination(notification);
     if (destination) navigate(destination);
   }
+  console.log("NotificationsPage render", {
+    notifications,
+    unreadCount,
+    isLoading,
+    page,
+    totalPages,
+    totalCount,
+  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -69,22 +86,26 @@ export function NotificationsPage() {
           <button
             onClick={() => setUnreadOnly(false)}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors
-              ${!unreadOnly
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+              ${
+                !unreadOnly
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
           >
             All
             {totalCount > 0 && (
-              <span className="ml-1.5 text-muted-foreground">({totalCount})</span>
+              <span className="ml-1.5 text-muted-foreground">
+                ({totalCount})
+              </span>
             )}
           </button>
           <button
             onClick={() => setUnreadOnly(true)}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors
-              ${unreadOnly
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+              ${
+                unreadOnly
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
           >
             Unread
@@ -118,37 +139,46 @@ export function NotificationsPage() {
         ) : (
           <div className="divide-y divide-border">
             {notifications.map((n) => {
-              const dotColor  = TYPE_COLOR[n.type] ?? "bg-gray-400";
-              const label     = TYPE_LABEL[n.type]  ?? "Notification";
-              const timeAgo   = formatDistanceToNow(parseUtc(n.createdAt), { addSuffix: true });
+              const dotColor = TYPE_COLOR[n.type] ?? "bg-gray-400";
+              const label = TYPE_LABEL[n.type] ?? "Notification";
+              const timeAgo = formatDistanceToNow(parseUtc(n.createdAt), {
+                addSuffix: true,
+              });
               const navigable = !!getDestination(n);
 
+              console.log(dotColor, label, timeAgo, navigable);
               return (
                 <div
                   key={n.id}
                   onClick={() => handleItemClick(n)}
                   className={`flex gap-4 px-5 py-4 transition-colors
                     ${navigable ? "cursor-pointer" : "cursor-default"}
-                    ${!n.isRead
-                      ? "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30"
-                      : "bg-background hover:bg-muted/40"
+                    ${
+                      !n.isRead
+                        ? "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/30"
+                        : "bg-background hover:bg-muted/40"
                     }`}
                 >
                   {/* Colour dot */}
                   <div className="mt-1 shrink-0">
-                    <div className={`h-2.5 w-2.5 rounded-full ${n.isRead ? "bg-muted" : dotColor}`} />
+                    <div
+                      className={`h-2.5 w-2.5 rounded-full ${n.isRead ? "bg-muted" : dotColor}`}
+                    />
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
-                      <p className={`text-xs font-semibold ${dotColor.replace("bg-", "text-")}`}>
+                      <p
+                        className={`text-xs font-semibold ${dotColor.replace("bg-", "text-")}`}
+                      >
                         {label}
                       </p>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
                         {timeAgo}
                       </span>
                     </div>
-                    <p className={`mt-1 text-sm leading-relaxed
+                    <p
+                      className={`mt-1 text-sm leading-relaxed
                       ${n.isRead ? "text-muted-foreground" : "text-foreground"}`}
                     >
                       {n.message}
@@ -210,7 +240,7 @@ function EmptyState({ unreadOnly }: { unreadOnly: boolean }) {
       </p>
       <p className="text-xs text-muted-foreground">
         {unreadOnly
-          ? "Switch to \"All\" to see your full history."
+          ? 'Switch to "All" to see your full history.'
           : "New notifications will appear here."}
       </p>
     </div>
