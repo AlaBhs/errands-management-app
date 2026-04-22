@@ -77,8 +77,8 @@ export function LoginPage() {
     <div
       className="relative h-screen overflow-hidden flex items-center
                     justify-center p-6
-                    bg-gradient-to-br from-[#2E2E38] via-[#252530]
-                    to-[#1a1a24]"
+                    bg-gradient-to-br from-[var(--ey-dark)] via-[#252530]
+                    to-[var(--ey-text-hover)]"
     >
       {/* ── Ambient glow blobs ──────────────────────────────────────────── */}
       <div
@@ -88,11 +88,11 @@ export function LoginPage() {
       >
         <div
           className="absolute -top-20 -left-20 h-56 w-56 rounded-full
-                bg-[#FFE600] opacity-[0.08] blur-2xl"
+                bg-[var(--ey-yellow)] opacity-[0.08] blur-2xl"
         />
         <div
           className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full
-                bg-[#FFE600] opacity-[0.08] blur-2xl
+                bg-[var(--ey-yellow)] opacity-[0.08] blur-2xl
                 [animation-delay:1.2s]"
         />
       </div>
@@ -103,9 +103,9 @@ export function LoginPage() {
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(45deg,#FFE600 0,#FFE600 1px," +
+            "repeating-linear-gradient(45deg,var(--ey-yellow) 0,var(--ey-yellow) 1px," +
             "transparent 1px,transparent 56px)," +
-            "repeating-linear-gradient(-45deg,#FFE600 0,#FFE600 1px," +
+            "repeating-linear-gradient(-45deg,var(--ey-yellow) 0,var(--ey-yellow) 1px," +
             "transparent 1px,transparent 56px)",
         }}
       />
@@ -115,15 +115,15 @@ export function LoginPage() {
       >
         <div
           className="flex h-9 w-9 items-center justify-center
-                  rounded-lg bg-[#FFE600]"
+                  rounded-lg bg-[var(--ey-yellow)]"
         >
-          <span className="text-sm font-black text-[#2E2E38]">EY</span>
+          <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
         </div>
         <div className="leading-tight">
           <p className="text-sm font-semibold text-white">EY Errands</p>
           <p
             className="text-[10px] font-medium tracking-widest
-                  text-[#FFE600]/70 uppercase"
+                  text-[var(--ey-yellow)]/70 uppercase"
           >
             Management System
           </p>
@@ -244,9 +244,9 @@ export function LoginPage() {
                 type="submit"
                 disabled={isSubmitting || login.isPending}
                 className="group mt-2 flex w-full items-center justify-center
-                           gap-2 rounded-xl bg-[#FFE600] py-4 text-sm
+                           gap-2 rounded-xl bg-[var(--ey-yellow)] py-4 text-sm
                            font-semibold text-primary-foreground shadow-lg
-                           transition-all hover:bg-[#FFE600]/90 hover:shadow-xl
+                           transition-all hover:bg-[var(--ey-yellow)]/90 hover:shadow-xl
                            disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {login.isPending ? (
@@ -276,8 +276,8 @@ export function LoginPage() {
                          bg-muted px-3 py-2.5"
             >
               <Shield
-                className="h-4 w-4 shrink-0 text-[#FFE600]
-                           [filter:drop-shadow(0_0_6px_#FFE600)]"
+                className="h-4 w-4 shrink-0 text-[var(--ey-yellow)]
+                           [filter:drop-shadow(0_0_6px_var(--ey-yellow))]"
               />
               <p className="text-xs text-muted-foreground">
                 Access is managed by your EY administrator

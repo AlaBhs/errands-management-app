@@ -447,7 +447,7 @@ export function RequestActions({ request }: RequestActionsProps) {
                     value={actualCost}
                     onChange={(e) => setActualCost(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
+                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[var(--ey-dark)] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -459,7 +459,7 @@ export function RequestActions({ request }: RequestActionsProps) {
                     value={completeNote}
                     onChange={(e) => setCompleteNote(e.target.value)}
                     placeholder="Delivery note..."
-                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
+                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[var(--ey-dark)] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -542,7 +542,7 @@ export function RequestActions({ request }: RequestActionsProps) {
                   value={surveyComment}
                   onChange={(e) => setSurveyComment(e.target.value)}
                   placeholder="Comment (optional)"
-                  className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[var(--ey-dark)] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
                 />
 
                 <Button

@@ -103,15 +103,15 @@ export function AttachmentUploader({ requestId }: AttachmentUploaderProps) {
         className={`border-2 border-dashed rounded-lg p-8 text-center
                     transition-colors select-none
                     ${canAdd
-                      ? "cursor-pointer hover:border-[#2E2E38]"
+                      ? "cursor-pointer hover:border-[var(--ey-dark)]"
                       : "cursor-not-allowed opacity-50"}
                     ${isDragging
-                      ? "border-[#2E2E38] bg-gray-50"
+                      ? "border-[var(--ey-dark)] bg-gray-50"
                       : "border-border"}`}
       >
         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
         <p className="text-sm text-gray-600 mb-1">
-          <span className="font-medium text-[#2E2E38]">Click to upload</span>
+          <span className="font-medium text-[var(--ey-dark)]">Click to upload</span>
           {" "}or drag and drop
         </p>
         <p className="text-xs text-gray-400">
@@ -157,7 +157,7 @@ export function AttachmentUploader({ requestId }: AttachmentUploaderProps) {
 
               {/* Status */}
               {item.status === "uploading" && (
-                <Loader2 className="w-4 h-4 animate-spin text-[#2E2E38]" />
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--ey-dark)]" />
               )}
               {item.status === "done" && (
                 <span className="text-xs font-medium text-emerald-600">

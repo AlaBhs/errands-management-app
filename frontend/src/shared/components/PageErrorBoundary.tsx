@@ -50,8 +50,8 @@ export class PageErrorBoundary extends Component<Props, State> {
             window.location.reload();
           }}
           className="mt-6 flex items-center gap-2 rounded-xl
-                     bg-[#2E2E38] px-5 py-2.5 text-sm font-semibold
-                     text-white hover:bg-[#1a1a24] transition-colors"
+                     bg-[var(--ey-dark)] px-5 py-2.5 text-sm font-semibold
+                     text-white hover:bg-[var(--ey-text-hover)] transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
           Reload page

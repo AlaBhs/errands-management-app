@@ -89,7 +89,7 @@ export function NotificationsPage() {
           >
             Unread
             {unreadCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-[#FFE600] px-1.5 py-0.5 text-[10px] font-bold text-[#2E2E38]">
+              <span className="ml-1.5 rounded-full bg-[var(--ey-yellow)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ey-dark)]">
                 {unreadCount}
               </span>
             )}

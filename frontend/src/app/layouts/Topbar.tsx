@@ -50,7 +50,7 @@ export function Topbar() {
         <span className="text-gray-300 dark:text-gray-600 hidden md:block">
           /
         </span>
-        <span className="font-medium text-[#2E2E38] dark:text-foreground truncate">
+        <span className="font-medium text-[var(--ey-dark)] dark:text-foreground truncate">
           {pageTitle}
         </span>{" "}
       </div>
@@ -86,8 +86,8 @@ export function Topbar() {
           <button
             onClick={() => navigate("/requests/new")}
             className="flex items-center gap-1.5 rounded-lg h-[stretch]
-                        bg-[#2E2E38] px-3 py-1.5 text-xs font-semibold
-                        text-white hover:bg-[#1a1a24] transition-colors
+                        bg-[var(--ey-dark)] px-3 py-1.5 text-xs font-semibold
+                        text-white hover:bg-[var(--ey-text-hover)] transition-colors
                         hidden sm:flex"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -131,8 +131,8 @@ export function Topbar() {
           </div>
           <div
             className="flex h-8 w-8 items-center justify-center
-                          rounded-full bg-[#2E2E38] text-xs font-bold
-                          text-[#FFE600]"
+                          rounded-full bg-[var(--ey-dark)] text-xs font-bold
+                          text-[var(--ey-yellow)]"
           >
             {getInitials(user?.fullName)}
           </div>

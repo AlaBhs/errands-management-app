@@ -9,7 +9,7 @@ export function NotFoundPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center
-                    bg-[#2E2E38] px-6 text-center">
+                    bg-[var(--ey-dark)] px-6 text-center">
 
       {/* Subtle grid */}
       <div
@@ -17,7 +17,7 @@ export function NotFoundPage() {
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(45deg,#FFE600 0,#FFE600 1px," +
+            "repeating-linear-gradient(45deg,var(--ey-yellow) 0,var(--ey-yellow) 1px," +
             "transparent 1px,transparent 24px)",
         }}
       />
@@ -26,13 +26,13 @@ export function NotFoundPage() {
       <div className="relative space-y-6">
         {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center
-                        rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/20">
-          <FileQuestion className="h-10 w-10 text-[#FFE600]" />
+                        rounded-2xl bg-[var(--ey-yellow)]/10 border border-[var(--ey-yellow)]/20">
+          <FileQuestion className="h-10 w-10 text-[var(--ey-yellow)]" />
         </div>
 
         {/* 404 */}
         <div>
-          <p className="text-8xl font-black text-[#FFE600] leading-none
+          <p className="text-8xl font-black text-[var(--ey-yellow)] leading-none
                         tabular-nums">
             404
           </p>
@@ -59,9 +59,9 @@ export function NotFoundPage() {
           </button>
           <button
             onClick={() => navigate(isAuthenticated ? "/dashboard" : "/")}
-            className="flex items-center gap-2 rounded-xl bg-[#FFE600]
-                       px-5 py-2.5 text-sm font-bold text-[#2E2E38]
-                       hover:bg-[#ffd700] transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-[var(--ey-yellow)]
+                       px-5 py-2.5 text-sm font-bold text-[var(--ey-dark)]
+                       hover:bg-[var(--ey-yellow-hover)] transition-colors"
           >
             <Home className="h-4 w-4" />
             {isAuthenticated ? "Back to Dashboard" : "Back to Home"}
@@ -71,8 +71,8 @@ export function NotFoundPage() {
         {/* EY mark */}
         <div className="flex items-center justify-center gap-2 pt-2">
           <div className="flex h-6 w-6 items-center justify-center
-                          rounded bg-[#FFE600]">
-            <span className="text-[9px] font-black text-[#2E2E38]">EY</span>
+                          rounded bg-[var(--ey-yellow)]">
+            <span className="text-[9px] font-black text-[var(--ey-dark)]">EY</span>
           </div>
           <span className="text-xs text-gray-500">
             EY Errands Management

@@ -82,15 +82,15 @@ function Nav({ onSignIn }: { onSignIn: () => void }) {
       <div className="flex items-center gap-3">
         <div
           className="flex h-9 w-9 items-center justify-center
-                        rounded-lg bg-[#FFE600]"
+                        rounded-lg bg-[var(--ey-yellow)]"
         >
-          <span className="text-sm font-black text-[#2E2E38]">EY</span>
+          <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
         </div>
         <div className="leading-tight">
           <p className="text-sm font-semibold text-white">EY Errands</p>
           <p
             className="text-[10px] font-medium tracking-widest
-                        text-[#FFE600]/70 uppercase"
+                        text-[var(--ey-yellow)]/70 uppercase"
           >
             Management System
           </p>
@@ -99,7 +99,7 @@ function Nav({ onSignIn }: { onSignIn: () => void }) {
 
       <Button
         onClick={onSignIn}
-        className="bg-[#FFE600] text-[#2E2E38] hover:bg-[#ffd700]
+        className="bg-[var(--ey-yellow)] text-[var(--ey-dark)] hover:bg-[var(--ey-yellow-hover)]
                    font-semibold shadow-none"
       >
         Sign In
@@ -114,7 +114,7 @@ function StatPill({ value, label }: { value: string; label: string }) {
       className="rounded-xl border border-white/10 bg-white/5
                     px-6 py-5 backdrop-blur-sm"
     >
-      <p className="text-3xl font-black text-[#FFE600]">{value}</p>
+      <p className="text-3xl font-black text-[var(--ey-yellow)]">{value}</p>
       <p className="mt-1 text-sm text-gray-400">{label}</p>
     </div>
   );
@@ -137,12 +137,12 @@ function FeatureCard({
     >
       <div
         className="mb-4 flex h-11 w-11 items-center justify-center
-                      rounded-xl bg-[#FFE600]/15 transition-colors
-                      group-hover:bg-[#FFE600]/25"
+                      rounded-xl bg-[var(--ey-yellow)]/15 transition-colors
+                      group-hover:bg-[var(--ey-yellow)]/25"
       >
-        <Icon className="h-5 w-5 text-[#2E2E38]" />
+        <Icon className="h-5 w-5 text-[var(--ey-dark)]" />
       </div>
-      <h3 className="mb-2 text-base font-semibold text-[#2E2E38]">{title}</h3>
+      <h3 className="mb-2 text-base font-semibold text-[var(--ey-dark)]">{title}</h3>
       <p className="text-sm leading-relaxed text-gray-500">{desc}</p>
     </div>
   );
@@ -153,12 +153,12 @@ function BenefitRow({ title, desc }: { title: string; desc: string }) {
     <div className="flex gap-4">
       <div
         className="mt-0.5 flex h-6 w-6 shrink-0 items-center
-                      justify-center rounded-full bg-[#FFE600]"
+                      justify-center rounded-full bg-[var(--ey-yellow)]"
       >
-        <CheckCircle2 className="h-3.5 w-3.5 text-[#2E2E38]" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-[var(--ey-dark)]" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-[#2E2E38]">{title}</p>
+        <p className="text-sm font-semibold text-[var(--ey-dark)]">{title}</p>
         <p className="mt-0.5 text-sm text-gray-500">{desc}</p>
       </div>
     </div>
@@ -174,14 +174,14 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#2E2E38]">
+      <section className="relative overflow-hidden bg-[var(--ey-dark)]">
         {/* Subtle diagonal grid */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(45deg,#FFE600 0,#FFE600 1px," +
+              "repeating-linear-gradient(45deg,var(--ey-yellow) 0,var(--ey-yellow) 1px," +
               "transparent 1px,transparent 24px)",
           }}
         />
@@ -190,7 +190,7 @@ export function LandingPage() {
         <div
           aria-hidden
           className="pointer-events-none absolute -right-32 -top-32
-                     h-96 w-96 rounded-full bg-[#FFE600]/10 blur-3xl"
+                     h-96 w-96 rounded-full bg-[var(--ey-yellow)]/10 blur-3xl"
         />
 
         <Nav onSignIn={signIn} />
@@ -202,11 +202,11 @@ export function LandingPage() {
               {/* Eyebrow */}
               <div
                 className="mb-6 inline-flex items-center gap-2 rounded-full
-                      border border-[#FFE600]/30 bg-[#FFE600]/10
+                      border border-[var(--ey-yellow)]/30 bg-[var(--ey-yellow)]/10
                       px-4 py-1.5"
               >
-                <span className="h-1.5 w-1.5 rounded-full bg-[#FFE600]" />
-                <span className="text-xs font-medium tracking-wide text-[#FFE600]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--ey-yellow)]" />
+                <span className="text-xs font-medium tracking-wide text-[var(--ey-yellow)]">
                   Internal Enterprise Platform
                 </span>
               </div>
@@ -217,7 +217,7 @@ export function LandingPage() {
                      tracking-tight text-white"
               >
                 Streamline Your{" "}
-                <span className="text-[#FFE600]">Errand Operations</span> Across
+                <span className="text-[var(--ey-yellow)]">Errand Operations</span> Across
                 EY
               </h1>
               {/* Description */}
@@ -232,7 +232,7 @@ export function LandingPage() {
                 <Button
                   onClick={signIn}
                   size="lg"
-                  className="bg-[#FFE600] text-[#2E2E38] hover:bg-[#ffd700]
+                  className="bg-[var(--ey-yellow)] text-[var(--ey-dark)] hover:bg-[var(--ey-yellow-hover)]
                      font-bold shadow-none gap-2"
                 >
                   Get Started
@@ -266,7 +266,7 @@ export function LandingPage() {
               {/* Glow behind card */}
               <div
                 className="absolute -inset-4 rounded-3xl
-                      bg-[#FFE600]/8 blur-3xl"
+                      bg-[var(--ey-yellow)]/8 blur-3xl"
               />
 
               <div
@@ -286,7 +286,7 @@ export function LandingPage() {
                 <div className="mb-4 grid grid-cols-3 gap-3">
                   {[
                     { label: "Total", value: "248", color: "bg-white" },
-                    { label: "Active", value: "12", color: "bg-[#FFE600]" },
+                    { label: "Active", value: "12", color: "bg-[var(--ey-yellow)]" },
                     { label: "Done", value: "236", color: "bg-emerald-400" },
                   ].map((c) => (
                     <div
@@ -355,9 +355,9 @@ export function LandingPage() {
                 >
                   <div
                     className="flex h-5 w-5 items-center justify-center
-                          rounded bg-[#FFE600]"
+                          rounded bg-[var(--ey-yellow)]"
                   >
-                    <span className="text-[8px] font-black text-[#2E2E38]">
+                    <span className="text-[8px] font-black text-[var(--ey-dark)]">
                       EY
                     </span>
                   </div>
@@ -379,12 +379,12 @@ export function LandingPage() {
           <div className="mb-14 text-center">
             <p
               className="mb-2 text-xs font-semibold uppercase
-                          tracking-widest text-[#FFE600]
-                          [text-shadow:0_0_20px_#FFE60066]"
+                          tracking-widest text-[var(--ey-yellow)]
+                          [text-shadow:0_0_20px_var(--ey-yellow)66]"
             >
               Capabilities
             </p>
-            <h2 className="text-4xl font-black text-[#2E2E38]">
+            <h2 className="text-4xl font-black text-[var(--ey-dark)]">
               Everything You Need
             </h2>
             <p className="mt-3 text-gray-500">
@@ -408,11 +408,11 @@ export function LandingPage() {
             <div className="flex flex-col">
               <p
                 className="mb-2 text-xs font-semibold uppercase
-                            tracking-widest text-[#FFE600]"
+                            tracking-widest text-[var(--ey-yellow)]"
               >
                 Why EY Errands
               </p>
-              <h2 className="mb-8 text-4xl font-black text-[#2E2E38]">
+              <h2 className="mb-8 text-4xl font-black text-[var(--ey-dark)]">
                 Built for How EY Works
               </h2>
               <div className="space-y-5">
@@ -422,8 +422,8 @@ export function LandingPage() {
               </div>
               <Button
                 onClick={signIn}
-                className="mt-auto w-fit bg-[#2E2E38] text-white
-                 hover:bg-[#1a1a24] font-semibold gap-2"
+                className="mt-auto w-fit bg-[var(--ey-dark)] text-white
+                 hover:bg-[var(--ey-text-hover)] font-semibold gap-2"
               >
                 Access the Platform
                 <ArrowRight className="h-4 w-4" />
@@ -434,7 +434,7 @@ export function LandingPage() {
             <div className="relative">
               <div
                 className="absolute -inset-4 rounded-3xl
-                  bg-[#FFE600]/8 blur-2xl"
+                  bg-[var(--ey-yellow)]/8 blur-2xl"
               />
 
               <div
@@ -443,7 +443,7 @@ export function LandingPage() {
               >
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-[#2E2E38]">
+                  <p className="text-sm font-semibold text-[var(--ey-dark)]">
                     Request Lifecycle
                   </p>
                   <span
@@ -501,9 +501,9 @@ export function LandingPage() {
                             justify-center rounded-full text-xs font-bold
                             ${
                               item.status === "done"
-                                ? "bg-[#2E2E38] text-[#FFE600]"
+                                ? "bg-[var(--ey-dark)] text-[var(--ey-yellow)]"
                                 : item.status === "active"
-                                  ? "bg-[#FFE600] text-[#2E2E38] ring-4 ring-[#FFE600]/20"
+                                  ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] ring-4 ring-[var(--ey-yellow)]/20"
                                   : "bg-gray-100 text-gray-400"
                             }`}
                         >
@@ -514,7 +514,7 @@ export function LandingPage() {
                             className={`mt-1 w-px flex-1 mb-1
                               ${
                                 item.status === "done"
-                                  ? "bg-[#2E2E38]/20"
+                                  ? "bg-[var(--ey-dark)]/20"
                                   : "bg-gray-100"
                               }`}
                             style={{ minHeight: "24px" }}
@@ -534,7 +534,7 @@ export function LandingPage() {
                             ${
                               item.status === "pending"
                                 ? "text-gray-400"
-                                : "text-[#2E2E38]"
+                                : "text-[var(--ey-dark)]"
                             }`}
                           >
                             {item.title}
@@ -554,7 +554,7 @@ export function LandingPage() {
                           className={`shrink-0 text-xs tabular-nums
                              ${
                                item.status === "active"
-                                 ? "font-semibold text-[#2E2E38]"
+                                 ? "font-semibold text-[var(--ey-dark)]"
                                  : "text-gray-400"
                              }`}
                         >
@@ -582,7 +582,7 @@ export function LandingPage() {
       </section>
 
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
-      <section className="bg-[#2E2E38] py-20 px-6">
+      <section className="bg-[var(--ey-dark)] py-20 px-6">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-4xl font-black text-white">
             Ready to Get Started?
@@ -593,7 +593,7 @@ export function LandingPage() {
           <Button
             onClick={signIn}
             size="lg"
-            className="mt-8 bg-[#FFE600] text-[#2E2E38] hover:bg-[#ffd700]
+            className="mt-8 bg-[var(--ey-yellow)] text-[var(--ey-dark)] hover:bg-[var(--ey-yellow-hover)]
                        font-bold shadow-none gap-2"
           >
             Sign In to EY Errands
@@ -603,7 +603,7 @@ export function LandingPage() {
       </section>
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <footer className="bg-[#1a1a24] px-6 py-10">
+      <footer className="bg-[var(--ey-text-hover)] px-6 py-10">
         <div className="mx-auto max-w-7xl">
           <div
             className="flex flex-col items-center justify-between
@@ -612,9 +612,9 @@ export function LandingPage() {
             <div className="flex items-center gap-2.5">
               <div
                 className="flex h-7 w-7 items-center justify-center
-                              rounded bg-[#FFE600]"
+                              rounded bg-[var(--ey-yellow)]"
               >
-                <span className="text-[10px] font-black text-[#2E2E38]">
+                <span className="text-[10px] font-black text-[var(--ey-dark)]">
                   EY
                 </span>
               </div>

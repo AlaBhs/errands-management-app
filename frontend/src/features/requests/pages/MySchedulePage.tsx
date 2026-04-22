@@ -108,7 +108,7 @@ export function MySchedulePage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "table"
-                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                 : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
@@ -121,7 +121,7 @@ export function MySchedulePage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "card"
-                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                 : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >

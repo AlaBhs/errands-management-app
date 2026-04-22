@@ -144,7 +144,7 @@ function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
 const inputCls =
   "w-full px-4 py-2 border border-border rounded-lg text-sm " +
   "bg-background dark:bg-card text-foreground " +
-  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "focus:outline-none focus:ring-2 focus:ring-[var(--ey-dark)] " +
   "placeholder:text-muted-foreground";
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -475,7 +475,7 @@ export function CreateRequestPage() {
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
                 ${
                   canAddMore
-                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
+                    ? "cursor-pointer hover:border-foreground dark:hover:border-[var(--ey-yellow)] hover:bg-muted/50 dark:hover:bg-muted/20"
                     : "cursor-not-allowed opacity-50"
                 } border-border`}
                 >
@@ -652,8 +652,8 @@ export function CreateRequestPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-[#2E2E38] text-white
-                       rounded-lg text-sm hover:bg-[#1a1a24] transition-colors
+            className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--ey-dark)] text-white
+                       rounded-lg text-sm hover:bg-[var(--ey-text-hover)] transition-colors
                        disabled:opacity-50"
           >
             {isSubmitting ? (

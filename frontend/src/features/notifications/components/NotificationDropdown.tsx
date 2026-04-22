@@ -35,7 +35,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground">Notifications</p>
           {unreadCount > 0 && (
-            <span className="rounded-full bg-[#FFE600] px-2 py-0.5 text-[10px] font-bold text-[#2E2E38]">
+            <span className="rounded-full bg-[var(--ey-yellow)] px-2 py-0.5 text-[10px] font-bold text-[var(--ey-dark)]">
               {unreadCount}
             </span>
           )}

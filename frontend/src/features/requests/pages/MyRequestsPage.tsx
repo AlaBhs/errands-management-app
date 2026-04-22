@@ -141,7 +141,7 @@ export function MyRequestsPage() {
                 "flex h-8 w-8 items-center justify-center rounded-md",
                 "transition-colors",
                 viewMode === "table"
-                  ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                  ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                   : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
               )}
             >
@@ -154,7 +154,7 @@ export function MyRequestsPage() {
                 "flex h-8 w-8 items-center justify-center rounded-md",
                 "transition-colors",
                 viewMode === "card"
-                  ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                  ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                   : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
               )}
             >
@@ -165,9 +165,9 @@ export function MyRequestsPage() {
           {/* New request */}
           <Link
             to="/requests/new"
-            className="flex items-center gap-1.5 rounded-lg bg-[#2E2E38]
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--ey-dark)]
                        px-4 py-2 text-sm font-semibold text-white
-                       hover:bg-[#1a1a24] dark:bg-[#FFE600] dark:text-[#2E2E38]
+                       hover:bg-[var(--ey-text-hover)] dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)]
                        dark:hover:bg-yellow-400 transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -643,8 +643,8 @@ function MyRequestsEmptyState({ hasFilters }: { hasFilters: boolean }) {
         <Link
           to="/requests/new"
           className="mt-4 flex items-center gap-1.5 rounded-lg
-                     bg-[#2E2E38] px-4 py-2 text-sm font-semibold
-                     text-white hover:bg-[#1a1a24] dark:bg-[#FFE600] dark:text-[#2E2E38]
+                     bg-[var(--ey-dark)] px-4 py-2 text-sm font-semibold
+                     text-white hover:bg-[var(--ey-text-hover)] dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)]
                      dark:hover:bg-yellow-400 transition-colors"
         >
           <Plus className="h-4 w-4" />

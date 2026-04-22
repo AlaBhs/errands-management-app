@@ -193,7 +193,7 @@ export function RequestFilters({
                   className={`
                 relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer
                 rounded-full bg-gray-200 
-                data-[state=checked]:bg-[#2E2E38] 
+                data-[state=checked]:bg-[var(--ey-dark)] 
                 transition-colors
                 focus:outline-none focus:ring-2 focus:ring-ring
               `}
@@ -217,7 +217,7 @@ export function RequestFilters({
                   className={`
                 relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer
                 rounded-full bg-gray-200 
-                data-[state=checked]:bg-[#2E2E38] 
+                data-[state=checked]:bg-[var(--ey-dark)] 
                 transition-colors
                 focus:outline-none focus:ring-2 focus:ring-ring
               `}

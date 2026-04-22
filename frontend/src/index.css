@@ -39,6 +39,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --ey-aside-bg: #252930;
+  --ey-text-hover : #1a1a24;
+  --ey-yellow-hover: #ffd700;
 }
 
 .dark {
