@@ -372,7 +372,7 @@ export function RequestDetailsPage() {
         </div>
 
         {/* ── Right column ────────────────────────────────────────── */}
-        <div className="space-y-6">
+        <div className="space-y-6 flex flex-col">
           {/* Resubmit panel — Cancelled requests, Collaborator only */}
           {request.status === "Cancelled" && role === UserRole.Collaborator && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
@@ -470,6 +470,7 @@ export function RequestDetailsPage() {
           <Section
             title="Delivery Address"
             icon={<MapPin className="h-4 w-4" />}
+            className="flex-1 flex flex-col"
           >
             <div className="space-y-1">
               <p className="text-sm text-foreground">
@@ -491,11 +492,11 @@ export function RequestDetailsPage() {
 
             {request.deliveryAddress.latitude &&
               request.deliveryAddress.longitude && (
-                <div className="mt-4">
+                <div className="mt-4 flex-1">
                   <LocationMap
                     latitude={request.deliveryAddress.latitude}
                     longitude={request.deliveryAddress.longitude}
-                    height="200px"
+                    height="stretch"
                   />
                 </div>
               )}
@@ -529,14 +530,18 @@ function Section({
   badge,
   icon,
   children,
+  className,
 }: {
   title: string;
   badge?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
+    <div
+      className={`rounded-xl border bg-card p-5 shadow-sm ${className || ''}`}
+    >
       <div className="mb-4 flex items-center gap-2">
         {icon && <span className="text-muted-foreground">{icon}</span>}
         <h3
