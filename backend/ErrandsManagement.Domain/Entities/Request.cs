@@ -32,6 +32,8 @@ public class Request : BaseEntity
 
     public Survey? Survey { get; private set; }
 
+    public DateTime? LastRiskAlertAt { get; private set; }
+
     public IReadOnlyCollection<Assignment> Assignments => _assignments.AsReadOnly();
     public IReadOnlyCollection<Attachment> Attachments => _attachments.AsReadOnly();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLogs.AsReadOnly();
@@ -207,4 +209,9 @@ public class Request : BaseEntity
         _attachments.Remove(attachment);
     }
 
+    public void MarkRiskAlertSent()
+    {
+        LastRiskAlertAt = DateTime.UtcNow;
+        MarkAsUpdated();
+    }
 }

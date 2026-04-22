@@ -34,6 +34,9 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
         builder.Property(r => r.Category)
             .IsRequired();
 
+        builder.Property(r => r.LastRiskAlertAt)
+            .IsRequired(false);
+
         // Owned Value Object
         builder.OwnsOne(r => r.DeliveryAddress, address =>
         {

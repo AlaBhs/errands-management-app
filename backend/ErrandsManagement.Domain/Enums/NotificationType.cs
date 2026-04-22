@@ -8,5 +8,6 @@ public enum NotificationType
     RequestCompleted = 4,
     RequestCancelled = 5,
     NewMessageReceived = 6,
+    DeadlineRisk = 7,
     General = 99
 }
