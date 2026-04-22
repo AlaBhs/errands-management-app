@@ -11,16 +11,18 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, currentUserId, isLoading }: MessageListProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to latest message whenever the list updates
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = containerRef.current;
+    if (!el) return;
+    // Scroll the container itself — never the page
+    el.scrollTop = el.scrollHeight;
   }, [messages.length]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-3 p-4 h-full overflow-y-auto">
         {[...Array(4)].map((_, i) => (
           <Skeleton
             key={i}
@@ -33,14 +35,14 @@ export function MessageList({ messages, currentUserId, isLoading }: MessageListP
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground py-8">
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
         No messages yet. Start the conversation.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
+    <div ref={containerRef} className="flex flex-col gap-3 p-4 h-full overflow-y-auto">
       {messages.map((msg) => (
         <MessageItem
           key={msg.id}
@@ -48,8 +50,6 @@ export function MessageList({ messages, currentUserId, isLoading }: MessageListP
           isOwn={msg.senderId === currentUserId}
         />
       ))}
-      <div ref={bottomRef} />
     </div>
   );
 }
-

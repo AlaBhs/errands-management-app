@@ -45,7 +45,7 @@ export function MessageInput({ onSend, isSending, disabled }: MessageInputProps)
         size="sm"
         onClick={handleSend}
         disabled={!value.trim() || isSending || disabled}
-        className="shrink-0"
+        className="shrink-0 h-[stretch] max-h-[46px] rounded-xl"
       >
         <Send className="h-4 w-4" />
         <span className="sr-only">Send</span>

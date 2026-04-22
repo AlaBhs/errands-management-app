@@ -11,7 +11,12 @@ export const messageKeys = {
 export function useRequestMessages(requestId: string) {
   return useQuery<RequestMessageDto[]>({
     queryKey: messageKeys.thread(requestId),
-    queryFn: () => messagesApi.getAll(requestId).then((r) => r.data),
+    queryFn: async () => {
+      const response = await messagesApi.getAll(requestId);
+      // Ensure responseis always an array
+      const data = response;
+      return Array.isArray(data) ? data : [];
+    },
     staleTime: 30_000,
   });
 }
