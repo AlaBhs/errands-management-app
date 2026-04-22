@@ -1,157 +1,126 @@
 # Errands Management App
 
-This branch adds a **Courier Recommendation Engine** — when an admin is
-about to assign a pending request, the system scores and ranks all
-available couriers using availability, proximity, and performance data,
-and presents a transparent breakdown so the admin can make an informed
-decision. The final assignment remains a manual admin action.
+This branch adds a **Request In-App Messaging System** — a real-time
+discussion thread per request that allows Admin, the assigned Courier,
+and the request owner (Collaborator) to exchange messages, with
+persistent history, SignalR live delivery, and full integration with
+the existing notification pipeline.
 
-## What's New — `feature/courier-recommendation`
+## What's New — `feature/request-messaging`
 
-### Courier Location — User Profile Extension
-- Three new fields on `ApplicationUser`: `Latitude` (`double?`),
-  `Longitude` (`double?`), `City` (`string?`)
-- New endpoint `PUT /api/users/me/location` — any authenticated user
-  can update their own GPS coordinates and city label
-- EF Core migration `AddLocationToApplicationUser` adds the columns to
-  `AspNetUsers` and `DeliveryAddress_Latitude` /
-  `DeliveryAddress_Longitude` to `Requests`
-- `RegisterUserCommand` accepts optional location parameters — admins
-  can set courier coordinates at account creation time
-- Seeded couriers carry real Tunis-area coordinates so proximity
-  scoring produces meaningful results out of the box
-
-### Delivery Address Coordinates
-- `Address` value object extended with optional `Latitude` and
-  `Longitude` properties
-- `AddressDto` and `CreateRequestDto` accept optional coordinates —
-  the frontend passes them via browser geolocation or the Leaflet map
-- All three seeded delivery addresses (`tunis`, `lac`, `marsa`) carry
-  real GPS coordinates for demo proximity scoring
-
-### Scoring Model
-Each courier is scored 0–100 across three independent criteria:
-
-| Criterion | Formula | Weight — Normal | Weight — High/Urgent |
-|---|---|---|---|
-| Availability | `max(0, (1 − active/maxActive) × 100)` | 40% | 60% |
-| Proximity | `max(0, (1 − distanceKm/maxDistance) × 100)` | 35% | 25% |
-| Performance | `(normalisedRating × 0.5) + (completionRate × 0.5)` | 25% | 15% |
-
-- Couriers with no location score **0** on proximity — they are still
-  included, never excluded
-- If the request has no delivery coordinates, all couriers score **50**
-  on proximity (neutral, not penalised)
-- New couriers with no assignment history score **50** on performance
-  (neutral)
-- Results are sorted descending by total score, top 10 returned
-
-### Scoring Algorithm — Pure Domain Logic
-- All scoring math lives in `Domain/ValueObjects/CourierScoring.cs` —
-  a static class with zero infrastructure dependencies
-- `ComputeAvailabilityScore`, `ComputeProximityScore`,
-  `ComputePerformanceScore`, and `Haversine` are fully unit-testable
-  with no mocks or database
-- `CourierRecommendationEngine` in Infrastructure is a thin
-  orchestrator — it fetches data from EF Core and delegates all
-  calculations to `CourierScoring`
-
-### Configuration
-Weights and thresholds are bound from `appsettings.json` at startup.
-Weights are validated on startup — the app refuses to start if any
-priority group does not sum to 1.0:
-
-```json
-"RecommendationEngine": {
-  "MaxActiveAssignments": 3,
-  "MaxScoringDistanceKm": 20.0,
-  "NormalPriority": {
-    "AvailabilityWeight": 0.40,
-    "ProximityWeight": 0.35,
-    "PerformanceWeight": 0.25
-  },
-  "UrgentPriority": {
-    "AvailabilityWeight": 0.60,
-    "ProximityWeight": 0.25,
-    "PerformanceWeight": 0.15
-  }
-}
-```
+### Discussion Thread per Request
+- Each Request has a **persistent message thread** — all messages
+  are saved to the database and returned in chronological order
+- Participants:
+  - **Admin** — full access on any request
+  - **Collaborator** — only on their own requests
+  - **Courier** — only on requests they are (or were) assigned to
+- Messages are **immutable after creation** — no edit, no delete;
+  the thread is part of the request's audit history
+- Participant authorization is enforced at the **Application layer**
+  inside the CQRS handlers, not at the controller
 
 ### New API Endpoints
 
 | Method | Route | Role | Description |
 |---|---|---|---|
-| `GET` | `/api/requests/{id}/candidates` | Admin | Ranked courier list with score breakdown |
-| `PUT` | `/api/users/me/location` | Any authenticated | Update own GPS coordinates and city |
+| `POST` | `/api/requests/{id}/messages` | Admin, Collaborator, Courier | Send a message (participants only) |
+| `GET` | `/api/requests/{id}/messages` | Admin, Collaborator, Courier | Get full thread, oldest first |
 
-The existing `POST /api/requests/{id}/assign` is unchanged. The admin
-calls `GET candidates` first, reviews the ranked list, then calls
-`POST assign` with their chosen courier. The two calls are fully
-independent — no coupling.
+### Real-Time Delivery (SignalR)
+A new hub `RequestMessagingHub` is registered at `/hubs/request-messaging`.
+Clients join a request-specific group and receive new messages live:
+
+- Group naming convention: `request-{requestId}`
+- Clients explicitly call `JoinRequestGroup(requestId)` when opening
+  a thread and `LeaveRequestGroup(requestId)` when navigating away
+- The hub **re-validates participant access** before adding a connection
+  to the group — a valid JWT alone is not sufficient
+- When a message is sent, the server pushes it to the group via
+  `ReceiveRequestMessage`, reaching all connected participants
+  including the sender
+
+### Notification Integration
+Sending a message triggers the **existing two-step notification
+pipeline** — no duplication:
+
+1. `RequestMessageCreatedEvent` → `CreateNotificationsOnRequestMessageCreated`
+   → persists one `Notification` per recipient (everyone except the sender)
+2. `NotificationCreatedEvent` → `SendRealtimeOnNotificationCreated`
+   → delivers the notification badge over the existing `/hubs/notifications`
+
+Recipient rules:
+- Collaborator sends → Admin(s) + Courier (if assigned)
+- Courier sends → Admin(s) + Collaborator
+- Admin sends → Collaborator + Courier (if assigned)
+
+A new `NotificationType.NewMessageReceived = 6` is added.
+The `referenceId` on the notification carries the `requestId` for
+deep-link navigation to the thread.
 
 ### Architecture
 
 ```
 Domain/
-└── ValueObjects/
-    ├── Address.cs                  ← +Latitude?, +Longitude?
-    └── CourierScoring.cs           ← pure static scoring math
+├── Entities/
+│   └── RequestMessage.cs              ← immutable, static Create factory
+└── Events/
+    └── RequestMessageCreatedEvent.cs
 
 Application/
-└── CourierRecommendation/
-    ├── DTOs/
-    │   ├── CourierScoreDto.cs
-    │   └── RecommendationRequest.cs
-    ├── Interfaces/
-    │   └── ICourierRecommendationEngine.cs
-    ├── Models/
-    │   └── CourierScore.cs         ← internal engine model
-    ├── Queries/
-    │   └── GetCourierCandidates/
-    │       ├── GetCourierCandidatesQuery.cs
-    │       └── GetCourierCandidatesHandler.cs
-    └── Settings/
-        └── RecommendationEngineSettings.cs
+└── RequestMessages/
+    ├── Commands/    SendRequestMessageCommand + Validator
+    ├── Queries/     GetRequestMessagesQuery
+    ├── Handlers/    SendRequestMessageHandler
+    │                GetRequestMessagesHandler
+    ├── Events/      CreateNotificationsOnRequestMessageCreated
+    │                PushRealtimeOnRequestMessageCreated
+    ├── DTOs/        RequestMessageDto · SendMessageDto
+    └── Interfaces/  IRequestMessageRepository
+                     IRequestMessagingRealtimeService
+                     IRequestMessagingHubProxy
 
 Infrastructure/
-└── Recommendation/
-    └── CourierRecommendationEngine.cs  ← EF queries + delegates to CourierScoring
+├── Repositories/   RequestMessageRepository
+├── Configurations/ RequestMessageConfiguration
+├── RealTime/       SignalRRequestMessagingService
+└── Migrations/     20260421120000_AddRequestMessages
+
+API/
+├── Hubs/        RequestMessagingHub · RequestMessagingHubProxy
+└── Controllers/ RequestMessagesController
 ```
 
 Dependency direction is strictly one-way: Infrastructure → Application
-→ Domain. The scoring algorithm has no EF Core, no HTTP, and no
-infrastructure references.
+→ Domain. The hub proxy pattern (`IRequestMessagingHubProxy`) mirrors
+the existing notification architecture — Infrastructure never references
+a SignalR hub type directly.
 
-### Leaflet Maps (Frontend)
-Three map integrations using `react-leaflet`:
+### Bug Fixes
 
-- **Register form** — interactive map for the admin to pick courier
-  GPS coordinates when creating a new account; clicking the map sets
-  latitude and longitude on the form
-- **Create request form** — interactive map for the collaborator to
-  pin the delivery address location; coordinates are submitted with
-  the request and used for proximity scoring
-- **Request details page** — read-only map showing the delivery
-  location marker for the current request
+**`fix(messaging)` — 403 for non-participants, Courier read access
+after completion**
+- `ExceptionHandlingMiddleware` was mapping `UnauthorizedAccessException`
+  to `401 Unauthorized`. The correct HTTP status for an authenticated
+  but non-permitted user is `403 Forbidden`. Frontend interceptors were
+  silently treating the 401 as a token expiry, causing the GET thread
+  endpoint to appear to return an empty array.
+- The Courier participant check in `GetRequestMessagesHandler` was
+  restricted to `IsActive` assignments. Once a request completes the
+  assignment closes, locking the Courier out of thread history. Fixed
+  to allow any historical assignment — Couriers retain read access after
+  completion. The **send** handler keeps `IsActive` so Couriers cannot
+  post on closed requests.
 
-### Recommendation Panel (Frontend)
-When an Admin opens a Pending request, the courier dropdown is replaced
-by a ranked candidate panel:
-
-- Each card shows: rank badge, courier name, total score (inline next
-  to name), city, distance in km, active assignment count
-- Clicking the chevron expands a score breakdown — three labelled
-  progress bars (availability, proximity, performance) plus average
-  rating and completion rate
-- Clicking a card selects it and highlights it in blue
-- A summary panel appears below the list showing the selected courier's
-  name and score, with a contextual assign button (`Assign Ali`)
-- Score color adapts to value: green ≥ 75, amber ≥ 50, red below 50
-- Loading state renders three skeleton pulses while the API call
-  resolves
-- `useUsers` and the courier dropdown are removed entirely — no dead
-  code remains
+**`fix(api)` — UTC `Z` suffix on all DateTime serialization**
+- SQL Server returns `DateTime` with `Kind = Unspecified`. `System.Text.Json`
+  serializes that without a trailing `Z`, producing `"2026-04-22T11:43:43.586"`.
+  The browser treats bare strings as local time — causing timestamps to
+  appear one hour behind for UTC+1 users (`timeago` showed "about an hour
+  ago" for a message just sent).
+- A `UtcDateTimeConverter` is registered globally on the JSON serializer,
+  forcing `DateTimeKind.Utc` on every write. Applies to all endpoints:
+  notifications, messages, requests, analytics.
 
 ## How to Test with Docker
 
@@ -166,72 +135,48 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
-### Testing the Recommendation Engine
+### Testing the Messaging System
 
-**Step 1 — Log in as Admin**
+**Step 1 — Log in as Collaborator**
 ```
 POST /api/auth/login
-{ "email": "admin@errands.local", "password": "Admin123!" }
+{ "email": "sarah.johnson@ey.local", "password": "Dev1234!" }
 ```
 
-**Step 2 — Create a request as Collaborator** (log in as Collaborator
-first), then open the request details page as Admin.
-
-**Step 3 — View candidates**
+**Step 2 — Send a message on a request you own**
 ```
-GET /api/requests/{id}/candidates
+POST /api/requests/{id}/messages
+Authorization: Bearer <collaborator-token>
+{ "content": "Can you confirm the pickup time?" }
+```
+
+**Step 3 — Read the thread**
+```
+GET /api/requests/{id}/messages
 Authorization: Bearer <admin-token>
 ```
-The response is a ranked list of couriers with full score breakdowns.
-In the frontend, open any Pending request as Admin — the recommendation
-panel loads automatically.
+The response is a chronological list of messages with sender name,
+role, and timestamp. All participants also receive a real-time
+notification badge via `/hubs/notifications` and the full message
+payload on `/hubs/request-messaging`.
 
-**Step 4 — Assign**
-Select a courier from the panel and click Assign, or call:
+**Step 4 — Connect to the messaging hub (SignalR)**
 ```
-POST /api/requests/{id}/assign
-{ "courierId": "<guid>" }
+/hubs/request-messaging?access_token=<JWT>
 ```
-
-### Score Calculation Example
-
-A courier 2 km away from the delivery address, with 1 active
-assignment, a 4.0 average rating, and 8 out of 10 completed — on a
-Normal priority request:
-
-```
-Availability:  (1 − 1/3)  × 100        = 66.7
-Proximity:     (1 − 2/20) × 100        = 90.0
-Performance:   (4.0/5 × 100) × 0.5
-             + (8/10 × 100) × 0.5      = 80.0
-
-Total = 66.7 × 0.40
-      + 90.0 × 0.35
-      + 80.0 × 0.25
-      = 26.7 + 31.5 + 20.0
-      = 78.2
-```
-
-### Extending the Engine with a New Criterion
-
-1. Add a static method to `Domain/ValueObjects/CourierScoring.cs`
-2. Add a weight field to `PriorityWeights` in
-   `RecommendationEngineSettings` and update `appsettings.json`
-3. Update `Validate()` — weights must still sum to 1.0
-4. Wire the new score in `CourierRecommendationEngine.RecommendAsync`
-5. Add a unit test in `Domain.UnitTests/Scoring/CourierScoringTests.cs`
-
-No existing code changes required — fully open/closed.
+Invoke `JoinRequestGroup("{requestId}")`, then listen on
+`ReceiveRequestMessage`.
 
 ## Notes
 
-- All 319 tests pass with 0 failures (`dotnet test` from the `backend`
-  directory). The 22 new tests cover scoring algorithm unit tests,
-  settings validation, handler tests, and integration tests for the
-  candidates endpoint.
+- All tests pass (`dotnet test` from the `backend` directory). The new
+  integration tests cover: 201 for owner / Admin / assigned Courier,
+  403 for non-participants, 401 for unauthenticated, 400 for empty
+  content, 404 for missing request, chronological ordering, and full
+  DTO shape validation.
 - This branch includes all features from all previous branches,
-  including the real-time notification system from
-  `feature/notifications`.
+  including the Courier Recommendation Engine and the real-time
+  notification system.
 
 ## Demo Credentials
 
