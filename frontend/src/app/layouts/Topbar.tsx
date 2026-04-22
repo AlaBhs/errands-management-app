@@ -39,7 +39,7 @@ export function Topbar() {
 
   return (
     <header
-      className="h-16 bg-white dark:bg-card border-b border-border flex
+      className="h-16 bg-white dark:bg-card border-b border-border flex z-50
                        items-center justify-between px-6 gap-4"
     >
       {/* ── Left — page title ─────────────────────────────────────── */}

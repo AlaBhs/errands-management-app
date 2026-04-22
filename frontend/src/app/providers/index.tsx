@@ -71,6 +71,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <Toaster
         richColors
         position="top-right"
+        style={{ top: "74px", zIndex: 40 }}
         toastOptions={{
           duration: 4000,
           closeButton: true,

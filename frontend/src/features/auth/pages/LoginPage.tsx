@@ -244,9 +244,9 @@ export function LoginPage() {
                 type="submit"
                 disabled={isSubmitting || login.isPending}
                 className="group mt-2 flex w-full items-center justify-center
-                           gap-2 rounded-xl bg-primary py-4 text-sm
+                           gap-2 rounded-xl bg-[#FFE600] py-4 text-sm
                            font-semibold text-primary-foreground shadow-lg
-                           transition-all hover:bg-primary/90 hover:shadow-xl
+                           transition-all hover:bg-[#FFE600]/90 hover:shadow-xl
                            disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {login.isPending ? (
