@@ -5,6 +5,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationType } from "@/features/notifications/types";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
+import { parseUtc } from "@/shared/utils/date";
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ export function NotificationsPage() {
             {notifications.map((n) => {
               const dotColor  = TYPE_COLOR[n.type] ?? "bg-gray-400";
               const label     = TYPE_LABEL[n.type]  ?? "Notification";
-              const timeAgo   = formatDistanceToNow(new Date(n.createdAt), { addSuffix: true });
+              const timeAgo   = formatDistanceToNow(parseUtc(n.createdAt), { addSuffix: true });
               const navigable = !!getDestination(n);
 
               return (

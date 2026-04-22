@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/shared/utils/utils";
 import type { RequestMessageDto } from "../types/messaging.types";
+import { parseUtc } from "@/shared/utils/date";
 
 interface MessageItemProps {
   message: RequestMessageDto;
@@ -31,7 +32,7 @@ export function MessageItem({ message, isOwn }: MessageItemProps) {
 
       {/* Timestamp */}
       <span className="text-[10px] text-muted-foreground px-1">
-        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+        {formatDistanceToNow(parseUtc(message.createdAt), { addSuffix: true })}
       </span>
     </div>
   );

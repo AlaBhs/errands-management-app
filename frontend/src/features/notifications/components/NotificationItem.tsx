@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { NotificationType, type NotificationDto } from "@/features/notifications/types";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
+import { parseUtc } from "@/shared/utils/date";
 
 const TYPE_COLOR: Record<number, string> = {
   [NotificationType.RequestCreated]:   "bg-blue-500",
@@ -49,7 +50,7 @@ export function NotificationItem({ notification, onNavigate }: NotificationItemP
 
   const dotColor = TYPE_COLOR[notification.type] ?? "bg-gray-400";
   const label    = TYPE_LABEL[notification.type] ?? "Notification";
-  const timeAgo  = formatDistanceToNow(new Date(notification.createdAt), {
+  const timeAgo  = formatDistanceToNow(parseUtc(notification.createdAt), {
     addSuffix: true,
   });
   const isNavigable = !!getDestination(notification);

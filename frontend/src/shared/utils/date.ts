@@ -45,3 +45,12 @@ export function formatDuration(start: string | Date, end: string | Date): string
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 }
+
+/**
+ * helper appends Z if missing,
+ * to ensure it's parsed as UTC
+ */
+export function parseUtc(dateString: string): Date {
+  const s = dateString.endsWith("Z") ? dateString : dateString + "Z";
+  return new Date(s);
+}
