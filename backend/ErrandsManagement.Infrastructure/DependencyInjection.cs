@@ -1,6 +1,7 @@
 ﻿using ErrandsManagement.Application.CourierRecommendation.Interfaces;
 using ErrandsManagement.Application.CourierRecommendation.Settings;
 using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Infrastructure.BackgroundJobs;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddStorage();
         services.AddServices();
         services.AddRecommendationEngine(configuration);
+        services.AddHostedService<DeadlineMonitoringService>();
 
         return services;
     }
