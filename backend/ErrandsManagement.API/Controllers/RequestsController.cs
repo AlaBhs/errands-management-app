@@ -2,6 +2,9 @@
 using ErrandsManagement.Application.Common.Pagination;
 using ErrandsManagement.Application.CourierRecommendation.DTOs;
 using ErrandsManagement.Application.CourierRecommendation.Queries.GetCourierCandidates;
+using ErrandsManagement.Application.RequestMessages.Commands;
+using ErrandsManagement.Application.RequestMessages.DTOs;
+using ErrandsManagement.Application.RequestMessages.Queries;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CompleteRequest;
@@ -13,7 +16,6 @@ using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Application.Requests.Queries.GetMyAssignments;
 using ErrandsManagement.Application.Requests.Queries.GetMyRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
-using ErrandsManagement.Domain.Common.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -252,6 +254,72 @@ public sealed class RequestsController : ControllerBase
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
     }
+
+    /// <summary>
+    /// Send a message to the request discussion thread.
+    /// Only participants (owner, assigned courier, admin) may send.
+    /// </summary>
+    /// <response code="201">Message created. Returns the new message's Guid.</response>
+    /// <response code="403">Caller is not a participant of this request.</response>
+    /// <response code="404">Request not found.</response>
+    [HttpPost("{requestId:guid}/messages")]
+    [Authorize(Roles = "Admin,Collaborator,Courier")]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendMessage(
+        Guid requestId,
+        [FromBody] SendMessageDto body,
+        CancellationToken cancellationToken)
+    {
+        var senderId = GetCurrentUserId();
+
+        var command = new SendRequestMessageCommand(
+            RequestId: requestId,
+            SenderId: senderId,
+            Content: body.Content);
+
+        var messageId = await _mediator.Send(command, cancellationToken);
+
+        return CreatedAtAction(
+            nameof(GetMessages),
+            new { requestId },
+            ApiResponse<Guid>.SuccessResponse(
+                messageId,
+                StatusCodes.Status201Created,
+                HttpContext.TraceIdentifier));
+    }
+
+    /// <summary>
+    /// Retrieve the full discussion thread for the request.
+    /// Messages are ordered chronologically (oldest first).
+    /// Only participants (owner, assigned courier, admin) may read.
+    /// </summary>
+    /// <response code="200">List of messages in chronological order.</response>
+    /// <response code="403">Caller is not a participant of this request.</response>
+    /// <response code="404">Request not found.</response>
+    [HttpGet("{requestId:guid}/messages")]
+    [Authorize(Roles = "Admin,Collaborator,Courier")]
+    [ProducesResponseType(typeof(ApiResponse<List<RequestMessageDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMessages(
+        Guid requestId,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        var query = new GetRequestMessagesQuery(
+            RequestId: requestId,
+            RequestingUserId: userId);
+
+        var messages = await _mediator.Send(query, cancellationToken);
+
+        return Ok(ApiResponse<List<RequestMessageDto>>.SuccessResponse(
+            messages,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
+    }
     // ── Private helpers ────────────────────────────────────────────────────
 
     private Guid GetCurrentUserId()
@@ -263,17 +331,4 @@ public sealed class RequestsController : ControllerBase
         return Guid.Parse(value);
     }
 
-    // ============================= DEBUG =============================
-    [HttpGet("ping")]
-    public IActionResult Ping()
-    {
-        return Ok("API is working");
-    }
-
-    [HttpGet("test-exception")]
-    public IActionResult TestException()
-    {
-        throw new InvalidRequestStateException("Test domain exception.");
-    }
-    // ============================= DEBUG =============================
 }
