@@ -55,11 +55,17 @@ public sealed class RequestAtRiskHandler : INotificationHandler<RequestAtRiskEve
         // ── 2. Persist & push each notification ──────────────────────────
         foreach (var userId in uniqueRecipients)
         {
+            var metadata = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                deadlineUtc = evt.Deadline.ToString("O")
+            });
+
             var notification = Notification.Create(
                 userId: userId,
-                message: message,
+                message: $"Request \"{evt.Title}\" is at risk of missing its deadline.",
                 type: NotificationType.DeadlineRisk,
-                referenceId: evt.RequestId);
+                referenceId: evt.RequestId,
+                metadata: metadata);
 
             await _notificationRepository.AddAsync(notification, cancellationToken);
             await _notificationRepository.SaveChangesAsync(cancellationToken);

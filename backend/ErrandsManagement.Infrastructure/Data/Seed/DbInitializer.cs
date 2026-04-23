@@ -1204,6 +1204,24 @@ public static class DbInitializer
         SetAuditLogDate(o23, "Created", y2024_dec.AddDays(2));
         SetAuditLogDate(o23, "Cancelled", y2024_dec.AddDays(2).AddHours(4));
 
+
+        // ── DEADLINE RISK ALERT TEST ──────────────────────────────────────────
+        // TotalDuration = 36min → Threshold = MAX(432s, 7200s) = 7200s (2h floor)
+        // RemainingTime at startup ≈ 7min = 420s → 420 <= 7200 → AT RISK ✓
+
+        var riskTest = new Request(
+            "[TEST] Deadline risk alert",
+            "Seeded request to verify the DeadlineMonitoringService fires correctly.",
+            sarah.Id, tunis, PriorityLevel.Urgent, RequestCategory.Other,
+            "Test Contact", "+216 00 000 000", null,
+            deadline: now.AddMinutes(7),
+            estimatedCost: 0m);
+
+        riskTest.Assign(courier1.Id);
+
+        SetCreatedAt(riskTest, now.AddMinutes(-29));
+        SetAuditLogDate(riskTest, "Created", now.AddMinutes(-29));
+        SetAuditLogDate(riskTest, "Assigned", now.AddMinutes(-5));
         // ── Persist ────────────────────────────────────────────────────────────
         var all = new[]
         {
@@ -1213,7 +1231,7 @@ public static class DbInitializer
             h31, h32, h33, h34, h35, h36, h37, h38, h39, h40,
             o1,  o2,  o3,  o4,  o5,  o6,  o7,  o8,  o9,  o10,
             o11, o12, o13, o14, o15, o16, o17, o18, o19, o20,
-            o21, o22, o23
+            o21, o22, o23, riskTest
         };
 
         foreach (var request in all)

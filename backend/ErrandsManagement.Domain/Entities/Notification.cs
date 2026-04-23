@@ -11,6 +11,8 @@ public class Notification : BaseEntity
     public Guid? ReferenceId { get; private set; }
     public bool IsRead { get; private set; }
 
+    public string? Metadata { get; init; }
+
     // EF Core constructor
     private Notification() { }
 
@@ -18,7 +20,8 @@ public class Notification : BaseEntity
         Guid userId,
         string message,
         NotificationType type,
-        Guid? referenceId = null)
+        Guid? referenceId = null,
+        string? metadata = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
@@ -29,6 +32,7 @@ public class Notification : BaseEntity
             Message = message,
             Type = type,
             ReferenceId = referenceId,
+            Metadata = metadata,
             IsRead = false,
             CreatedAt = DateTime.UtcNow
         };

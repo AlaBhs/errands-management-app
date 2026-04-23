@@ -267,20 +267,21 @@ public sealed class RequestRepository : IRequestRepository
     DateTime now,
     CancellationToken cancellationToken)
     {
-        // Only Assigned or InProgress
         var atRiskStatuses = new[] { RequestStatus.Assigned, RequestStatus.InProgress };
 
         return await _context.Requests
             .AsNoTracking()
             .Where(r =>
-                atRiskStatuses.Contains(r.Status)          // status gate
-                && r.Deadline != null                       // must have deadline
-                && r.Deadline > now                         // not already overdue
-                && r.LastRiskAlertAt == null                // idempotency: alert once
-                && (EF.Functions.DateDiffSecond(now, r.Deadline.Value))
-                   <= Math.Max(
-                        EF.Functions.DateDiffSecond(r.CreatedAt, r.Deadline.Value) * 0.20,
-                        7200)  // max(20% of TotalDuration, 2 hours) in seconds
+                atRiskStatuses.Contains(r.Status)
+                && r.Deadline != null
+                && r.Deadline > now
+                && r.LastRiskAlertAt == null
+                && (
+                    EF.Functions.DateDiffSecond(now, r.Deadline.Value) <= 7200
+                    ||
+                    EF.Functions.DateDiffSecond(now, r.Deadline.Value) * 5
+                        <= EF.Functions.DateDiffSecond(r.CreatedAt, r.Deadline.Value)
+                )
             )
             .Select(r => new AtRiskRequestDto(
                 r.Id,
@@ -288,7 +289,7 @@ public sealed class RequestRepository : IRequestRepository
                 r.Deadline!.Value,
                 r.RequesterId,
                 r.Assignments
-                    .Where(a => a.IsActive)
+                    .Where(a => a.CompletedAt == null)
                     .Select(a => (Guid?)a.CourierId)
                     .FirstOrDefault()
             ))

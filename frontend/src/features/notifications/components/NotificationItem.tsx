@@ -9,8 +9,9 @@ const TYPE_COLOR: Record<string, string> = {
   RequestAssigned: "bg-yellow-400",
   RequestStarted: "bg-orange-500",
   RequestCompleted: "bg-green-500",
-  RequestCancelled: "bg-red-500",
+  RequestCancelled: "bg-gray-600",
   NewMessageReceived: "bg-purple-500",
+  DeadlineRisk: "bg-red-500",
   General: "bg-gray-400",
 };
 
@@ -21,6 +22,7 @@ const TYPE_LABEL: Record<string, string> = {
   RequestCompleted: "Request Completed",
   RequestCancelled: "Request Cancelled",
   NewMessageReceived: "New Message",
+  DeadlineRisk: "Deadline Risk",
   General: "General",
 };
 
@@ -34,7 +36,10 @@ interface NotificationItemProps {
   onNavigate?: () => void;
 }
 
-export function NotificationItem({ notification, onNavigate }: NotificationItemProps) {
+export function NotificationItem({
+  notification,
+  onNavigate,
+}: NotificationItemProps) {
   const markAsRead = useNotificationStore((s) => s.markAsRead);
   const navigate = useNavigate();
 
@@ -49,35 +54,49 @@ export function NotificationItem({ notification, onNavigate }: NotificationItemP
   }
 
   const dotColor = TYPE_COLOR[notification.type] ?? "bg-gray-400";
-  const label    = TYPE_LABEL[notification.type] ?? "Notification";
-  const timeAgo  = formatDistanceToNow(parseUtc(notification.createdAt), {
+  const label = TYPE_LABEL[notification.type] ?? "Notification";
+  const timeAgo = formatDistanceToNow(parseUtc(notification.createdAt), {
     addSuffix: true,
   });
   const isNavigable = !!getDestination(notification);
+  const meta = notification.metadata ? JSON.parse(notification.metadata) : null;
 
+  const deadlineDisplay = meta?.deadlineUtc
+    ? parseUtc(meta.deadlineUtc).toLocaleString()
+    : null;
+  const message = deadlineDisplay
+    ? `${notification.message} Deadline: ${deadlineDisplay}`
+    : notification.message;
   return (
     <div
       onClick={handleClick}
       className={`flex gap-3 px-4 py-3 transition-colors
         ${isNavigable ? "cursor-pointer" : "cursor-default"}
-        ${!notification.isRead
-          ? "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/60 dark:hover:bg-blue-950/30"
-          : "hover:bg-muted/50"
+        ${
+          !notification.isRead
+            ? "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/60 dark:hover:bg-blue-950/30"
+            : "hover:bg-muted/50"
         }`}
     >
       <div className="mt-1 shrink-0">
-        <div className={`h-2 w-2 rounded-full mt-1 ${notification.isRead ? "bg-transparent" : dotColor}`} />
+        <div
+          className={`h-2 w-2 rounded-full mt-1 ${notification.isRead ? "bg-transparent" : dotColor}`}
+        />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-xs font-semibold ${dotColor.replace("bg-", "text-")}`}>
+          <p
+            className={`text-xs font-semibold ${dotColor.replace("bg-", "text-")}`}
+          >
             {label}
           </p>
-          <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground">
+            {timeAgo}
+          </span>
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-          {notification.message}
+          {message}
         </p>
       </div>
     </div>

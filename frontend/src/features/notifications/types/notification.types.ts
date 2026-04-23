@@ -7,6 +7,7 @@ export interface NotificationDto {
   message: string;
   type: NotificationType;
   referenceId: string | null;
+  metadata: string;
   isRead: boolean;
   createdAt: string;
 }

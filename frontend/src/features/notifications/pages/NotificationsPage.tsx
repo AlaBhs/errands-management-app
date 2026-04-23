@@ -13,8 +13,9 @@ const TYPE_COLOR: Record<string, string> = {
   RequestAssigned: "bg-yellow-400",
   RequestStarted: "bg-orange-500",
   RequestCompleted: "bg-green-500",
-  RequestCancelled: "bg-red-500",
+  RequestCancelled: "bg-gray-600",
   NewMessageReceived: "bg-purple-500",
+  DeadlineRisk: "bg-red-500",
   General: "bg-gray-400",
 };
 
@@ -25,6 +26,7 @@ const TYPE_LABEL: Record<string, string> = {
   RequestCompleted: "Request Completed",
   RequestCancelled: "Request Cancelled",
   NewMessageReceived: "New Message",
+  DeadlineRisk: "Deadline Risk",
   General: "General",
 };
 
@@ -65,14 +67,6 @@ export function NotificationsPage() {
     const destination = getDestination(notification);
     if (destination) navigate(destination);
   }
-  console.log("NotificationsPage render", {
-    notifications,
-    unreadCount,
-    isLoading,
-    page,
-    totalPages,
-    totalCount,
-  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -145,8 +139,15 @@ export function NotificationsPage() {
                 addSuffix: true,
               });
               const navigable = !!getDestination(n);
+              const meta = n.metadata ? JSON.parse(n.metadata) : null;
 
-              console.log(dotColor, label, timeAgo, navigable);
+              const deadlineDisplay = meta?.deadlineUtc
+                ? parseUtc(meta.deadlineUtc).toLocaleString()
+                : null;
+              const message = deadlineDisplay
+                ? `${n.message} Deadline: ${deadlineDisplay}`
+                : n.message;
+
               return (
                 <div
                   key={n.id}
@@ -181,7 +182,7 @@ export function NotificationsPage() {
                       className={`mt-1 text-sm leading-relaxed
                       ${n.isRead ? "text-muted-foreground" : "text-foreground"}`}
                     >
-                      {n.message}
+                      {message}
                     </p>
                   </div>
                 </div>
