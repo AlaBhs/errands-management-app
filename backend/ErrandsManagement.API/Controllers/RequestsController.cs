@@ -5,17 +5,23 @@ using ErrandsManagement.Application.CourierRecommendation.Queries.GetCourierCand
 using ErrandsManagement.Application.RequestMessages.Commands;
 using ErrandsManagement.Application.RequestMessages.DTOs;
 using ErrandsManagement.Application.RequestMessages.Queries;
+using ErrandsManagement.Application.Requests.Commands.AddExpenseRecord;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CompleteRequest;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
+using ErrandsManagement.Application.Requests.Commands.MarkExpenseReconciled;
+using ErrandsManagement.Application.Requests.Commands.RemoveExpenseRecord;
+using ErrandsManagement.Application.Requests.Commands.SetAdvancedAmount;
 using ErrandsManagement.Application.Requests.Commands.StartRequest;
 using ErrandsManagement.Application.Requests.Commands.SubmitSurvey;
 using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
+using ErrandsManagement.Application.Requests.Queries.GetExpenseSummary;
 using ErrandsManagement.Application.Requests.Queries.GetMyAssignments;
 using ErrandsManagement.Application.Requests.Queries.GetMyRequests;
 using ErrandsManagement.Application.Requests.Queries.GetRequestById;
+using ErrandsManagement.Application.Requests.Queries.GetRequestExpenses;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -319,6 +325,76 @@ public sealed class RequestsController : ControllerBase
             messages,
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
+    }
+
+
+    [HttpGet("{requestId:guid}/expenses")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAll(Guid requestId, CancellationToken ct)
+    {
+        var result = await _mediator.Send(new GetRequestExpensesQuery(requestId), ct);
+        return Ok(ApiResponse<IReadOnlyList<ExpenseRecordDto>>.SuccessResponse(
+            result, StatusCodes.Status200OK, HttpContext.TraceIdentifier));
+    }
+
+    [HttpGet("{requestId:guid}/expenses/summary")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetSummary(Guid requestId, CancellationToken ct)
+    {
+        var result = await _mediator.Send(new GetExpenseSummaryQuery(requestId), ct);
+        return Ok(ApiResponse<ExpenseSummaryDto>.SuccessResponse(
+            result, StatusCodes.Status200OK, HttpContext.TraceIdentifier));
+    }
+
+    [HttpPost("{requestId:guid}/expenses")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AddExpense(
+        Guid requestId,
+        [FromBody] AddExpenseRecordDto body,
+        CancellationToken ct)
+    {
+        var createdBy = User.FindFirstValue(ClaimTypes.Email)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? "unknown";
+
+        var id = await _mediator.Send(
+            new AddExpenseRecordCommand(
+                requestId, body.Category, body.Amount, createdBy, body.Description), ct);
+
+        return CreatedAtAction(nameof(GetAll), new { requestId },
+            ApiResponse<Guid>.SuccessResponse(
+                id, StatusCodes.Status201Created, HttpContext.TraceIdentifier));
+    }
+
+    [HttpDelete("{requestId:guid}/expenses/{expenseId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RemoveExpense(
+        Guid requestId, Guid expenseId, CancellationToken ct)
+    {
+        await _mediator.Send(
+            new RemoveExpenseRecordCommand(requestId, expenseId), ct);
+        return NoContent();
+    }
+
+    [HttpPost("{requestId:guid}/expenses/advanced-amount")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> SetAdvancedAmount(
+        Guid requestId,
+        [FromBody] SetAdvancedAmountDto body,
+        CancellationToken ct)
+    {
+        await _mediator.Send(
+            new SetAdvancedAmountCommand(requestId, body.Amount), ct);
+        return NoContent();
+    }
+
+    [HttpPost("{requestId:guid}/expenses/reconcile")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Reconcile(Guid requestId, CancellationToken ct)
+    {
+        await _mediator.Send(
+            new MarkExpenseReconciledCommand(requestId), ct);
+        return NoContent();
     }
     // ── Private helpers ────────────────────────────────────────────────────
 
