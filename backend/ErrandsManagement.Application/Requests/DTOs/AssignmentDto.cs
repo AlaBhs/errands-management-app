@@ -7,5 +7,7 @@
     DateTime? StartedAt,
     DateTime? CompletedAt,
     decimal? ActualCost,
-    string? Note);
+    string? Note,
+    decimal? AdvancedAmount,
+    bool IsReconciled);
 }

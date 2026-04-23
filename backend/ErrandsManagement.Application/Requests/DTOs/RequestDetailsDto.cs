@@ -21,4 +21,5 @@ public sealed record RequestDetailsDto(
     AssignmentDto? CurrentAssignment,
     IReadOnlyCollection<AuditLogDto> AuditLogs,
     IReadOnlyList<AttachmentDto> Attachments,
-    SurveyDto? Survey);
+    SurveyDto? Survey,
+    ExpenseSummaryDto? ExpenseSummary);
