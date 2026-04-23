@@ -295,4 +295,54 @@ public sealed class RequestRepository : IRequestRepository
             ))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ExpenseRecordDto>> GetExpenseRecordsAsync(
+    Guid requestId,
+    CancellationToken cancellationToken)
+    {
+        return await _context.Set<ExpenseRecord>()
+            .AsNoTracking()
+            .Where(e => e.RequestId == requestId)
+            .OrderBy(e => e.CreatedAt)
+            .Select(e => new ExpenseRecordDto(
+                e.Id,
+                e.Category.ToString(),
+                e.Amount,
+                e.Description,
+                e.CreatedBy,
+                e.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ExpenseSummaryDto> GetExpenseSummaryAsync(
+        Guid requestId,
+        CancellationToken cancellationToken)
+    {
+        // SUM at DB level — no collection loaded into memory
+        var totalExpenses = await _context.Set<ExpenseRecord>()
+            .AsNoTracking()
+            .Where(e => e.RequestId == requestId)
+            .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
+
+        var assignment = await _context.Set<Assignment>()
+            .AsNoTracking()
+            .Where(a => a.RequestId == requestId)
+            .OrderByDescending(a => a.AssignedAt)
+            .Select(a => new { a.AdvancedAmount, a.ReconciledAt })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var advanced = assignment?.AdvancedAmount;
+        var reconciledAt = assignment?.ReconciledAt;
+
+        decimal? difference = advanced.HasValue
+            ? totalExpenses - advanced.Value
+            : null;
+
+        return new ExpenseSummaryDto(
+            advanced,
+            totalExpenses,
+            difference,
+            reconciledAt.HasValue,
+            reconciledAt);
+    }
 }
