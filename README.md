@@ -1,126 +1,85 @@
 # Errands Management App
 
-This branch adds a **Request In-App Messaging System** — a real-time
-discussion thread per request that allows Admin, the assigned Courier,
-and the request owner (Collaborator) to exchange messages, with
-persistent history, SignalR live delivery, and full integration with
-the existing notification pipeline.
+This branch adds a **Deadline Risk Alerting System** — a background feature that
+automatically monitors active requests and sends real-time alerts to all relevant
+participants when a request is approaching its deadline, with full integration
+into the existing notification pipeline.
 
-## What's New — `feature/request-messaging`
+## What's New — `feature/deadline-risk-alerting`
 
-### Discussion Thread per Request
-- Each Request has a **persistent message thread** — all messages
-  are saved to the database and returned in chronological order
-- Participants:
-  - **Admin** — full access on any request
-  - **Collaborator** — only on their own requests
-  - **Courier** — only on requests they are (or were) assigned to
-- Messages are **immutable after creation** — no edit, no delete;
-  the thread is part of the request's audit history
-- Participant authorization is enforced at the **Application layer**
-  inside the CQRS handlers, not at the controller
+### Proactive Deadline Monitoring
+- A background job runs **every 5 minutes** and scans all active requests
+- Requests are flagged as **at risk** when their remaining time falls within a
+  calculated threshold based on their total duration
+- Alerts are sent to all relevant participants automatically — no manual action needed
+- Each request receives **at most one alert per lifecycle** — no duplicate notifications
 
-### New API Endpoints
+### Risk Detection Rules
+A request is considered at risk when all of the following are true:
 
-| Method | Route | Role | Description |
-|---|---|---|---|
-| `POST` | `/api/requests/{id}/messages` | Admin, Collaborator, Courier | Send a message (participants only) |
-| `GET` | `/api/requests/{id}/messages` | Admin, Collaborator, Courier | Get full thread, oldest first |
+- Status is **Assigned** or **InProgress**
+- Has a deadline set
+- Deadline has **not yet passed**
+- Has **not already been alerted**
+- Remaining time is within `MAX(20% of total duration, 2 hours)`
 
-### Real-Time Delivery (SignalR)
-A new hub `RequestMessagingHub` is registered at `/hubs/request-messaging`.
-Clients join a request-specific group and receive new messages live:
+For example, a request with a 20-hour total duration gets alerted when 4 hours
+remain. A short 1-hour request gets alerted immediately since the 2-hour floor
+kicks in.
 
-- Group naming convention: `request-{requestId}`
-- Clients explicitly call `JoinRequestGroup(requestId)` when opening
-  a thread and `LeaveRequestGroup(requestId)` when navigating away
-- The hub **re-validates participant access** before adding a connection
-  to the group — a valid JWT alone is not sufficient
-- When a message is sent, the server pushes it to the group via
-  `ReceiveRequestMessage`, reaching all connected participants
-  including the sender
+### Who Gets Notified
+Every alert fans out to all participants of the request:
 
-### Notification Integration
-Sending a message triggers the **existing two-step notification
-pipeline** — no duplication:
+| Recipient | Condition |
+|---|---|
+| **Admin(s)** | Always |
+| **Collaborator** (request owner) | Always |
+| **Courier** | Only if one is assigned |
 
-1. `RequestMessageCreatedEvent` → `CreateNotificationsOnRequestMessageCreated`
-   → persists one `Notification` per recipient (everyone except the sender)
-2. `NotificationCreatedEvent` → `SendRealtimeOnNotificationCreated`
-   → delivers the notification badge over the existing `/hubs/notifications`
+### Notification Content
+Alerts use a new dedicated `DeadlineRisk` notification type. The message is
+timezone-neutral — the deadline is delivered as structured ISO 8601 UTC metadata
+alongside the message, so the frontend can render it in each user's local timezone
+automatically.
 
-Recipient rules:
-- Collaborator sends → Admin(s) + Courier (if assigned)
-- Courier sends → Admin(s) + Collaborator
-- Admin sends → Collaborator + Courier (if assigned)
-
-A new `NotificationType.NewMessageReceived = 6` is added.
-The `referenceId` on the notification carries the `requestId` for
-deep-link navigation to the thread.
+### New API Behavior
+No new endpoints are added. Alerts flow entirely through the existing notification
+pipeline — they appear in the notification bell like any other notification and
+are pushed live via SignalR to all connected participants.
 
 ### Architecture
 
 ```
 Domain/
 ├── Entities/
-│   └── RequestMessage.cs              ← immutable, static Create factory
+│   └── Request.cs                  ← +LastRiskAlertAt, +MarkRiskAlertSent()
+├── Enums/
+│   └── NotificationType.cs         ← +DeadlineRisk = 7
 └── Events/
-    └── RequestMessageCreatedEvent.cs
+    └── RequestAtRiskEvent.cs
 
 Application/
-└── RequestMessages/
-    ├── Commands/    SendRequestMessageCommand + Validator
-    ├── Queries/     GetRequestMessagesQuery
-    ├── Handlers/    SendRequestMessageHandler
-    │                GetRequestMessagesHandler
-    ├── Events/      CreateNotificationsOnRequestMessageCreated
-    │                PushRealtimeOnRequestMessageCreated
-    ├── DTOs/        RequestMessageDto · SendMessageDto
-    └── Interfaces/  IRequestMessageRepository
-                     IRequestMessagingRealtimeService
-                     IRequestMessagingHubProxy
+└── Requests/
+    ├── Queries/    GetAtRiskRequestsQuery
+    ├── Commands/   MarkRequestRiskAlertSentCommand
+    └── Handlers/   RequestAtRiskHandler
 
 Infrastructure/
-├── Repositories/   RequestMessageRepository
-├── Configurations/ RequestMessageConfiguration
-├── RealTime/       SignalRRequestMessagingService
-└── Migrations/     20260421120000_AddRequestMessages
-
-API/
-├── Hubs/        RequestMessagingHub · RequestMessagingHubProxy
-└── Controllers/ RequestMessagesController
+├── BackgroundJobs/   DeadlineMonitoringService
+├── Repositories/     RequestRepository  ← +GetAtRiskRequestsAsync
+├── Configurations/   RequestConfiguration  ← +LastRiskAlertAt mapping
+└── Migrations/       AddLastRiskAlertAtToRequest
 ```
 
-Dependency direction is strictly one-way: Infrastructure → Application
-→ Domain. The hub proxy pattern (`IRequestMessagingHubProxy`) mirrors
-the existing notification architecture — Infrastructure never references
-a SignalR hub type directly.
+The background job contains zero business logic — it only schedules and delegates
+to the Application layer via MediatR. All detection and notification logic lives
+in the Application layer, strictly respecting Clean Architecture boundaries.
 
-### Bug Fixes
-
-**`fix(messaging)` — 403 for non-participants, Courier read access
-after completion**
-- `ExceptionHandlingMiddleware` was mapping `UnauthorizedAccessException`
-  to `401 Unauthorized`. The correct HTTP status for an authenticated
-  but non-permitted user is `403 Forbidden`. Frontend interceptors were
-  silently treating the 401 as a token expiry, causing the GET thread
-  endpoint to appear to return an empty array.
-- The Courier participant check in `GetRequestMessagesHandler` was
-  restricted to `IsActive` assignments. Once a request completes the
-  assignment closes, locking the Courier out of thread history. Fixed
-  to allow any historical assignment — Couriers retain read access after
-  completion. The **send** handler keeps `IsActive` so Couriers cannot
-  post on closed requests.
-
-**`fix(api)` — UTC `Z` suffix on all DateTime serialization**
-- SQL Server returns `DateTime` with `Kind = Unspecified`. `System.Text.Json`
-  serializes that without a trailing `Z`, producing `"2026-04-22T11:43:43.586"`.
-  The browser treats bare strings as local time — causing timestamps to
-  appear one hour behind for UTC+1 users (`timeago` showed "about an hour
-  ago" for a message just sent).
-- A `UtcDateTimeConverter` is registered globally on the JSON serializer,
-  forcing `DateTimeKind.Utc` on every write. Applies to all endpoints:
-  notifications, messages, requests, analytics.
+### Database Changes
+A single nullable column `LastRiskAlertAt` is added to the `Requests` table. It
+is `NULL` by default, meaning all existing requests are eligible for a one-time
+alert. Once an alert is sent, the column is stamped and the request is excluded
+from all future scans.
 
 ## How to Test with Docker
 
@@ -135,48 +94,46 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
-### Testing the Messaging System
+### Testing the Alerting System
 
-**Step 1 — Log in as Collaborator**
+The seeded data includes a test request designed to enter the risk window
+shortly after startup.
+
+**Step 1 — Log in and open the notification panel**
+
+Log in as Admin or as the Collaborator `sarah.johnson@ey.local`. Watch the
+notification bell — an alert will appear within the first two scan cycles
+(within 5 minutes of startup).
+
+**Step 2 — Watch the background job logs**
+
+In the Docker console you will see:
 ```
-POST /api/auth/login
-{ "email": "sarah.johnson@ey.local", "password": "Dev1234!" }
+[DeadlineMonitor] Scanning for at-risk requests at ...
+[DeadlineMonitor] Found 1 at-risk request(s).
 ```
 
-**Step 2 — Send a message on a request you own**
-```
-POST /api/requests/{id}/messages
-Authorization: Bearer <collaborator-token>
-{ "content": "Can you confirm the pickup time?" }
-```
+**Step 3 — Verify the notification**
 
-**Step 3 — Read the thread**
-```
-GET /api/requests/{id}/messages
-Authorization: Bearer <admin-token>
-```
-The response is a chronological list of messages with sender name,
-role, and timestamp. All participants also receive a real-time
-notification badge via `/hubs/notifications` and the full message
-payload on `/hubs/request-messaging`.
+The alert appears in the notification feed for Admin, the request owner, and
+the assigned Courier. Each recipient receives it independently and gets a live
+push via SignalR.
 
-**Step 4 — Connect to the messaging hub (SignalR)**
+**Step 4 — Verify idempotency**
+
+On the next scan cycle the log will show:
 ```
-/hubs/request-messaging?access_token=<JWT>
+[DeadlineMonitor] Found 0 at-risk request(s).
 ```
-Invoke `JoinRequestGroup("{requestId}")`, then listen on
-`ReceiveRequestMessage`.
+The same request is never alerted twice.
 
 ## Notes
 
-- All tests pass (`dotnet test` from the `backend` directory). The new
-  integration tests cover: 201 for owner / Admin / assigned Courier,
-  403 for non-participants, 401 for unauthenticated, 400 for empty
-  content, 404 for missing request, chronological ordering, and full
-  DTO shape validation.
-- This branch includes all features from all previous branches,
-  including the Courier Recommendation Engine and the real-time
+- This branch includes all features from all previous branches, including the
+  Request Messaging System, Courier Recommendation Engine, and the real-time
   notification system.
+- The background job starts with a 15-second delay after app startup to let
+  the host finish wiring up before the first scan.
 
 ## Demo Credentials
 
