@@ -11,6 +11,7 @@ public class Request : BaseEntity
     private readonly List<Assignment> _assignments = new();
     private readonly List<Attachment> _attachments = new();
     private readonly List<AuditLog> _auditLogs = new();
+    private readonly List<ExpenseRecord> _expenseRecords = new();
 
     public string Title { get; private set; }
     public string Description { get; private set; }
@@ -37,6 +38,8 @@ public class Request : BaseEntity
     public IReadOnlyCollection<Assignment> Assignments => _assignments.AsReadOnly();
     public IReadOnlyCollection<Attachment> Attachments => _attachments.AsReadOnly();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLogs.AsReadOnly();
+    public IReadOnlyCollection<ExpenseRecord> ExpenseRecords => _expenseRecords.AsReadOnly();
+
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     private Request() { } // For EF
@@ -213,5 +216,77 @@ public class Request : BaseEntity
     {
         LastRiskAlertAt = DateTime.UtcNow;
         MarkAsUpdated();
+    }
+
+    public void AddExpense(
+    ExpenseCategory category,
+    decimal amount,
+    string createdBy,
+    string? description = null)
+    {
+        if (Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException(
+                "Expenses cannot be added to a cancelled request.");
+
+        var assignment = GetActiveOrLastAssignment();
+
+        var record = new ExpenseRecord(
+            Id,
+            assignment.Id,
+            category,
+            amount,
+            createdBy,
+            description);
+
+        _expenseRecords.Add(record);
+        MarkAsUpdated();
+
+        AddAudit("ExpenseAdded",
+            $"Expense of {amount:F2} ({category}) added by {createdBy}.");
+    }
+
+    public void RemoveExpense(Guid expenseRecordId)
+    {
+        if (Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException(
+                "Expenses cannot be removed from a cancelled request.");
+
+        var record = _expenseRecords.FirstOrDefault(e => e.Id == expenseRecordId)
+            ?? throw new InvalidRequestStateException(
+                "Expense record not found on this request.");
+
+        _expenseRecords.Remove(record);
+        MarkAsUpdated();
+
+        AddAudit("ExpenseRemoved", $"Expense record {expenseRecordId} removed.");
+    }
+    public void SetAdvancedAmount(decimal amount)
+    {
+        if (Status != RequestStatus.Assigned)
+            throw new InvalidRequestStateException(
+                "AdvancedAmount can only be set when the request is Assigned.");
+
+        var assignment = GetActiveAssignment();
+        assignment.SetAdvancedAmount(amount);
+        MarkAsUpdated();
+
+        AddAudit("AdvancedAmountSet", $"Advanced amount set to {amount:F2}.");
+    }
+
+    public void MarkReconciled()
+    {
+        var assignment = GetActiveOrLastAssignment();
+        assignment.MarkReconciled();
+        MarkAsUpdated();
+
+        AddAudit("Reconciled", "Expense reconciliation marked.");
+    }
+
+    private Assignment GetActiveOrLastAssignment()
+    {
+        var assignment = _assignments.LastOrDefault()
+            ?? throw new InvalidRequestStateException(
+                "No assignment found for this request.");
+        return assignment;
     }
 }
