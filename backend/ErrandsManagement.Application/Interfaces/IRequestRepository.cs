@@ -26,4 +26,12 @@ public interface IRequestRepository
     Task<List<AtRiskRequestDto>> GetAtRiskRequestsAsync(
     DateTime now,
     CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ExpenseRecordDto>> GetExpenseRecordsAsync(
+    Guid requestId,
+    CancellationToken cancellationToken);
+
+    Task<ExpenseSummaryDto> GetExpenseSummaryAsync(
+        Guid requestId,
+        CancellationToken cancellationToken);
 }
