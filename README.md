@@ -1,85 +1,80 @@
 # Errands Management App
 
-This branch adds a **Deadline Risk Alerting System** — a background feature that
-automatically monitors active requests and sends real-time alerts to all relevant
-participants when a request is approaching its deadline, with full integration
-into the existing notification pipeline.
+This branch adds a **Request Expense Tracking System** — a financial layer on top
+of the existing request lifecycle that allows admins to record cash advances given
+to couriers, track categorized expenses per request, and formally reconcile the
+financial outcome once a request is complete.
 
-## What's New — `feature/deadline-risk-alerting`
+## What's New — `feature/request-expense-tracking`
 
-### Proactive Deadline Monitoring
-- A background job runs **every 5 minutes** and scans all active requests
-- Requests are flagged as **at risk** when their remaining time falls within a
-  calculated threshold based on their total duration
-- Alerts are sent to all relevant participants automatically — no manual action needed
-- Each request receives **at most one alert per lifecycle** — no duplicate notifications
+### Cash Advance Management
+- Admin can set a **cash advance** amount for a courier when a request is in the
+  Assigned state
+- The advanced amount is recorded once and cannot be modified — ensuring a clear
+  and auditable financial record
+- Visible directly on the request detail page alongside the assignment information
 
-### Risk Detection Rules
-A request is considered at risk when all of the following are true:
+### Expense Recording
+- Admin can add **multiple expense entries** to any active or completed request
+- Each entry has a **category** (Transport, Purchase, or Other), an amount, and
+  an optional description
+- Entries can be removed before reconciliation if a mistake was made
+- Expenses can still be added after the request is completed — supporting
+  real-world scenarios where receipts arrive late
 
-- Status is **Assigned** or **InProgress**
-- Has a deadline set
-- Deadline has **not yet passed**
-- Has **not already been alerted**
-- Remaining time is within `MAX(20% of total duration, 2 hours)`
+### Automatic Financial Summary
+The system computes the financial outcome in real time without any manual
+calculation:
 
-For example, a request with a 20-hour total duration gets alerted when 4 hours
-remain. A short 1-hour request gets alerted immediately since the 2-hour floor
-kicks in.
-
-### Who Gets Notified
-Every alert fans out to all participants of the request:
-
-| Recipient | Condition |
+| Field | Meaning |
 |---|---|
-| **Admin(s)** | Always |
-| **Collaborator** (request owner) | Always |
-| **Courier** | Only if one is assigned |
+| **Advanced Amount** | Cash given to the courier upfront |
+| **Total Expenses** | Sum of all recorded expense entries |
+| **Difference** | Total Expenses − Advanced Amount |
 
-### Notification Content
-Alerts use a new dedicated `DeadlineRisk` notification type. The message is
-timezone-neutral — the deadline is delivered as structured ISO 8601 UTC metadata
-alongside the message, so the frontend can render it in each user's local timezone
-automatically.
+The difference tells the admin exactly what action to take:
 
-### New API Behavior
-No new endpoints are added. Alerts flow entirely through the existing notification
-pipeline — they appear in the notification bell like any other notification and
-are pushed live via SignalR to all connected participants.
+- **Positive** → the organisation owes the courier the difference
+- **Negative** → the courier returns money to the organisation
+- **Zero** → balanced, no transfer needed
 
-### Architecture
+### Reconciliation
+- Once the admin has reviewed the summary, they can **mark the request as
+  reconciled** with a single action
+- Reconciliation is only available when an advanced amount has been set
+- After reconciliation the expense panel becomes fully read-only — no further
+  edits are possible
+- The reconciliation timestamp is recorded and displayed on the request
 
-```
-Domain/
-├── Entities/
-│   └── Request.cs                  ← +LastRiskAlertAt, +MarkRiskAlertSent()
-├── Enums/
-│   └── NotificationType.cs         ← +DeadlineRisk = 7
-└── Events/
-    └── RequestAtRiskEvent.cs
+### Non-Blocking Design
+Expense tracking is entirely **optional and non-blocking**. A request can be
+assigned, started, completed, and surveyed without ever touching the finances
+section. The feature sits as a parallel layer and never interferes with the
+request lifecycle.
 
-Application/
-└── Requests/
-    ├── Queries/    GetAtRiskRequestsQuery
-    ├── Commands/   MarkRequestRiskAlertSentCommand
-    └── Handlers/   RequestAtRiskHandler
+### Who Can Use It
+The Finances section is **Admin-only**. Couriers and Collaborators do not see
+expense data on the request detail page.
 
-Infrastructure/
-├── BackgroundJobs/   DeadlineMonitoringService
-├── Repositories/     RequestRepository  ← +GetAtRiskRequestsAsync
-├── Configurations/   RequestConfiguration  ← +LastRiskAlertAt mapping
-└── Migrations/       AddLastRiskAlertAtToRequest
-```
+### New API Endpoints
 
-The background job contains zero business logic — it only schedules and delegates
-to the Application layer via MediatR. All detection and notification logic lives
-in the Application layer, strictly respecting Clean Architecture boundaries.
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/requests/{id}/expenses/advanced-amount` | Set the cash advance |
+| `GET` | `/requests/{id}/expenses` | List all expense records |
+| `POST` | `/requests/{id}/expenses` | Add an expense entry |
+| `DELETE` | `/requests/{id}/expenses/{expenseId}` | Remove an expense entry |
+| `GET` | `/requests/{id}/expenses/summary` | Get the financial summary |
+| `POST` | `/requests/{id}/expenses/reconcile` | Mark as reconciled |
+
+The financial summary is also embedded directly in the existing
+`GET /requests/{id}` response, so the request detail page loads everything in
+a single call.
 
 ### Database Changes
-A single nullable column `LastRiskAlertAt` is added to the `Requests` table. It
-is `NULL` by default, meaning all existing requests are eligible for a one-time
-alert. Once an alert is sent, the column is stamped and the request is excluded
-from all future scans.
+Two nullable columns are added to the `Assignments` table (`AdvancedAmount`,
+`ReconciledAt`) and a new `ExpenseRecords` table is created, linked to both the
+request and its assignment. All existing data is unaffected.
 
 ## How to Test with Docker
 
@@ -94,46 +89,44 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
-### Testing the Alerting System
+### Testing the Expense Tracking Flow
 
-The seeded data includes a test request designed to enter the risk window
-shortly after startup.
+**Step 1 — Assign a request and set an advance**
 
-**Step 1 — Log in and open the notification panel**
+Log in as Admin, open any Pending request, and assign a courier. Once the
+status becomes Assigned, the **Finances** section appears in the right column.
+Enter a cash advance amount and click **Set**.
 
-Log in as Admin or as the Collaborator `sarah.johnson@ey.local`. Watch the
-notification bell — an alert will appear within the first two scan cycles
-(within 5 minutes of startup).
+**Step 2 — Add expenses**
 
-**Step 2 — Watch the background job logs**
+Add one or more expense entries using the category selector and amount field.
+The summary updates immediately after each entry. Try adding a Transport and a
+Purchase entry to see the difference calculation in action.
 
-In the Docker console you will see:
-```
-[DeadlineMonitor] Scanning for at-risk requests at ...
-[DeadlineMonitor] Found 1 at-risk request(s).
-```
+**Step 3 — Remove an entry**
 
-**Step 3 — Verify the notification**
+Click the trash icon on any expense row to remove it. The summary recalculates
+automatically.
 
-The alert appears in the notification feed for Admin, the request owner, and
-the assigned Courier. Each recipient receives it independently and gets a live
-push via SignalR.
+**Step 4 — Reconcile**
 
-**Step 4 — Verify idempotency**
+Once you are satisfied with the entries, click **Mark as Reconciled**. The panel
+becomes read-only, the reconciliation timestamp is displayed, and the Reconciled
+badge appears in the section header.
 
-On the next scan cycle the log will show:
-```
-[DeadlineMonitor] Found 0 at-risk request(s).
-```
-The same request is never alerted twice.
+**Step 5 — Verify the audit trail**
+
+Scroll down to the **Activity** timeline on the request detail page. Each
+financial action — setting the advance, adding or removing expenses, and
+reconciliation — appears as a timestamped entry in the timeline.
 
 ## Notes
 
 - This branch includes all features from all previous branches, including the
-  Request Messaging System, Courier Recommendation Engine, and the real-time
-  notification system.
-- The background job starts with a 15-second delay after app startup to let
-  the host finish wiring up before the first scan.
+  Deadline Risk Alerting System, Request Messaging System, Courier Recommendation
+  Engine, and the real-time notification system.
+- Expense records are append-only by design — each entry is independent and
+  there is no edit operation, only add and remove.
 
 ## Demo Credentials
 
