@@ -94,7 +94,7 @@ public sealed class SendRequestMessageHandler : IRequestHandler<SendRequestMessa
             return true;
 
         var isAssignedCourier = request.Assignments
-            .Any(a => a.CourierId == userId && a.IsActive);
+            .Any(a => a.CourierId == userId);
 
         return isAssignedCourier;
     }
