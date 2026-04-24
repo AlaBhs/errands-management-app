@@ -1,5 +1,5 @@
 // Types
-export { RequestStatus, PriorityLevel } from "./types";
+export { RequestStatus, PriorityLevel, RequestCategory } from "./types";
 export type {
   CancelRequestPayload,
   CompleteRequestPayload,
@@ -8,6 +8,8 @@ export type {
   SubmitSurveyPayload,
   RequestQueryParams,
   SortField,
+  SetAdvancedAmountPayload,
+  AddExpenseRecordPayload,
 } from "./types";
 export type {
   RequestDetailsDto,
@@ -17,7 +19,9 @@ export type {
   AuditLogDto,
   SurveyDto,
   ScoreBreakdownDto,
-  CourierScoreDto
+  CourierScoreDto,
+  ExpenseRecordDto,
+  ExpenseSummaryDto,
 } from "./types";
 
 // Hooks
