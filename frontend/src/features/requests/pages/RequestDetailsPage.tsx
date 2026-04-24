@@ -30,10 +30,14 @@ import {
   ChevronLeft,
   Paperclip,
   RotateCcw,
+  Wallet,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { LocationMap } from "@/shared/components/LocationMap";
 import { RequestMessagesPanel } from "@/features/messaging";
+import { ExpensePanel } from "../components/common/ExpensePanel";
 
 // ── Audit log config ──────────────────────────────────────────────────────────
 
@@ -48,39 +52,63 @@ const AUDIT_EVENT_CONFIG: Record<
 > = {
   Created: {
     icon: FileText,
-    color: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-100 dark:bg-blue-950/30",
-    label: "Created",
+    color: "text-slate-600 dark:text-slate-400",
+    bg: "bg-slate-100 dark:bg-slate-900/30",
+    label: "Request Created",
   },
   Assigned: {
     icon: UserCheck,
-    color: "text-purple-600 dark:text-purple-400",
-    bg: "bg-purple-100 dark:bg-purple-950/30",
-    label: "Assigned",
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-indigo-100 dark:bg-indigo-950/30",
+    label: "Courier Assigned",
   },
   Started: {
     icon: Play,
-    color: "text-orange-600 dark:text-orange-400",
-    bg: "bg-orange-100 dark:bg-orange-950/30",
-    label: "Started",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    label: "Work Started",
   },
   Completed: {
     icon: CheckCircle2,
-    color: "text-emerald-600 dark:text-emerald-400",
-    bg: "bg-emerald-100 dark:bg-emerald-950/30",
-    label: "Completed",
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-100 dark:bg-green-950/30",
+    label: "Request Completed",
   },
   Cancelled: {
     icon: XCircle,
-    color: "text-red-600 dark:text-red-400",
-    bg: "bg-red-100 dark:bg-red-950/30",
-    label: "Cancelled",
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-100 dark:bg-rose-950/30",
+    label: "Request Cancelled",
   },
   SurveySubmitted: {
     icon: Star,
-    color: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-100 dark:bg-amber-950/30",
+    color: "text-yellow-600 dark:text-yellow-400",
+    bg: "bg-yellow-100 dark:bg-yellow-950/30",
     label: "Survey Submitted",
+  },
+  ExpenseAdded: {
+    icon: Plus,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-100 dark:bg-emerald-950/30",
+    label: "Expense Added",
+  },
+  ExpenseRemoved: {
+    icon: Trash2,
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-red-100 dark:bg-red-950/30",
+    label: "Expense Removed",
+  },
+  AdvancedAmountSet: {
+    icon: Wallet,
+    color: "text-cyan-600 dark:text-cyan-400",
+    bg: "bg-cyan-100 dark:bg-cyan-950/30",
+    label: "Cash Advance Set",
+  },
+  Reconciled: {
+    icon: CheckCircle2,
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-100 dark:bg-teal-950/30",
+    label: "Expenses Reconciled",
   },
 };
 
@@ -408,63 +436,135 @@ export function RequestDetailsPage() {
           {/* Actions */}
           <RequestActions request={request} />
 
-          {/* Assignment */}
-          {request.currentAssignment && (
-            <Section title="Assignment">
-              <div className="space-y-3">
-                <InfoRow
-                  label="Courier"
-                  value={request.currentAssignment.courierName}
-                  bold
-                />
-                <InfoRow
-                  label="Assigned"
-                  value={formatDateTime(request.currentAssignment.assignedAt)}
-                />
-                {request.currentAssignment.startedAt && (
-                  <InfoRow
-                    label="Started"
-                    value={formatDateTime(request.currentAssignment.startedAt)}
-                  />
-                )}
-                {request.currentAssignment.completedAt && (
-                  <>
-                    <InfoRow
-                      label="Completed"
-                      value={formatDateTime(
-                        request.currentAssignment.completedAt,
-                      )}
-                    />
-                    {request.currentAssignment.startedAt && (
-                      <InfoRow
-                        label="Duration"
-                        value={formatDuration(
-                          request.currentAssignment.startedAt,
-                          request.currentAssignment.completedAt,
-                        )}
-                        bold
-                      />
-                    )}
-                  </>
-                )}
-                {request.currentAssignment.actualCost != null && (
-                  <InfoRow
-                    label="Actual Cost"
-                    value={`$${request.currentAssignment.actualCost}`}
-                    bold
-                  />
-                )}
-                {request.currentAssignment.note && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Note</p>
-                    <p className="text-sm text-foreground">
-                      {request.currentAssignment.note}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Section>
+          {/* ── Finances (Admin only) ──────────────────────────────── */}
+          {role === UserRole.Admin && (
+            <ExpensePanel
+              requestId={request.id}
+              status={request.status}
+              expenseSummary={request.expenseSummary}
+            />
           )}
+
+          {/* Assignment */}
+{request.currentAssignment && (
+  <Section title="Assignment">
+    <div className="space-y-4">
+      {/* Courier info */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground mb-0.5">Courier</p>
+          <p className="font-semibold text-foreground">
+            {request.currentAssignment.courierName}
+          </p>
+        </div>
+        {request.currentAssignment.completedAt && request.currentAssignment.startedAt && (
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground mb-0.5">Duration</p>
+            <p className="text-sm font-medium text-foreground">
+              {formatDuration(
+                request.currentAssignment.startedAt,
+                request.currentAssignment.completedAt
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Horizontal timeline */}
+      <div className="relative flex items-center justify-between gap-2 py-2">
+        {/* Assigned */}
+        <div className="flex flex-1 flex-col items-center text-center">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950/30">
+            <UserCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <p className="mt-2 text-xs font-medium text-foreground">Assigned</p>
+          <p className="text-xs text-muted-foreground">
+            {formatDateTime(request.currentAssignment.assignedAt)}
+          </p>
+        </div>
+
+        {/* Connecting line (only if Started exists) */}
+        {request.currentAssignment.startedAt && (
+          <div className="h-px flex-1 bg-border" />
+        )}
+
+        {/* Started (if exists) */}
+        {request.currentAssignment.startedAt && (
+          <div className="flex flex-1 flex-col items-center text-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30">
+              <Play className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="mt-2 text-xs font-medium text-foreground">Started</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDateTime(request.currentAssignment.startedAt)}
+            </p>
+          </div>
+        )}
+
+        {/* Connecting line (only if Completed exists) */}
+        {request.currentAssignment.completedAt && (
+          <div className="h-px flex-1 bg-border" />
+        )}
+
+        {/* Completed (if exists) */}
+        {request.currentAssignment.completedAt && (
+          <div className="flex flex-1 flex-col items-center text-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="mt-2 text-xs font-medium text-foreground">Completed</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDateTime(request.currentAssignment.completedAt)}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Financial summary card */}
+      {(request.currentAssignment.actualCost != null ||
+        request.currentAssignment.advancedAmount != null ||
+        request.currentAssignment.isReconciled) && (
+        <div className="rounded-lg bg-muted/30 p-3 space-y-1">
+          <p className="text-xs font-medium text-muted-foreground mb-1">Financial</p>
+          <div className="flex flex-wrap justify-between items-center gap-2 text-sm">
+            {request.currentAssignment.actualCost != null && (
+              <div>
+                <span className="text-muted-foreground">Actual cost:</span>{' '}
+                <span className="font-medium">
+                  {request.currentAssignment.actualCost.toFixed(2)} TND
+                </span>
+              </div>
+            )}
+            {request.currentAssignment.advancedAmount != null && (
+              <div>
+                <span className="text-muted-foreground">Advanced:</span>{' '}
+                <span className="font-medium">
+                  {request.currentAssignment.advancedAmount.toFixed(2)} TND
+                </span>
+              </div>
+            )}
+            {request.currentAssignment.isReconciled && (
+              <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">Reconciled</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Note */}
+      {request.currentAssignment.note && (
+        <div className="border-l-2 border-amber-300 pl-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Note</p>
+          <p className="text-sm text-foreground italic">
+            {request.currentAssignment.note}
+          </p>
+        </div>
+      )}
+    </div>
+  </Section>
+)}
 
           {/* Delivery address */}
           <Section
@@ -540,7 +640,7 @@ function Section({
 }) {
   return (
     <div
-      className={`rounded-xl border bg-card p-5 shadow-sm ${className || ''}`}
+      className={`rounded-xl border bg-card p-5 shadow-sm ${className || ""}`}
     >
       <div className="mb-4 flex items-center gap-2">
         {icon && <span className="text-muted-foreground">{icon}</span>}
@@ -559,21 +659,3 @@ function Section({
   );
 }
 
-function InfoRow({
-  label,
-  value,
-  bold,
-}: {
-  label: string;
-  value: string;
-  bold?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-      <p className={cn("text-sm text-foreground", bold && "font-semibold")}>
-        {value}
-      </p>
-    </div>
-  );
-}
