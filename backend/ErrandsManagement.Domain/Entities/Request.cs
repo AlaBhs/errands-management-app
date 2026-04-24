@@ -242,7 +242,7 @@ public class Request : BaseEntity
         MarkAsUpdated();
 
         AddAudit("ExpenseAdded",
-            $"Expense of {amount:F2} ({category}) added by {createdBy}.");
+            $"Expense of {amount:F2} ({category}) added by System Admin.");
     }
 
     public void RemoveExpense(Guid expenseRecordId)

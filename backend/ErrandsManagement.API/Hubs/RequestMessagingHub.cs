@@ -99,6 +99,6 @@ public sealed class RequestMessagingHub : Hub
         if (request.RequesterId == userId)
             return true;
 
-        return request.Assignments.Any(a => a.CourierId == userId && a.IsActive);
+        return request.Assignments.Any(a => a.CourierId == userId);
     }
 }
