@@ -17,6 +17,8 @@ export interface RequestTemplateDetailsDto {
   description: string;
   category: RequestCategory;
   address: AddressDto;
+  contactPerson?: string;
+  contactPhone?: string;
   estimatedCost?: number;
   createdAt: string;
 }

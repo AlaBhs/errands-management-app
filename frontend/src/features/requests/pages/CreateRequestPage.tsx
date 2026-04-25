@@ -2,7 +2,14 @@ import { useNavigate, useLocation } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileIcon, Upload, X, Loader2, RotateCcw, BookTemplate } from "lucide-react";
+import {
+  FileIcon,
+  Upload,
+  X,
+  Loader2,
+  RotateCcw,
+  BookTemplate,
+} from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -25,6 +32,7 @@ import type { RequestDetailsDto } from "../types";
 import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
 import type { RequestTemplateListItemDto } from "@/features/request-templates";
 import { TemplatePicker } from "@/features/request-templates";
+import { templatesApi } from "@/features/request-templates/api/templates.api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -174,6 +182,8 @@ export function CreateRequestPage() {
     RequestTemplateListItemDto | undefined
   >(undefined);
 
+  const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -221,33 +231,68 @@ export function CreateRequestPage() {
     });
   };
 
-  const applyTemplate = (template: RequestTemplateListItemDto) => {
-    setAppliedTemplate(template);
-    // Fetch template details to get address and description
-    import("@/features/request-templates/api/templates.api").then(
-      ({ templatesApi }) => {
-        templatesApi.getById(template.id).then((res) => {
-          const t = res.data;
-          setValue("title", t.title);
-          setValue("description", t.description);
-          setValue("category", t.category);
-          if (t.estimatedCost != null) {
-            setValue("estimatedCost", String(t.estimatedCost));
-          }
-          if (t.address) {
-            setValue("deliveryAddress.city", t.address.city ?? "");
-            setValue("deliveryAddress.postalCode", t.address.postalCode ?? "");
-            setValue("deliveryAddress.country", t.address.country ?? "");
-            setValue("deliveryAddress.street", t.address.street ?? "");
-            setValue("deliveryAddress.note", t.address.note ?? "");
-            if (t.address.latitude)
-              setValue("deliveryAddress.latitude", t.address.latitude);
-            if (t.address.longitude)
-              setValue("deliveryAddress.longitude", t.address.longitude);
-          }
+  const applyTemplate = async (template: RequestTemplateListItemDto) => {
+    setIsApplyingTemplate(true);
+    try {
+      const res = await templatesApi.getById(template.id);
+      const t = res.data;
+
+      // Core fields
+      setValue("title", t.title, { shouldDirty: true });
+      setValue("description", t.description, { shouldDirty: true });
+      setValue("category", t.category, { shouldDirty: true });
+
+      if (t.estimatedCost != null) {
+        setValue("estimatedCost", String(t.estimatedCost), {
+          shouldDirty: true,
         });
-      },
-    );
+      }
+
+      if (t.contactPerson) {
+        setValue("contactPerson", t.contactPerson, { shouldDirty: true });
+      }
+      if (t.contactPhone) {
+        setValue("contactPhone", t.contactPhone, { shouldDirty: true });
+      }
+
+      const addr = t.address;
+      if (addr) {
+        setValue("deliveryAddress.city", addr.city ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.postalCode", addr.postalCode ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.country", addr.country ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.street", addr.street ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.note", addr.note ?? "", {
+          shouldDirty: true,
+        });
+        // Coordinates — shouldValidate forces Controller to re-render map pin
+        if (addr.latitude != null) {
+          setValue("deliveryAddress.latitude", addr.latitude, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+        if (addr.longitude != null) {
+          setValue("deliveryAddress.longitude", addr.longitude, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+      }
+
+      setAppliedTemplate(template);
+    } catch {
+      toast.error("Failed to load template details.");
+    } finally {
+      setIsApplyingTemplate(false);
+    }
   };
 
   const clearTemplate = () => {
@@ -350,7 +395,10 @@ export function CreateRequestPage() {
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
             Use a Template
           </span>
-          {appliedTemplate && (
+          {isApplyingTemplate && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500 ml-1" />
+          )}
+          {appliedTemplate && !isApplyingTemplate && (
             <span className="ml-auto text-xs text-indigo-600 dark:text-indigo-400 font-medium">
               ✓ Form pre-filled from "{appliedTemplate.name}"
             </span>
@@ -360,6 +408,7 @@ export function CreateRequestPage() {
           onSelect={applyTemplate}
           onClear={clearTemplate}
           selectedName={appliedTemplate?.name}
+          disabled={isApplyingTemplate}
         />
       </div>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">

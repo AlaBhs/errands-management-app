@@ -8,6 +8,7 @@ interface TemplatePickerProps {
   onSelect: (template: RequestTemplateListItemDto) => void;
   onClear: () => void;
   selectedName?: string;
+  disabled?: boolean;
 }
 
 export function TemplatePicker({ onSelect, onClear, selectedName }: TemplatePickerProps) {
@@ -66,6 +67,7 @@ export function TemplatePicker({ onSelect, onClear, selectedName }: TemplatePick
           "w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5",
           "text-sm transition-colors bg-background dark:bg-card",
           "hover:border-indigo-300 dark:hover:border-indigo-700",
+          "disabled:opacity-60 disabled:cursor-not-allowed", 
           open
             ? "border-indigo-400 dark:border-indigo-600 ring-1 ring-indigo-200 dark:ring-indigo-900"
             : "border-border",
