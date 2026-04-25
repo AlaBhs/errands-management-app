@@ -32,6 +32,12 @@ public sealed class RequestTemplateConfiguration : IEntityTypeConfiguration<Requ
         builder.Property(t => t.CreatedBy)
             .IsRequired();
 
+        builder.Property(t => t.ContactPerson)
+            .HasMaxLength(100);
+
+        builder.Property(t => t.ContactPhone)
+            .HasMaxLength(20);
+
         // Unique composite index: name must be unique per user
         builder.HasIndex(t => new { t.CreatedBy, t.Name })
             .IsUnique();

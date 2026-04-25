@@ -42,6 +42,8 @@ public sealed class GetRequestTemplateByIdHandler
                 template.Address.Latitude,
                 template.Address.Longitude),
             template.EstimatedCost,
+            template.ContactPerson,
+            template.ContactPhone,
             template.CreatedAt);
     }
 }

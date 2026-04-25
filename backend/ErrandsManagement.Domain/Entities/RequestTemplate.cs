@@ -17,6 +17,8 @@ public sealed class RequestTemplate : BaseEntity
     public Address Address { get; private set; }
     public decimal? EstimatedCost { get; private set; }
     public Guid CreatedBy { get; private set; }
+    public string? ContactPerson { get; private set; }
+    public string? ContactPhone { get; private set; }
 
     public RequestTemplate(
         string name,
@@ -25,7 +27,9 @@ public sealed class RequestTemplate : BaseEntity
         RequestCategory category,
         Address address,
         decimal? estimatedCost,
-        Guid createdBy)
+        Guid createdBy,
+        string? contactPerson = null,
+        string? contactPhone = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Template name is required.", nameof(name));
@@ -41,5 +45,7 @@ public sealed class RequestTemplate : BaseEntity
         Address = address;
         EstimatedCost = estimatedCost;
         CreatedBy = createdBy;
+        ContactPerson = contactPerson;
+        ContactPhone = contactPhone;
     }
 }

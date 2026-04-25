@@ -48,7 +48,9 @@ public sealed class CreateRequestTemplateFromRequestHandler
             request.Category,
             request.DeliveryAddress,
             request.EstimatedCost,
-            command.UserId);
+            command.UserId,
+            request.ContactPerson,
+            request.ContactPhone);
 
         await _templateRepository.AddAsync(template, cancellationToken);
         await _templateRepository.SaveChangesAsync(cancellationToken);

@@ -10,4 +10,6 @@ public sealed record RequestTemplateDetailsDto(
     string Category,
     AddressDto Address,
     decimal? EstimatedCost,
+    string? ContactPerson,
+    string? ContactPhone,
     DateTime CreatedAt);
