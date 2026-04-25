@@ -22,6 +22,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<RequestMessage> RequestMessages => Set<RequestMessage>();
 
+    public DbSet<RequestTemplate> RequestTemplates => Set<RequestTemplate>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
