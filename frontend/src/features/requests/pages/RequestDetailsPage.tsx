@@ -33,11 +33,14 @@ import {
   Wallet,
   Trash2,
   Plus,
+  BookmarkPlus,
 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import { LocationMap } from "@/shared/components/LocationMap";
 import { RequestMessagesPanel } from "@/features/messaging";
 import { ExpensePanel } from "../components/common/ExpensePanel";
+import { CreateTemplateModal } from "@/features/request-templates/components/CreateTemplateModal";
+import { useState } from "react";
 
 // ── Audit log config ──────────────────────────────────────────────────────────
 
@@ -127,6 +130,7 @@ export function RequestDetailsPage() {
   const role = useAuthStore((s) => s.user?.role);
   const navigate = useNavigate();
   const userId = useAuthStore((s) => s.user?.id);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const backLink =
     role === UserRole.Courier
@@ -233,6 +237,22 @@ export function RequestDetailsPage() {
                 </span>
               )}
             </div>
+          </div>
+          <div className="shrink-0 flex flex-col items-end gap-2">
+            {/* Save as Template — Collaborator only, owns this request */}
+            {role === UserRole.Collaborator &&
+              request.requesterId === userId && (
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200
+                 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/20
+                 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300
+                 hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors"
+                >
+                  <BookmarkPlus className="h-3.5 w-3.5" />
+                  Save as Template
+                </button>
+              )}
           </div>
         </div>
       </div>
@@ -446,125 +466,148 @@ export function RequestDetailsPage() {
           )}
 
           {/* Assignment */}
-{request.currentAssignment && (
-  <Section title="Assignment">
-    <div className="space-y-4">
-      {/* Courier info */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground mb-0.5">Courier</p>
-          <p className="font-semibold text-foreground">
-            {request.currentAssignment.courierName}
-          </p>
-        </div>
-        {request.currentAssignment.completedAt && request.currentAssignment.startedAt && (
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground mb-0.5">Duration</p>
-            <p className="text-sm font-medium text-foreground">
-              {formatDuration(
-                request.currentAssignment.startedAt,
-                request.currentAssignment.completedAt
-              )}
-            </p>
-          </div>
-        )}
-      </div>
+          {request.currentAssignment && (
+            <Section title="Assignment">
+              <div className="space-y-4">
+                {/* Courier info */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      Courier
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      {request.currentAssignment.courierName}
+                    </p>
+                  </div>
+                  {request.currentAssignment.completedAt &&
+                    request.currentAssignment.startedAt && (
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground mb-0.5">
+                          Duration
+                        </p>
+                        <p className="text-sm font-medium text-foreground">
+                          {formatDuration(
+                            request.currentAssignment.startedAt,
+                            request.currentAssignment.completedAt,
+                          )}
+                        </p>
+                      </div>
+                    )}
+                </div>
 
-      {/* Horizontal timeline */}
-      <div className="relative flex items-center justify-between gap-2 py-2">
-        {/* Assigned */}
-        <div className="flex flex-1 flex-col items-center text-center">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950/30">
-            <UserCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <p className="mt-2 text-xs font-medium text-foreground">Assigned</p>
-          <p className="text-xs text-muted-foreground">
-            {formatDateTime(request.currentAssignment.assignedAt)}
-          </p>
-        </div>
+                {/* Horizontal timeline */}
+                <div className="relative flex items-center justify-between gap-2 py-2">
+                  {/* Assigned */}
+                  <div className="flex flex-1 flex-col items-center text-center">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950/30">
+                      <UserCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <p className="mt-2 text-xs font-medium text-foreground">
+                      Assigned
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateTime(request.currentAssignment.assignedAt)}
+                    </p>
+                  </div>
 
-        {/* Connecting line (only if Started exists) */}
-        {request.currentAssignment.startedAt && (
-          <div className="h-px flex-1 bg-border" />
-        )}
+                  {/* Connecting line (only if Started exists) */}
+                  {request.currentAssignment.startedAt && (
+                    <div className="h-px flex-1 bg-border" />
+                  )}
 
-        {/* Started (if exists) */}
-        {request.currentAssignment.startedAt && (
-          <div className="flex flex-1 flex-col items-center text-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30">
-              <Play className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            </div>
-            <p className="mt-2 text-xs font-medium text-foreground">Started</p>
-            <p className="text-xs text-muted-foreground">
-              {formatDateTime(request.currentAssignment.startedAt)}
-            </p>
-          </div>
-        )}
+                  {/* Started (if exists) */}
+                  {request.currentAssignment.startedAt && (
+                    <div className="flex flex-1 flex-col items-center text-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30">
+                        <Play className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-foreground">
+                        Started
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(request.currentAssignment.startedAt)}
+                      </p>
+                    </div>
+                  )}
 
-        {/* Connecting line (only if Completed exists) */}
-        {request.currentAssignment.completedAt && (
-          <div className="h-px flex-1 bg-border" />
-        )}
+                  {/* Connecting line (only if Completed exists) */}
+                  {request.currentAssignment.completedAt && (
+                    <div className="h-px flex-1 bg-border" />
+                  )}
 
-        {/* Completed (if exists) */}
-        {request.currentAssignment.completedAt && (
-          <div className="flex flex-1 flex-col items-center text-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
-              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-            </div>
-            <p className="mt-2 text-xs font-medium text-foreground">Completed</p>
-            <p className="text-xs text-muted-foreground">
-              {formatDateTime(request.currentAssignment.completedAt)}
-            </p>
-          </div>
-        )}
-      </div>
+                  {/* Completed (if exists) */}
+                  {request.currentAssignment.completedAt && (
+                    <div className="flex flex-1 flex-col items-center text-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/30">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-foreground">
+                        Completed
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(request.currentAssignment.completedAt)}
+                      </p>
+                    </div>
+                  )}
+                </div>
 
-      {/* Financial summary card */}
-      {(request.currentAssignment.actualCost != null ||
-        request.currentAssignment.advancedAmount != null ||
-        request.currentAssignment.isReconciled) && (
-        <div className="rounded-lg bg-muted/30 p-3 space-y-1">
-          <p className="text-xs font-medium text-muted-foreground mb-1">Financial</p>
-          <div className="flex flex-wrap justify-between items-center gap-2 text-sm">
-            {request.currentAssignment.actualCost != null && (
-              <div>
-                <span className="text-muted-foreground">Actual cost:</span>{' '}
-                <span className="font-medium">
-                  {request.currentAssignment.actualCost.toFixed(2)} TND
-                </span>
+                {/* Financial summary card */}
+                {(request.currentAssignment.actualCost != null ||
+                  request.currentAssignment.advancedAmount != null ||
+                  request.currentAssignment.isReconciled) && (
+                  <div className="rounded-lg bg-muted/30 p-3 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Financial
+                    </p>
+                    <div className="flex flex-wrap justify-between items-center gap-2 text-sm">
+                      {request.currentAssignment.actualCost != null && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Actual cost:
+                          </span>{" "}
+                          <span className="font-medium">
+                            {request.currentAssignment.actualCost.toFixed(2)}{" "}
+                            TND
+                          </span>
+                        </div>
+                      )}
+                      {request.currentAssignment.advancedAmount != null && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Advanced:
+                          </span>{" "}
+                          <span className="font-medium">
+                            {request.currentAssignment.advancedAmount.toFixed(
+                              2,
+                            )}{" "}
+                            TND
+                          </span>
+                        </div>
+                      )}
+                      {request.currentAssignment.isReconciled && (
+                        <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span className="text-xs font-medium">
+                            Reconciled
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Note */}
+                {request.currentAssignment.note && (
+                  <div className="border-l-2 border-amber-300 pl-3">
+                    <p className="text-xs text-muted-foreground mb-0.5">Note</p>
+                    <p className="text-sm text-foreground italic">
+                      {request.currentAssignment.note}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-            {request.currentAssignment.advancedAmount != null && (
-              <div>
-                <span className="text-muted-foreground">Advanced:</span>{' '}
-                <span className="font-medium">
-                  {request.currentAssignment.advancedAmount.toFixed(2)} TND
-                </span>
-              </div>
-            )}
-            {request.currentAssignment.isReconciled && (
-              <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">Reconciled</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Note */}
-      {request.currentAssignment.note && (
-        <div className="border-l-2 border-amber-300 pl-3">
-          <p className="text-xs text-muted-foreground mb-0.5">Note</p>
-          <p className="text-sm text-foreground italic">
-            {request.currentAssignment.note}
-          </p>
-        </div>
-      )}
-    </div>
-  </Section>
-)}
+            </Section>
+          )}
 
           {/* Delivery address */}
           <Section
@@ -619,6 +662,13 @@ export function RequestDetailsPage() {
           </Section>
         </div>
       </div>
+      {showTemplateModal && (
+        <CreateTemplateModal
+          requestId={request.id}
+          requestTitle={request.title}
+          onClose={() => setShowTemplateModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -658,4 +708,3 @@ function Section({
     </div>
   );
 }
-
