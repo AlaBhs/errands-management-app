@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileIcon, Upload, X, Loader2, RotateCcw } from "lucide-react";
+import { FileIcon, Upload, X, Loader2, RotateCcw, BookTemplate } from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
 import type { RequestDetailsDto } from "../types";
 import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
+import type { RequestTemplateListItemDto } from "@/features/request-templates/types";
+import { TemplatePicker } from "@/features/request-templates/components/TemplatePicker";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -168,11 +170,16 @@ export function CreateRequestPage() {
   const { mutateAsync: uploadFiles, isPending: isUploadingFiles } =
     useUploadAttachments();
 
+  const [appliedTemplate, setAppliedTemplate] = useState<
+    RequestTemplateListItemDto | undefined
+  >(undefined);
+
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -214,6 +221,39 @@ export function CreateRequestPage() {
     });
   };
 
+  const applyTemplate = (template: RequestTemplateListItemDto) => {
+    setAppliedTemplate(template);
+    // Fetch template details to get address and description
+    import("@/features/request-templates/api/templates.api").then(
+      ({ templatesApi }) => {
+        templatesApi.getById(template.id).then((res) => {
+          const t = res.data;
+          setValue("title", t.title);
+          setValue("description", t.description);
+          setValue("category", t.category);
+          if (t.estimatedCost != null) {
+            setValue("estimatedCost", String(t.estimatedCost));
+          }
+          if (t.address) {
+            setValue("deliveryAddress.city", t.address.city ?? "");
+            setValue("deliveryAddress.postalCode", t.address.postalCode ?? "");
+            setValue("deliveryAddress.country", t.address.country ?? "");
+            setValue("deliveryAddress.street", t.address.street ?? "");
+            setValue("deliveryAddress.note", t.address.note ?? "");
+            if (t.address.latitude)
+              setValue("deliveryAddress.latitude", t.address.latitude);
+            if (t.address.longitude)
+              setValue("deliveryAddress.longitude", t.address.longitude);
+          }
+        });
+      },
+    );
+  };
+
+  const clearTemplate = () => {
+    setAppliedTemplate(undefined);
+    reset({ priority: 1 });
+  };
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   const onSubmit = (values: FormValues) => {
@@ -300,6 +340,28 @@ export function CreateRequestPage() {
         />
       )}
 
+      {/* ── Template Picker ──────────────────────────────────────────────────── */}
+      <div
+        className="rounded-xl border border-indigo-100 dark:border-indigo-900/30
+                bg-indigo-50/50 dark:bg-indigo-950/10 p-4"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <BookTemplate className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+            Use a Template
+          </span>
+          {appliedTemplate && (
+            <span className="ml-auto text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+              ✓ Form pre-filled from "{appliedTemplate.name}"
+            </span>
+          )}
+        </div>
+        <TemplatePicker
+          onSelect={applyTemplate}
+          onClear={clearTemplate}
+          selectedName={appliedTemplate?.name}
+        />
+      </div>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         {/* ── General Info ─────────────────────────────────────────────────── */}
         <div className="bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
