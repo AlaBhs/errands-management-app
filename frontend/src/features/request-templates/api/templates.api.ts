@@ -15,13 +15,17 @@ export const templatesApi = {
 
   getAll: (params?: TemplateQueryParams) =>
     apiClient
-      .get<PaginatedResponse<RequestTemplateListItemDto>>("/request-templates", { params })
+      .get<
+        PaginatedResponse<RequestTemplateListItemDto>
+      >("/request-templates", { params })
       .then((res) => res.data),
 
   getById: (id: string) =>
     apiClient
       .get<ApiResponse<RequestTemplateDetailsDto>>(`/request-templates/${id}`)
-      .then((res) => res.data),
+      .then((res) => {
+        return res.data;
+      }),
 
   delete: (id: string) =>
     apiClient

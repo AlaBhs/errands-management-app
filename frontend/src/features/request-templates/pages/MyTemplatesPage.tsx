@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
-  BookTemplate,
   Trash2,
   Search,
   Calendar,
   DollarSign,
+  BookTemplate,
 } from "lucide-react";
 import { useMyTemplates } from "../hooks/useTemplates";
 import { useDeleteTemplate } from "../hooks/useTemplateMutations";

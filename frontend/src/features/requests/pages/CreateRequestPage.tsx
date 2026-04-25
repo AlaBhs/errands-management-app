@@ -184,6 +184,8 @@ export function CreateRequestPage() {
 
   const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
 
+  const [mapKey, setMapKey] = useState(0);
+
   const {
     register,
     handleSubmit,
@@ -236,6 +238,7 @@ export function CreateRequestPage() {
     try {
       const res = await templatesApi.getById(template.id);
       const t = res.data;
+      console.log("Applying template :", t);
 
       // Core fields
       setValue("title", t.title, { shouldDirty: true });
@@ -285,6 +288,7 @@ export function CreateRequestPage() {
             shouldValidate: true,
           });
         }
+        setMapKey(prev => prev + 1);
       }
 
       setAppliedTemplate(template);
@@ -298,6 +302,7 @@ export function CreateRequestPage() {
   const clearTemplate = () => {
     setAppliedTemplate(undefined);
     reset({ priority: 1 });
+    setMapKey(prev => prev + 1);
   };
   // ── Submit ─────────────────────────────────────────────────────────────────
 
@@ -705,6 +710,7 @@ export function CreateRequestPage() {
                       control={control}
                       render={({ field: lngField }) => (
                         <AddressMapPicker
+                          key={mapKey}
                           latitude={latField.value}
                           longitude={lngField.value}
                           onCoordinatesChange={(lat, lng) => {
