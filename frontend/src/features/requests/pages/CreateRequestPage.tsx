@@ -23,8 +23,8 @@ import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
 import type { RequestDetailsDto } from "../types";
 import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
-import type { RequestTemplateListItemDto } from "@/features/request-templates/types";
-import { TemplatePicker } from "@/features/request-templates/components/TemplatePicker";
+import type { RequestTemplateListItemDto } from "@/features/request-templates";
+import { TemplatePicker } from "@/features/request-templates";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

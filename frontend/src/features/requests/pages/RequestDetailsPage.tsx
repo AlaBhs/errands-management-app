@@ -39,7 +39,7 @@ import { cn } from "@/shared/utils/utils";
 import { LocationMap } from "@/shared/components/LocationMap";
 import { RequestMessagesPanel } from "@/features/messaging";
 import { ExpensePanel } from "../components/common/ExpensePanel";
-import { CreateTemplateModal } from "@/features/request-templates/components/CreateTemplateModal";
+import { CreateTemplateModal } from "@/features/request-templates";
 import { useState } from "react";
 
 // ── Audit log config ──────────────────────────────────────────────────────────

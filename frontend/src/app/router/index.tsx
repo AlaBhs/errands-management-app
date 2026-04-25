@@ -63,6 +63,11 @@ const PublicOrDashboard = lazy(() =>
     default: m.PublicOrDashboard,
   })),
 );
+const MyTemplatesPage = lazy(() =>
+  import("@/features/request-templates/pages/MyTemplatesPage").then((m) => ({
+    default: m.MyTemplatesPage,
+  })),
+);
 const NotFoundPage = lazy(() =>
   import("../pages/NotFoundPage").then((m) => ({
     default: m.NotFoundPage,
@@ -93,6 +98,7 @@ export function AppRouter() {
             <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
               <Route path="/requests/mine" element={<MyRequestsPage />} />
               <Route path="/requests/new" element={<CreateRequestPage />} />
+              <Route path="/templates" element={<MyTemplatesPage />} />
             </Route>
 
             <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>

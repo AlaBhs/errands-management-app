@@ -11,6 +11,7 @@ import {
   PanelLeft,
   ChevronRight,
   CalendarClock,
+  BookTemplate,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -81,6 +82,12 @@ const collaboratorNav: NavGroup[] = [
         path: "/requests/new",
         label: "New Request",
         icon: PlusCircle,
+        exact: true,
+      },
+      {
+        path: "/templates",
+        label: "My Templates",
+        icon: BookTemplate,
         exact: true,
       },
     ],
