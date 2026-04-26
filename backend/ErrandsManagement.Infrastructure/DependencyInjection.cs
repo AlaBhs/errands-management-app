@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddScoped<IRequestMessageRepository, RequestMessageRepository>();
         services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
         services.AddScoped<IRequestTemplateRepository, RequestTemplateRepository>();
+        services.AddScoped<IDeliveryBatchRepository, DeliveryBatchRepository>();
 
         return services;
     }

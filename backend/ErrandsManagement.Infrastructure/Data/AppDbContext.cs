@@ -24,6 +24,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<RequestTemplate> RequestTemplates => Set<RequestTemplate>();
 
+    public DbSet<DeliveryBatch> DeliveryBatches => Set<DeliveryBatch>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
