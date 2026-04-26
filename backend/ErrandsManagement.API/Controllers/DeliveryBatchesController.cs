@@ -3,6 +3,7 @@ using ErrandsManagement.Application.DeliveryBatches.Commands.CancelDeliveryBatch
 using ErrandsManagement.Application.DeliveryBatches.Commands.ConfirmDeliveryPickup;
 using ErrandsManagement.Application.DeliveryBatches.Commands.CreateDeliveryBatch;
 using ErrandsManagement.Application.DeliveryBatches.Commands.MarkDeliveryHandedToReception;
+using ErrandsManagement.Application.DeliveryBatches.Commands.UploadDeliveryPickupProof;
 using ErrandsManagement.Application.DeliveryBatches.Queries.GetDeliveryBatchById;
 using ErrandsManagement.Application.DeliveryBatches.Queries.GetDeliveryBatches;
 using ErrandsManagement.Domain.Enums;
@@ -140,6 +141,43 @@ public sealed class DeliveryBatchesController : ControllerBase
 
         return Ok(ApiResponse<string>.SuccessResponse(
             "Delivery batch cancelled.", StatusCodes.Status200OK, HttpContext.TraceIdentifier));
+    }
+
+    /// <summary>POST /api/delivery-batches/{id}/attachments/pickup-proof</summary>
+    [HttpPost("{id:guid}/attachments/pickup-proof")]
+    [Authorize(Roles = "Reception")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
+    public async Task<IActionResult> UploadPickupProof(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(
+                ApiResponse<string>.FailureResponse(
+                    "No file provided.",
+                    StatusCodes.Status400BadRequest,
+                    HttpContext.TraceIdentifier));
+
+        await using var stream = file.OpenReadStream();
+
+        var command = new UploadDeliveryPickupProofCommand(
+            BatchId: id,
+            FileName: file.FileName,
+            ContentType: file.ContentType,
+            FileSize: file.Length,
+            FileStream: stream);
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id },
+            ApiResponse<object>.SuccessResponse(
+                result,
+                StatusCodes.Status201Created,
+                HttpContext.TraceIdentifier));
     }
 
     // ── Helpers ─────────────────────────────────────────────
