@@ -12,6 +12,7 @@ import {
   ChevronRight,
   CalendarClock,
   BookTemplate,
+  Truck,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -42,6 +43,7 @@ const adminNav: NavGroup[] = [
         exact: true,
       },
       { path: "/requests", label: "All Requests", icon: FileText, exact: true },
+      { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
       { path: "/analytics", label: "Analytics", icon: BarChart3, exact: true },
     ],
   },
@@ -107,6 +109,25 @@ const courierNav: NavGroup[] = [
         path: "/assignments",
         label: "My Schedule",
         icon: CalendarClock,
+        exact: true,
+      },
+    ],
+  },
+];
+
+const receptionNav: NavGroup[] = [
+  {
+    items: [
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        path: "/delivery",
+        label: "Deliveries",
+        icon: Truck,
         exact: true,
       },
     ],
@@ -228,6 +249,8 @@ function getNavGroups(role?: UserRole): NavGroup[] {
       return collaboratorNav;
     case UserRole.Courier:
       return courierNav;
+    case UserRole.Reception:
+      return receptionNav;
     default:
       return [];
   }
@@ -271,7 +294,9 @@ export function Sidebar() {
               className="flex h-8 w-8 items-center justify-center
                          rounded-lg bg-[var(--ey-yellow)] mx-auto"
             >
-              <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
+              <span className="text-sm font-black text-[var(--ey-dark)]">
+                EY
+              </span>
             </div>
           )
         ) : (
@@ -282,7 +307,9 @@ export function Sidebar() {
                 className="flex h-8 w-8 shrink-0 items-center justify-center
                            rounded-lg bg-[var(--ey-yellow)]"
               >
-                <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
+                <span className="text-sm font-black text-[var(--ey-dark)]">
+                  EY
+                </span>
               </div>
               <div className="leading-tight">
                 <p className="text-sm font-semibold">EY Errands</p>

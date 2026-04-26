@@ -58,6 +58,21 @@ const NotificationsPage = lazy(() =>
     default: m.NotificationsPage,
   })),
 );
+const DeliveryBatchesPage = lazy(() =>
+  import("@/features/delivery/pages/DeliveryBatchesPage").then((m) => ({
+    default: m.DeliveryBatchesPage,
+  })),
+);
+const DeliveryBatchDetailsPage = lazy(() =>
+  import("@/features/delivery/pages/DeliveryBatchDetailsPage").then((m) => ({
+    default: m.DeliveryBatchDetailsPage,
+  })),
+);
+const CreateDeliveryBatchPage = lazy(() =>
+  import("@/features/delivery/pages/CreateDeliveryBatchPage").then((m) => ({
+    default: m.CreateDeliveryBatchPage,
+  })),
+);
 const PublicOrDashboard = lazy(() =>
   import("@/app/router/PublicOrDashboard").then((m) => ({
     default: m.PublicOrDashboard,
@@ -87,20 +102,39 @@ export function AppRouter() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/requests/:id" element={<RequestDetailsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            
+
+            {/* ── Admin only ─────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
               <Route path="/requests" element={<RequestsListPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
+              <Route
+                path="/delivery/new"
+                element={<CreateDeliveryBatchPage />}
+              />
             </Route>
 
+            {/* ── Delivery — Admin + Reception ──────────────────────── */}
+            <Route
+              element={
+                <RoleGuard allowed={[UserRole.Admin, UserRole.Reception]} />
+              }
+            >
+              <Route path="/delivery" element={<DeliveryBatchesPage />} />
+              <Route
+                path="/delivery/:id"
+                element={<DeliveryBatchDetailsPage />}
+              />
+            </Route>
+
+            {/* ── Collaborator only ─────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
               <Route path="/requests/mine" element={<MyRequestsPage />} />
               <Route path="/requests/new" element={<CreateRequestPage />} />
               <Route path="/templates" element={<MyTemplatesPage />} />
             </Route>
-
+            {/* ── Courier only ─────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
               <Route path="/assignments" element={<MySchedulePage />} />
             </Route>
