@@ -2,4 +2,8 @@
 
 namespace ErrandsManagement.Domain.Events;
 
-public sealed record DeliveryBatchHandedToReceptionEvent(Guid BatchId) : IDomainEvent;
+public sealed record DeliveryBatchHandedToReceptionEvent(
+    Guid BatchId,
+    string BatchTitle,
+    string ClientName
+) : IDomainEvent;

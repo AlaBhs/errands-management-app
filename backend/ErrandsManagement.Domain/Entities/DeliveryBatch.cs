@@ -72,7 +72,7 @@ public sealed class DeliveryBatch : BaseEntity
         HandedToReceptionBy = byUserId;
 
         MarkAsUpdated();
-        RaiseDomainEvent(new DeliveryBatchHandedToReceptionEvent(Id));
+        RaiseDomainEvent(new DeliveryBatchHandedToReceptionEvent(Id, Title, ClientName));
     }
 
     // ── Step 3A ─────────────────────────────────────────────
@@ -88,7 +88,7 @@ public sealed class DeliveryBatch : BaseEntity
         ConfirmedBy = confirmedByUserId;
 
         MarkAsUpdated();
-        RaiseDomainEvent(new DeliveryBatchPickedUpEvent(Id));
+        RaiseDomainEvent(new DeliveryBatchPickedUpEvent(Id, Title, ClientName, CreatedBy));
     }
 
     // ── Step 3B ─────────────────────────────────────────────
