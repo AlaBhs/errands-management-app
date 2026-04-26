@@ -38,6 +38,15 @@ public sealed class DeliveryBatchConfiguration
         builder.Property(x => x.CancelReason)
             .HasMaxLength(500);
 
+        builder.HasMany<Attachment>("_attachments")
+            .WithOne()
+            .HasForeignKey("DeliveryBatchId")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation("_attachments")
+            .HasField("_attachments");
+
         // Indexes for common query patterns
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.CreatedAt);
