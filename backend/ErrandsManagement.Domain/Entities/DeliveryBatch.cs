@@ -115,9 +115,9 @@ public sealed class DeliveryBatch : BaseEntity
             throw new InvalidRequestStateException(
                 "Pickup proof can only be added after the batch has been picked up.");
 
-        if (_attachments.Count >= 5)
+        if (_attachments.Count >= 3)
             throw new BusinessRuleException(
-                "A delivery batch cannot have more than 5 attachments.");
+                "A delivery batch cannot have more than 3 attachments.");
 
         _attachments.Add(new Attachment(Id, fileName, contentType, uri, AttachmentType.PickupProof));
         MarkAsUpdated();
