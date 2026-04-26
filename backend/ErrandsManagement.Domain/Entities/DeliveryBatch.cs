@@ -7,6 +7,8 @@ namespace ErrandsManagement.Domain.Entities;
 
 public sealed class DeliveryBatch : BaseEntity
 {
+    private readonly List<Attachment> _attachments = new();
+    public IReadOnlyCollection<Attachment> Attachments => _attachments.AsReadOnly();
     // Identity
     public string Title { get; private set; }
 
@@ -105,5 +107,19 @@ public sealed class DeliveryBatch : BaseEntity
 
         MarkAsUpdated();
         RaiseDomainEvent(new DeliveryBatchCancelledEvent(Id, reason));
+    }
+
+    public void AddPickupProof(string fileName, string contentType, string uri)
+    {
+        if (Status != DeliveryBatchStatus.PickedUp)
+            throw new InvalidRequestStateException(
+                "Pickup proof can only be added after the batch has been picked up.");
+
+        if (_attachments.Count >= 5)
+            throw new BusinessRuleException(
+                "A delivery batch cannot have more than 5 attachments.");
+
+        _attachments.Add(new Attachment(Id, fileName, contentType, uri, AttachmentType.PickupProof));
+        MarkAsUpdated();
     }
 }
