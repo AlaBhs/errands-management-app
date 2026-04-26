@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { type NotificationDto } from "@/features/notifications/types";
+import { NotificationType, type NotificationDto } from "@/features/notifications/types";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 import { parseUtc } from "@/shared/utils/date";
 
@@ -12,6 +12,8 @@ const TYPE_COLOR: Record<string, string> = {
   RequestCancelled: "bg-gray-600",
   NewMessageReceived: "bg-purple-500",
   DeadlineRisk: "bg-red-500",
+  DeliveryHandedToReception: "bg-blue-500",
+  DeliveryPickedUp: "bg-green-500",
   General: "bg-gray-400",
 };
 
@@ -23,10 +25,24 @@ const TYPE_LABEL: Record<string, string> = {
   RequestCancelled: "Request Cancelled",
   NewMessageReceived: "New Message",
   DeadlineRisk: "Deadline Risk",
+  DeliveryHandedToReception: "bg-blue-500",
+  DeliveryPickedUp: "bg-green-500",
   General: "General",
 };
 
 function getDestination(notification: NotificationDto): string | null {
+  const deliveryTypes = [
+    NotificationType.DeliveryHandedToReception,
+    NotificationType.DeliveryPickedUp,
+  ] as number[];
+
+  if (
+    notification.referenceId &&
+    deliveryTypes.includes(notification.type as number)
+  ) {
+    return `/delivery/${notification.referenceId}`;
+  }
+
   if (notification.referenceId) return `/requests/${notification.referenceId}`;
   return null;
 }

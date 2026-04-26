@@ -5,6 +5,10 @@ export const NotificationType = {
   RequestCompleted :  4,
   RequestCancelled :  5,
   NewMessageReceived: 6,
+
+  DeliveryHandedToReception: 10,
+  DeliveryPickedUp:          11,
+
   General          :  99,
 }
 
