@@ -6,7 +6,7 @@ namespace ErrandsManagement.Infrastructure.Identity;
 
 public static class IdentitySeeder
 {
-    private static readonly string[] Roles = ["Admin", "Collaborator", "Courier"];
+    private static readonly string[] Roles = ["Admin", "Collaborator", "Courier", "Reception"];
 
     public static async Task SeedAsync(IServiceProvider services)
     {
