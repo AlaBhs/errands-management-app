@@ -4,7 +4,7 @@ import { useMyAssignments } from "../hooks";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { isApiError } from "@/shared/api/client";
 import { RequestStatus, type SortField } from "../types";
-import { useViewMode } from "../hooks/useViewMode";
+import { useViewMode } from "../../../shared/hooks/useViewMode";
 import {
   RequestFilters,
   type RequestFiltersValue,
