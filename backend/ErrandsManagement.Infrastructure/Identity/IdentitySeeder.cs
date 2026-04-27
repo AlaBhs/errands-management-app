@@ -17,6 +17,7 @@ public static class IdentitySeeder
 
         await SeedRolesAsync(roleManager, logger);
         await SeedDefaultAdminAsync(userManager, logger);
+        await SeedDefaultReceptionUsersAsync(userManager, logger);
     }
 
     // ── Private helpers ────────────────────────────────────────────────────
@@ -83,4 +84,61 @@ public static class IdentitySeeder
             logger.LogError("Failed to assign Admin role to seeded user: {Errors}",
                 string.Join(", ", roleResult.Errors.Select(e => e.Description)));
     }
+    private static async Task SeedDefaultReceptionUsersAsync(
+    UserManager<ApplicationUser> userManager,
+    ILogger logger)
+    {
+        var accounts = new[]
+        {
+        (Email: "reception1@errands.local", FullName: "Amira Belhaj"),
+        (Email: "reception2@errands.local", FullName: "Youssef Mansour"),
+    };
+
+        const string receptionPassword = "Reception123!";
+
+        foreach (var (email, fullName) in accounts)
+        {
+            var existing = await userManager.FindByEmailAsync(email);
+            if (existing is not null)
+            {
+                if (!existing.IsActive)
+                {
+                    existing.IsActive = true;
+                    await userManager.UpdateAsync(existing);
+                    logger.LogInformation("Reactivated seeded reception user: {Email}", email);
+                }
+                continue;
+            }
+
+            var user = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                FullName = fullName,
+                Email = email,
+                UserName = email,
+                EmailConfirmed = true,
+                IsActive = true,
+            };
+
+            var createResult = await userManager.CreateAsync(user, receptionPassword);
+            if (!createResult.Succeeded)
+            {
+                logger.LogError(
+                    "Failed to seed reception user {Email}: {Errors}",
+                    email,
+                    string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                continue;
+            }
+
+            var roleResult = await userManager.AddToRoleAsync(user, "Reception");
+            if (roleResult.Succeeded)
+                logger.LogInformation("Reception user seeded: {Email}", email);
+            else
+                logger.LogError(
+                    "Failed to assign Reception role to {Email}: {Errors}",
+                    email,
+                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+        }
+    }
+
 }

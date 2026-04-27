@@ -34,6 +34,14 @@ public static class DbInitializer
         var courier2 = await EnsureUser(userManager, "courier2@ey.local", "Karim Trabelsi", "Courier",
             latitude: 36.8781, longitude: 10.3248, city: "La Marsa");
 
+        var reception1 = await EnsureUser(
+            userManager, "reception1@errands.local", "Amira Belhaj", "Reception");
+        var reception2 = await EnsureUser(
+            userManager, "reception2@errands.local", "Youssef Mansour", "Reception");
+
+        var admin = await userManager.FindByEmailAsync("admin@errands.local")
+            ?? throw new InvalidOperationException("Admin user not seeded yet.");
+
         // ── Addresses ─────────────────────────────────────────────────────────
         var tunis = new Address("Rue de la Liberté", "Tunis", "1001", "Tunisia",
             latitude: 36.8065, longitude: 10.1815);
@@ -54,6 +62,16 @@ public static class DbInitializer
                 System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
             prop!.SetValue(request, date);
+        }
+
+        static void SetDeliveryBatchCreatedAt(DeliveryBatch batch, DateTime date)
+        {
+            var prop = typeof(BaseEntity).GetProperty(
+                "CreatedAt",
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Instance);
+            prop!.SetValue(batch, date);
         }
 
         // nullable completedAt — omit for in-progress requests
@@ -776,6 +794,145 @@ public static class DbInitializer
         // Pending
         SetCreatedAt(h40, m0.AddDays(-1));
         SetAuditLogDate(h40, "Created", m0.AddDays(-1));
+
+
+        // ══════════════════════════════════════════════════════════════════════
+        // DELIVERY BATCH DEMO DATA
+        // ══════════════════════════════════════════════════════════════════════
+
+        // 3 months ago — 2 picked up
+        var db1 = new DeliveryBatch(
+            "Q3 Audit Report Package",
+            "Deloitte Tunisia",
+            admin.Id,
+            clientPhone: "+216 71 100 200",
+            pickupNote: "Ask for the audit desk.");
+        db1.MarkAsHandedToReception(admin.Id);
+        db1.ConfirmPickup(reception1.Id, "Karim Ayari");
+        SetDeliveryBatchCreatedAt(db1, m3);
+
+        var db2 = new DeliveryBatch(
+            "Legal Contracts — Merger Docs",
+            "Cabinet Juridique Ben Salah",
+            admin.Id,
+            clientPhone: "+216 71 555 010");
+        db2.MarkAsHandedToReception(admin.Id);
+        db2.ConfirmPickup(reception2.Id, "Sonia Riahi");
+        SetDeliveryBatchCreatedAt(db2, m3.AddDays(5));
+
+        // 2 months ago — 2 picked up, 1 cancelled
+        var db3 = new DeliveryBatch(
+            "Supplier Invoice Pack — October",
+            "Fournitures Générales SA",
+            admin.Id,
+            clientPhone: "+216 98 200 300",
+            pickupNote: "Deliver to finance dept, 3rd floor.");
+        db3.MarkAsHandedToReception(admin.Id);
+        db3.ConfirmPickup(reception1.Id, "Ahmed Chaabane");
+        SetDeliveryBatchCreatedAt(db3, m2);
+
+        var db4 = new DeliveryBatch(
+            "IT Procurement Documents",
+            "Dell Technologies Tunisia",
+            admin.Id,
+            clientPhone: "+216 71 800 900");
+        db4.MarkAsHandedToReception(admin.Id);
+        db4.ConfirmPickup(reception2.Id, "Fatma Khalil");
+        SetDeliveryBatchCreatedAt(db4, m2.AddDays(3));
+
+        var db5 = new DeliveryBatch(
+            "Conference Materials Pack",
+            "EY Events Team",
+            admin.Id,
+            pickupNote: "Fragile — printed banners inside.");
+        db5.MarkAsHandedToReception(admin.Id);
+        db5.Cancel(reception1.Id, "Event was postponed — materials no longer needed.");
+        SetDeliveryBatchCreatedAt(db5, m2.AddDays(7));
+
+        // 1 month ago — 1 picked up, 1 cancelled, 1 handed to reception
+        var db6 = new DeliveryBatch(
+            "Notarized HR Documents",
+            "Maître Leila Boussetta",
+            admin.Id,
+            clientPhone: "+216 71 321 654");
+        db6.MarkAsHandedToReception(admin.Id);
+        db6.ConfirmPickup(reception2.Id, "Rim Hamdi");
+        SetDeliveryBatchCreatedAt(db6, m1);
+
+        var db7 = new DeliveryBatch(
+            "Tax Filing Package — Q3",
+            "Direction Générale des Impôts",
+            admin.Id,
+            clientPhone: "+216 71 010 020",
+            pickupNote: "Original documents — do not fold.");
+        db7.MarkAsHandedToReception(admin.Id);
+        db7.Cancel(reception1.Id, "Client rescheduled — will collect next week.");
+        SetDeliveryBatchCreatedAt(db7, m1.AddDays(4));
+
+        var db8 = new DeliveryBatch(
+            "Signed MOUs — Partnership Docs",
+            "Banque de Tunisie",
+            admin.Id,
+            clientPhone: "+216 71 148 000");
+        db8.MarkAsHandedToReception(admin.Id);
+        // Status: HandedToReception — waiting for pickup
+        SetDeliveryBatchCreatedAt(db8, m1.AddDays(10));
+
+        // Current month — mix of all statuses
+        var db9 = new DeliveryBatch(
+            "Annual Report Print Run",
+            "EY Client Relations",
+            admin.Id,
+            clientPhone: "+216 98 500 600",
+            pickupNote: "10 copies, bound and stamped.");
+        db9.MarkAsHandedToReception(admin.Id);
+        db9.ConfirmPickup(reception1.Id, "Omar Meddeb");
+        SetDeliveryBatchCreatedAt(db9, m0.AddDays(-10));
+
+        var db10 = new DeliveryBatch(
+            "Customs Declaration Forms",
+            "Port Authority Rades",
+            admin.Id,
+            clientPhone: "+216 71 735 000");
+        db10.MarkAsHandedToReception(admin.Id);
+        // Status: HandedToReception — pending pickup at reception desk
+        SetDeliveryBatchCreatedAt(db10, m0.AddDays(-5));
+
+        var db11 = new DeliveryBatch(
+            "Executive Briefing Folders",
+            "McKinsey & Company Tunis",
+            admin.Id,
+            clientPhone: "+216 71 861 000",
+            pickupNote: "Confidential — hand directly to named recipient.");
+        // Status: Created — admin hasn't handed over yet
+        SetDeliveryBatchCreatedAt(db11, m0.AddDays(-3));
+
+        var db12 = new DeliveryBatch(
+            "Visa Application Dossier",
+            "French Consulate Tunis",
+            admin.Id,
+            clientPhone: "+216 71 107 300",
+            pickupNote: "Passport copies included — keep sealed.");
+        // Status: Created — ready for handover
+        SetDeliveryBatchCreatedAt(db12, m0.AddDays(-1));
+
+        // ── Persist ──────────────────────────────────────────────────────────
+        var allBatches = new[]
+        {
+            db1, db2, db3, db4, db5, db6,
+            db7, db8, db9, db10, db11, db12
+        };
+
+        foreach (var batch in allBatches)
+        {
+            context.ChangeTracker.Clear();
+            await context.DeliveryBatches.AddAsync(batch);
+            await context.SaveChangesAsync();
+        }
+
+        logger.LogInformation(
+            "DbInitializer: seeded {Count} delivery batches across 3 months.",
+            allBatches.Length);
 
 
 

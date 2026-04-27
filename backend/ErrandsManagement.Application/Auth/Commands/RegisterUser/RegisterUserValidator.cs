@@ -5,7 +5,7 @@ namespace ErrandsManagement.Application.Auth.Commands.RegisterUser;
 public sealed class RegisterUserValidator : AbstractValidator<RegisterUserCommand>
 {
     // Admin controls who enters the system — all roles are valid assignments
-    private static readonly string[] AllowedRoles = ["Admin", "Collaborator", "Courier"];
+    private static readonly string[] AllowedRoles = ["Admin", "Collaborator", "Courier", "Reception"];
 
     public RegisterUserValidator()
     {
