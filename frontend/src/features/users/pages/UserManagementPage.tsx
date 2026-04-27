@@ -31,7 +31,7 @@ const createUserSchema = z.object({
     .regex(/[A-Z]/, "Must contain at least one uppercase letter")
     .regex(/[0-9]/, "Must contain at least one digit")
     .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
-  role: z.enum([UserRole.Collaborator, UserRole.Courier]),
+  role: z.enum([UserRole.Collaborator, UserRole.Courier, UserRole.Reception]),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   city: z.string().nullable().optional(),
@@ -185,6 +185,7 @@ export function UserManagementPage() {
                     Collaborator
                   </SelectItem>
                   <SelectItem value={UserRole.Courier}>Courier</SelectItem>
+                  <SelectItem value={UserRole.Reception}>Reception</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -439,6 +440,9 @@ export function UserManagementPage() {
                         Collaborator
                       </SelectItem>
                       <SelectItem value={UserRole.Courier}>Courier</SelectItem>
+                      <SelectItem value={UserRole.Reception}>
+                        Reception
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -539,6 +543,8 @@ function RoleBadge({ role }: { role: string }) {
       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
     Courier:
       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+    Reception:
+      "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   };
   return (
     <span
