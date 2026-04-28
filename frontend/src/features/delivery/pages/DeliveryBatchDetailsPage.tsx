@@ -26,6 +26,7 @@ import { formatDateTime } from "@/shared/utils/date";
 import { DeliveryBatchStatus } from "../types/delivery.enums";
 import { cn } from "@/shared/utils/utils";
 import { DeliveryAttachmentList } from "../components/DeliveryAttachmentList";
+import { DeliveryBatchDetailsSkeleton } from "../components/skeletons/DeliveryBatchDetailsSkeleton";
 
 // ── Section component (reusable) ──────────────────────────────────────────────
 function Section({
@@ -141,14 +142,8 @@ export function DeliveryBatchDetailsPage() {
   );
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
-        ))}
-      </div>
-    );
-  }
+  return <DeliveryBatchDetailsSkeleton />;
+}
 
   if (isError || !batch) {
     return (

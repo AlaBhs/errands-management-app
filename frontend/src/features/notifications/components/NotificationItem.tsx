@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { NotificationType, type NotificationDto } from "@/features/notifications/types";
+import { type NotificationDto } from "@/features/notifications/types";
 import { useNotificationStore } from "@/features/notifications/store/notificationStore";
 import { parseUtc } from "@/shared/utils/date";
 
@@ -30,21 +30,19 @@ const TYPE_LABEL: Record<string, string> = {
   General: "General",
 };
 
-function getDestination(notification: NotificationDto): string | null {
-  const deliveryTypes = [
-    NotificationType.DeliveryHandedToReception,
-    NotificationType.DeliveryPickedUp,
-  ] as number[];
+const DELIVERY_TYPES = new Set<string>([
+  "DeliveryHandedToReception",
+  "DeliveryPickedUp",
+]);
 
-  if (
-    notification.referenceId &&
-    deliveryTypes.includes(notification.type as number)
-  ) {
+function getDestination(notification: NotificationDto): string | null {
+  if (!notification.referenceId) return null;
+
+  if (DELIVERY_TYPES.has(notification.type)) {
     return `/delivery/${notification.referenceId}`;
   }
 
-  if (notification.referenceId) return `/requests/${notification.referenceId}`;
-  return null;
+  return `/requests/${notification.referenceId}`;
 }
 
 interface NotificationItemProps {

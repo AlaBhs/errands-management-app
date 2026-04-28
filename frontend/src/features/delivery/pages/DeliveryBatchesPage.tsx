@@ -10,7 +10,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useViewMode } from '@/shared/hooks/useViewMode';
 import { DeliveryFilters, type DeliveryFiltersValue } from '../components/DeliveryFilters';
 import { DeliveryBatchCard } from '../components/DeliveryBatchCard';
-import { DeliveryBatchesSkeleton } from '../components/DeliveryBatchesSkeleton';
+import { DeliveryBatchesSkeleton } from '../components/skeletons/DeliveryBatchesSkeleton';
 import { DeliveryStatusBadge } from '../components/DeliveryStatusBadge';
 import { formatDate } from '@/shared/utils/date';
 import { cn } from '@/shared/utils/utils';

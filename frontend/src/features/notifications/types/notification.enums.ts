@@ -1,15 +1,16 @@
 export const NotificationType = {
-  RequestCreated   :  1,
-  RequestAssigned  :  2,
-  RequestStarted   :  3,
-  RequestCompleted :  4,
-  RequestCancelled :  5,
-  NewMessageReceived: 6,
+  RequestCreated: "RequestCreated",
+  RequestAssigned: "RequestAssigned",
+  RequestStarted: "RequestStarted",
+  RequestCompleted: "RequestCompleted",
+  RequestCancelled: "RequestCancelled",
+  NewMessageReceived: "NewMessageReceived",
 
-  DeliveryHandedToReception: 10,
-  DeliveryPickedUp:          11,
+  DeliveryHandedToReception: "DeliveryHandedToReception",
+  DeliveryPickedUp: "DeliveryPickedUp",
 
-  General          :  99,
-}
+  General: "General",
+};
 
-export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];

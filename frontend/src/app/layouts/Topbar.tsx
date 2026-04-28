@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/analytics": "Analytics",
   "/admin": "Admin Panel",
   "/admin/users": "User Management",
+  "/delivery": "Deliveries",
   "/notifications": "Notifications",
 };
 
@@ -24,6 +25,8 @@ function getPageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   if (pathname.startsWith("/requests/") && pathname !== "/requests/new")
     return "Request Details";
+  if (pathname.startsWith("/delivery/"))
+    return "Delivery Details";
   return "EY Errands";
 }
 

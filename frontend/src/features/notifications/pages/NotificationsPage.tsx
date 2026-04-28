@@ -5,6 +5,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { parseUtc } from "@/shared/utils/date";
+import { type NotificationDto } from "../types";
 
 // ── Type metadata ─────────────────────────────────────────────────────────────
 
@@ -30,12 +31,19 @@ const TYPE_LABEL: Record<string, string> = {
   General: "General",
 };
 
-function getDestination(notification: {
-  type: number;
-  referenceId: string | null;
-}): string | null {
-  if (notification.referenceId) return `/requests/${notification.referenceId}`;
-  return null;
+const DELIVERY_TYPES = new Set<string>([
+  "DeliveryHandedToReception",
+  "DeliveryPickedUp",
+]);
+
+function getDestination(notification: NotificationDto): string | null {
+  if (!notification.referenceId) return null;
+
+  if (DELIVERY_TYPES.has(notification.type)) {
+    return `/delivery/${notification.referenceId}`;
+  }
+
+  return `/requests/${notification.referenceId}`;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
