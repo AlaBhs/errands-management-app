@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, LayoutGrid, List, Package } from 'lucide-react';
 import { useDeliveryBatches } from '../hooks';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -15,6 +15,7 @@ import { DeliveryStatusBadge } from '../components/DeliveryStatusBadge';
 import { formatDate } from '@/shared/utils/date';
 import { cn } from '@/shared/utils/utils';
 import type { DeliveryBatchListItemDto } from '../types/delivery.types';
+import { DeliveryBatchStatus } from '../types';
 
 const PAGE_SIZE = 12;
 
@@ -25,11 +26,23 @@ const DEFAULT_FILTERS: DeliveryFiltersValue = {
 
 export function DeliveryBatchesPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+    const getInitialStatus = (): DeliveryBatchStatus | '' => {
+  const param = searchParams.get('status');
+  if (!param) return '';
+  // Check if the param matches any enum value
+  const validStatuses = Object.values(DeliveryBatchStatus);
+  return validStatuses.includes(param as DeliveryBatchStatus) ? (param as DeliveryBatchStatus) : '';
+};
+  
   const role = useAuthStore((s) => s.user?.role);
   const isAdmin = role === UserRole.Admin;
 
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<DeliveryFiltersValue>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<DeliveryFiltersValue>({
+  search: '',
+  status: getInitialStatus(),
+});
   const [viewMode, setViewMode] = useViewMode('delivery-batches-view');
 
   const { data, isLoading, isError, error } = useDeliveryBatches({

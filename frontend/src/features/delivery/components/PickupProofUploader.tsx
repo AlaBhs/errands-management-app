@@ -1,5 +1,5 @@
 import { useRef, useState }      from 'react';
-import { Upload, X, Image, Loader2 } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useUploadPickupProof }  from '../hooks';
 
 interface PickupProofUploaderProps {
@@ -97,8 +97,8 @@ export function PickupProofUploader({ batchId }: PickupProofUploaderProps) {
                       : 'border-border'}`}
       >
         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-sm text-gray-600 mb-1">
-          <span className="font-medium text-[var(--ey-dark)]">Click to upload</span>
+        <p className="text-sm text-muted-foreground mb-1">
+          <span className="font-medium text-foreground">Click to upload</span>
           {' '}or drag and drop
         </p>
         <p className="text-xs text-gray-400">
@@ -120,44 +120,6 @@ export function PickupProofUploader({ batchId }: PickupProofUploaderProps) {
         onChange={(e) => e.target.files && enqueue(e.target.files)}
       />
 
-      {items.length > 0 && (
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center gap-3 rounded-lg border
-                         border-border bg-white dark:bg-card px-3 py-2 text-sm"
-            >
-              <Image className="w-4 h-4 shrink-0 text-gray-400" />
-              <div className="flex-1 min-w-0">
-                <p className="truncate font-medium text-gray-700 dark:text-gray-300">
-                  {item.file.name}
-                </p>
-                <p className="text-xs text-gray-400">{formatBytes(item.file.size)}</p>
-              </div>
-
-              {item.status === 'uploading' && (
-                <Loader2 className="w-4 h-4 animate-spin text-[var(--ey-dark)]" />
-              )}
-              {item.status === 'done' && (
-                <span className="text-xs font-medium text-emerald-600">Uploaded</span>
-              )}
-              {item.status === 'error' && (
-                <span className="text-xs font-medium text-red-500">{item.error}</span>
-              )}
-              {item.status !== 'uploading' && (
-                <button
-                  type="button"
-                  onClick={() => setItems((p) => p.filter((i) => i.id !== item.id))}
-                  className="shrink-0 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

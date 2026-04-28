@@ -25,7 +25,7 @@ import { UserRole } from "@/features/auth";
 import { formatDateTime } from "@/shared/utils/date";
 import { DeliveryBatchStatus } from "../types/delivery.enums";
 import { cn } from "@/shared/utils/utils";
-import type { AttachmentDto } from "@/features/requests/types/request.types";
+import { DeliveryAttachmentList } from "../components/DeliveryAttachmentList";
 
 // ── Section component (reusable) ──────────────────────────────────────────────
 function Section({
@@ -57,33 +57,6 @@ function Section({
   );
 }
 
-// ── Attachment list (enhanced) ───────────────────────────────────────────────
-function AttachmentList({ attachments }: { attachments?: AttachmentDto[] }) {
-  if (!attachments || attachments.length === 0) return null;
-  return (
-    <ul className="space-y-2">
-      {attachments.map((a) => (
-        <li
-          key={a.id}
-          className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm"
-        >
-          <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <a
-            href={a.uri}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 truncate text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            {a.fileName}
-          </a>
-          <span className="whitespace-nowrap text-xs text-muted-foreground">
-            {formatDateTime(a.uploadedAt)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 // ── Timeline event component (matches request activity style) ────────────────
 const EVENT_CONFIG: Record<
@@ -276,7 +249,7 @@ export function DeliveryBatchDetailsPage() {
               className="h-[stretch]"
             >
               {hasAttachments ? (
-                <AttachmentList attachments={batch.attachments} />
+                <DeliveryAttachmentList attachments={batch.attachments} />
               ) : (
                 <p className="text-sm text-muted-foreground italic mb-4">
                   No proof uploaded yet.

@@ -100,7 +100,6 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/requests/:id" element={<RequestDetailsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
 
             {/* ── Admin only ─────────────────────────────── */}
@@ -137,6 +136,21 @@ export function AppRouter() {
             {/* ── Courier only ─────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
               <Route path="/assignments" element={<MySchedulePage />} />
+            </Route>
+
+            {/* ── All except Reception ──────────────────────── */}
+            <Route
+              element={
+                <RoleGuard
+                  allowed={[
+                    UserRole.Admin,
+                    UserRole.Courier,
+                    UserRole.Collaborator,
+                  ]}
+                />
+              }
+            >
+              <Route path="/requests/:id" element={<RequestDetailsPage />} />
             </Route>
           </Route>
         </Route>
