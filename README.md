@@ -1,76 +1,58 @@
 # Errands Management App
 
-This branch adds a **Request Template System** — a productivity layer that lets
-collaborators capture the reusable details of any existing request as a named
-template, then use that template to pre-fill the creation form for future
-requests — eliminating repetitive manual input.
+This branch adds a **Physical Delivery Tracking System** — an operational layer
+that lets admins register batches of physical items prepared for a client, hand
+them off to reception, and lets reception confirm the final pickup — with full
+traceability, real-time notifications, and signed proof at every step.
 
-## What's New — `feature/request-templates`
+## What's New — `feature/physical-delivery-tracking`
 
-### Saving a Template from a Request
+### Creating a Delivery Batch (Admin)
 
-- On any request detail page, a collaborator who owns the request sees a
-  **"Save as Template"** button in the top-right corner of the header
-- Clicking it opens a small modal where the collaborator gives the template a name
-- The system captures all the reusable fields — title, description, category,
-  address, estimated cost, contact person, and contact phone — and saves them as
-  a private template
-- Dynamic fields that belong to a specific instance of a request are deliberately
-  excluded: deadline, status, assignment, and timestamps are never stored
+- On the **Delivery Batches** page, an Admin sees a **"New Batch"** button in
+  the top-right corner
+- Clicking it opens a creation form where the admin enters a batch title, the
+  client's name, an optional phone number, and any pickup instructions for
+  reception
+- Once submitted, the batch appears in the list with a **Created** status,
+  ready for handover
 
-### Using a Template to Create a Request
+### Handing Over to Reception (Admin)
 
-- On the **Create Request** page, a template picker appears above the form
-- The collaborator can search through their templates by name and select one from
-  the dropdown
-- The form is instantly pre-filled with all the saved values
-- Every field remains editable — the collaborator can adjust anything before
-  submitting, and sets the deadline and other instance-specific fields as usual
-- Clearing the picker resets the form back to blank
+- On any batch detail page, the admin sees a **"Hand Over to Reception"**
+  button when the batch is in the **Created** state
+- Clicking it opens a confirmation modal — one click records the handover with
+  the exact timestamp and the admin's identity
+- The batch status moves to **At Reception** and all reception users receive a
+  real-time notification instantly
 
-### My Templates Page
+### Confirming a Pickup (Reception)
 
-- A dedicated **My Templates** page (`/templates`) lists all templates saved by
-  the collaborator
-- Templates are displayed as cards showing the name, title, category, estimated
-  cost, and the date they were saved
-- The page supports **search by name** and **pagination**
-- Each card has a delete button (revealed on hover) — a confirmation prompt
-  appears before the template is permanently removed
+- Reception users see a dedicated **Deliveries** section in their sidebar with
+  only the batches relevant to them
+- On a batch detail page, a reception user sees a **"Confirm Pickup"** button
+  when the batch is **At Reception**
+- A small modal lets them optionally record the name of the person who collected
+  the items — useful for audit purposes
+- Once confirmed, the batch moves to **Picked Up** and the admin who created it
+  receives a real-time notification
 
-### Privacy and Rules
+### Pickup Proof Attachments (Reception)
 
-- Templates are **private** — a collaborator can only see and use their own
-  templates, never another user's
-- Template names must be **unique per user** — the system rejects a duplicate
-  name with a clear error message
-- Templates are **immutable** — once saved, a template cannot be edited, only
-  deleted and recreated
-- Only Collaborators can create, view, and use templates. Admins and Couriers do
-  not have access to this feature
+- After confirming a pickup, reception can upload photo evidence or a signed
+  document directly on the detail page
+- Only image files (JPEG, PNG, WEBP) up to 10 MB are accepted — up to 3 files
+  per batch
+- Admins can view uploaded proof on the same detail page in read-only mode
 
-### Non-Blocking Design
 
-Templates are entirely optional. The existing request creation flow works
-exactly as before — the template picker is an enhancement, not a requirement.
-No existing data or workflow is affected by this feature.
+### User Management — Reception Role
 
-### New API Endpoints
+- Admins can now create **Reception** accounts from the User Management page
+- The role appears in the role dropdown and is displayed with its own colour
+  badge throughout the interface
+- Two reception accounts are pre-seeded in the database for immediate testing
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/request-templates` | Save a template from an existing request |
-| `GET` | `/api/request-templates` | List my templates (searchable, paginated) |
-| `GET` | `/api/request-templates/{id}` | Get full template details |
-| `DELETE` | `/api/request-templates/{id}` | Delete a template |
-
-### Database Changes
-
-A new `RequestTemplates` table is created. It stores all reusable fields inline
-alongside a composite unique index on `(UserId, Name)` that enforces the
-per-user name uniqueness rule at the database level. The address is stored as
-embedded columns, identical to how request addresses are stored. No existing
-tables are modified.
 
 ## How to Test with Docker
 
@@ -85,46 +67,47 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
-### Testing the Template Flow
+### Testing the Delivery Flow
 
-**Step 1 — Create a template from a request**
+**Step 1 — Create a batch**
 
-Log in as a Collaborator, open any request you own, and look for the
-**"Save as Template"** button in the top-right corner of the request header.
-Click it, type a name for the template, and click **Save Template**.
+Log in as an Admin. Navigate to **Deliveries** in the sidebar and click
+**New Batch**. Fill in a title and client name, then submit.
 
-**Step 2 — View your templates**
+**Step 2 — Hand it over**
 
-Navigate to **My Templates** in the sidebar. The template you just saved should
-appear as a card. Try the search bar to filter by name.
+Open the batch you just created and click **Hand Over to Reception**. Confirm
+in the modal. The status changes to **At Reception** and reception users receive
+a notification.
 
-**Step 3 — Use the template on a new request**
+**Step 3 — Confirm pickup as Reception**
 
-Navigate to **Create Request**. At the top of the form, click the
-**"Use a template to pre-fill the form…"** picker and select your template. All
-saved fields — title, description, category, address, estimated cost, and contact
-details — are filled in automatically.
+Log in as a reception user (see credentials below). The notification appears
+in the bell — clicking it takes you straight to the batch. Click
+**Confirm Pickup**, optionally enter the collector's name, and confirm.
 
-**Step 4 — Adjust and submit**
+**Step 4 — Upload proof**
 
-Modify any field as needed, set the deadline, then submit the request as normal.
-The submitted request has no connection to the template — editing or deleting the
-template later has no effect on requests already created from it.
+Still on the detail page as a reception user, scroll to the **Pickup Proof**
+section and upload a photo. The admin can see it on their view of the same page.
 
-**Step 5 — Delete a template**
+**Step 5 — Check the admin notification**
 
-Go back to **My Templates**, hover over a card, and click the trash icon.
-Confirm the deletion in the prompt that appears.
+Switch back to the admin account. A notification confirms that the batch was
+picked up. The batch list shows the **Picked Up** status immediately.
+
+**Step 6 — Try cancellation**
+
+Create a second batch, hand it over, then log in as reception and use the
+**Cancel** button. Add a reason — it is recorded on the detail page.
 
 ## Notes
 
 - This branch includes all features from all previous branches, including the
   Deadline Risk Alerting System, Request Messaging System, Courier Recommendation
   Engine, Request Expense Tracking System, and the real-time notification system.
-- Templates capture contact person and contact phone from the source request,
-  so those fields are also pre-filled when a template is applied.
-- Attempting to save two templates with the same name returns a
-  **409 Conflict** error with a clear message.
+- The delivery tracking system is entirely separate from the request system —
+  no existing data or workflow is affected.
 
 ## Demo Credentials
 
@@ -135,3 +118,5 @@ Confirm the deletion in the prompt that appears.
 | Collaborator | `michael.chen@ey.local` | `Dev1234!` |
 | Courier | `courier1@ey.local` | `Dev1234!` |
 | Courier | `courier2@ey.local` | `Dev1234!` |
+| Reception | `reception1@errands.local` | `Reception123!` |
+| Reception | `reception2@errands.local` | `Reception123!` |
