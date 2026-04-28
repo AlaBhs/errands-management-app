@@ -7,8 +7,8 @@ namespace ErrandsManagement.Domain.Entities;
 
 public sealed class DeliveryBatch : BaseEntity
 {
-    private readonly List<Attachment> _attachments = new();
-    public IReadOnlyCollection<Attachment> Attachments => _attachments.AsReadOnly();
+    private readonly List<DeliveryBatchAttachment> _attachments = new();
+    public IReadOnlyCollection<DeliveryBatchAttachment> Attachments => _attachments.AsReadOnly();
     // Identity
     public string Title { get; private set; }
 
@@ -119,7 +119,7 @@ public sealed class DeliveryBatch : BaseEntity
             throw new BusinessRuleException(
                 "A delivery batch cannot have more than 3 attachments.");
 
-        _attachments.Add(new Attachment(Id, fileName, contentType, uri, AttachmentType.PickupProof));
+        _attachments.Add(new DeliveryBatchAttachment(Id, fileName, contentType, uri));
         MarkAsUpdated();
     }
 }

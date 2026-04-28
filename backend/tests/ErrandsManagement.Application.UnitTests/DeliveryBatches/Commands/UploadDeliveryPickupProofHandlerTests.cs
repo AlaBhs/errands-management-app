@@ -3,7 +3,6 @@ using ErrandsManagement.Application.DeliveryBatches.Commands.UploadDeliveryPicku
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Common.Exceptions;
 using ErrandsManagement.Domain.Entities;
-using ErrandsManagement.Domain.Enums;
 using FluentAssertions;
 using Moq;
 
@@ -48,7 +47,6 @@ public class UploadDeliveryPickupProofHandlerTests
 
         result.Should().NotBeNull();
         result.FileName.Should().Be("proof.jpg");
-        result.Type.Should().Be(AttachmentType.PickupProof);
         _storageMock.Verify(s => s.SaveAsync(
             It.IsAny<Stream>(), "proof.jpg", "image/jpeg",
             It.IsAny<CancellationToken>()), Times.Once);

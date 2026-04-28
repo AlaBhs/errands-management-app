@@ -1,12 +1,12 @@
-﻿using ErrandsManagement.Application.Attachments.DTOs;
-using ErrandsManagement.Application.Common.Exceptions;
+﻿using ErrandsManagement.Application.Common.Exceptions;
+using ErrandsManagement.Application.DeliveryBatches.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using MediatR;
 
 namespace ErrandsManagement.Application.DeliveryBatches.Commands.UploadDeliveryPickupProof;
 
 public sealed class UploadDeliveryPickupProofHandler
-    : IRequestHandler<UploadDeliveryPickupProofCommand, AttachmentDto>
+    : IRequestHandler<UploadDeliveryPickupProofCommand, DeliveryBatchAttachmentDto>
 {
     private readonly IDeliveryBatchRepository _repository;
     private readonly IFileStorageService _fileStorage;
@@ -19,7 +19,7 @@ public sealed class UploadDeliveryPickupProofHandler
         _fileStorage = fileStorage;
     }
 
-    public async Task<AttachmentDto> Handle(
+    public async Task<DeliveryBatchAttachmentDto> Handle(
         UploadDeliveryPickupProofCommand command,
         CancellationToken cancellationToken)
     {
@@ -51,12 +51,11 @@ public sealed class UploadDeliveryPickupProofHandler
 
         var attachment = batch.Attachments.Last();
 
-        return new AttachmentDto(
+        return new DeliveryBatchAttachmentDto(
             attachment.Id,
             attachment.FileName,
             attachment.ContentType,
             _fileStorage.GetUrl(attachment.Uri),
-            attachment.Type,
             attachment.UploadedAt);
     }
 }

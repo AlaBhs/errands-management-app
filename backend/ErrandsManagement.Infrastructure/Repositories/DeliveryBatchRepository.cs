@@ -18,9 +18,10 @@ public sealed class DeliveryBatchRepository : IDeliveryBatchRepository
     public async Task AddAsync(DeliveryBatch batch, CancellationToken cancellationToken)
         => await _context.DeliveryBatches.AddAsync(batch, cancellationToken);
 
-    public async Task<DeliveryBatch?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => await _context.DeliveryBatches
-            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+    public async Task<DeliveryBatch?> GetByIdAsync(Guid id, CancellationToken ct)
+    => await _context.DeliveryBatches
+        .Include(b => b.Attachments)
+        .FirstOrDefaultAsync(b => b.Id == id, ct);
 
     public async Task<PagedResult<DeliveryBatchListItemDto>> GetPagedAsync(
         DeliveryBatchQueryParameters parameters,

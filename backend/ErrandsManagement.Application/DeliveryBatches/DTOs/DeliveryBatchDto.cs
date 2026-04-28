@@ -19,5 +19,7 @@ public sealed record DeliveryBatchDto(
     Guid? ConfirmedBy,
 
     DateTime? CancelledAt,
-    string? CancelReason
+    string? CancelReason,
+
+    IReadOnlyCollection<DeliveryBatchAttachmentDto> Attachments
 );

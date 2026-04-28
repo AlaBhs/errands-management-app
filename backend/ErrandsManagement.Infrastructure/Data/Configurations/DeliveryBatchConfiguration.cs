@@ -38,13 +38,14 @@ public sealed class DeliveryBatchConfiguration
         builder.Property(x => x.CancelReason)
             .HasMaxLength(500);
 
-        builder.HasMany(b => b.Attachments)
+        builder
+            .HasMany(b => b.Attachments)
             .WithOne()
-            .HasForeignKey("DeliveryBatchId")
-            .IsRequired(false)
+            .HasForeignKey(a => a.DeliveryBatchId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Navigation(b => b.Attachments)
+        builder
+            .Navigation(b => b.Attachments)
             .HasField("_attachments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
