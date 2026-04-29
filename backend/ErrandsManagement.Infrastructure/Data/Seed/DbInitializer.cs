@@ -116,8 +116,6 @@ public static class DbInitializer
             var log = auditLogs.LastOrDefault(l => l.EventType == eventType);
             if (log is null) return;
 
-            // Target the backing field directly — EF reads backing fields, not properties,
-            // so SetValue on the property is ignored when EF serializes the entity.
             var backingField = typeof(AuditLog).GetField(
                 "<OccurredAt>k__BackingField",
                 System.Reflection.BindingFlags.NonPublic |
@@ -138,6 +136,7 @@ public static class DbInitializer
         // 5 MONTHS AGO — 2 completed (trend: 2)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h1 — FULL CYCLE: advanced 50 TND, two expenses, reconciled (under budget)
         var h1 = new Request(
             "Office supplies procurement",
             "Need printer paper A4 x10 reams and ballpoint pens x50.",
@@ -145,16 +144,22 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", "Please deliver before noon.",
             m5.AddDays(5), 45m);
         h1.Assign(courier1.Id);
+        h1.SetAdvancedAmount(50m);
         h1.Start();
-        h1.Complete(42m, "Delivered on time.");
+        h1.Complete("Delivered on time.");
+        h1.AddExpense(ExpenseCategory.Transport, 8m, "admin@errands.local", "Taxi to supplier");
+        h1.AddExpense(ExpenseCategory.Purchase, 34m, "admin@errands.local", "Paper reams x10 + pens");
+        h1.MarkReconciled(); // TotalExpenses=42, Advanced=50 → Difference=+8 (courier returns 8)
         h1.SubmitSurvey(4, "Good service, slight delay.");
         SetCreatedAt(h1, m5);
         SetAuditLogDate(h1, "Created", m5);
         SetAuditLogDate(h1, "Assigned", m5.AddHours(4));
         SetAuditLogDate(h1, "Started", m5.AddDays(1));
         SetAuditLogDate(h1, "Completed", m5.AddDays(1).AddMinutes(45));
+        SetAuditLogDate(h1, "Reconciled", m5.AddDays(2));
         SetAssignmentDates(h1, m5.AddDays(1), m5.AddDays(1).AddMinutes(45));
 
+        // h2 — FULL CYCLE: advanced 20 TND, one expense, reconciled (over budget)
         var h2 = new Request(
             "IT equipment pickup — HP laptop",
             "Pick up repaired laptop from HP service center.",
@@ -162,20 +167,25 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m5.AddDays(3), 0m);
         h2.Assign(courier2.Id);
+        h2.SetAdvancedAmount(20m);
         h2.Start();
-        h2.Complete(15m, "Laptop collected and delivered to IT department.");
+        h2.Complete("Laptop collected and delivered to IT department.");
+        h2.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Transport to HP service center");
+        h2.MarkReconciled(); // TotalExpenses=15, Advanced=20 → Difference=+5 (courier returns 5)
         h2.SubmitSurvey(5, "Excellent — very professional.");
         SetCreatedAt(h2, m5.AddDays(2));
         SetAuditLogDate(h2, "Created", m5.AddDays(2));
         SetAuditLogDate(h2, "Assigned", m5.AddDays(2).AddHours(6));
         SetAuditLogDate(h2, "Started", m5.AddDays(3));
         SetAuditLogDate(h2, "Completed", m5.AddDays(3).AddMinutes(90));
+        SetAuditLogDate(h2, "Reconciled", m5.AddDays(4));
         SetAssignmentDates(h2, m5.AddDays(3), m5.AddDays(3).AddMinutes(90));
 
         // ══════════════════════════════════════════════════════════════════════
         // 4 MONTHS AGO — 2 completed, 1 cancelled (trend: 3)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h3 — FULL CYCLE: advanced 30 TND, two expenses, reconciled (balanced)
         var h3 = new Request(
             "Travel booking documents",
             "Deliver flight itineraries and hotel vouchers to the client.",
@@ -183,16 +193,22 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m4.AddDays(4), 25m);
         h3.Assign(courier1.Id);
+        h3.SetAdvancedAmount(30m);
         h3.Start();
-        h3.Complete(20m, "Documents delivered successfully.");
+        h3.Complete("Documents delivered successfully.");
+        h3.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Taxi to client office");
+        h3.AddExpense(ExpenseCategory.Other, 8m, "admin@errands.local", "Parking fees");
+        h3.MarkReconciled(); // TotalExpenses=20, Advanced=30 → Difference=+10 (courier returns 10)
         h3.SubmitSurvey(3, "Delivery was late by an hour.");
         SetCreatedAt(h3, m4);
         SetAuditLogDate(h3, "Created", m4);
         SetAuditLogDate(h3, "Assigned", m4.AddHours(2));
         SetAuditLogDate(h3, "Started", m4.AddDays(1));
         SetAuditLogDate(h3, "Completed", m4.AddDays(1).AddMinutes(60));
+        SetAuditLogDate(h3, "Reconciled", m4.AddDays(2));
         SetAssignmentDates(h3, m4.AddDays(1), m4.AddDays(1).AddMinutes(60));
 
+        // h4 — FULL CYCLE: advanced 15 TND, one expense, reconciled (balanced)
         var h4 = new Request(
             "Facilities inspection report",
             "Deliver printed inspection reports to building management.",
@@ -200,16 +216,21 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m4.AddDays(6), 10m);
         h4.Assign(courier2.Id);
+        h4.SetAdvancedAmount(15m);
         h4.Start();
-        h4.Complete(10m, "Reports delivered and signed.");
+        h4.Complete("Reports delivered and signed.");
+        h4.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Transport to building");
+        h4.MarkReconciled(); // TotalExpenses=10, Advanced=15 → Difference=+5 (courier returns 5)
         h4.SubmitSurvey(4, "Smooth process.");
         SetCreatedAt(h4, m4.AddDays(1));
         SetAuditLogDate(h4, "Created", m4.AddDays(1));
         SetAuditLogDate(h4, "Assigned", m4.AddDays(2).AddHours(9));
         SetAuditLogDate(h4, "Started", m4.AddDays(2).AddHours(10));
         SetAuditLogDate(h4, "Completed", m4.AddDays(2).AddHours(10).AddMinutes(30));
+        SetAuditLogDate(h4, "Reconciled", m4.AddDays(3));
         SetAssignmentDates(h4, m4.AddDays(2).AddHours(10), m4.AddDays(2).AddHours(10).AddMinutes(30));
 
+        // h5 — Cancelled, no finance
         var h5 = new Request(
             "Conference catering order",
             "Pick up catering order for client meeting.",
@@ -225,6 +246,7 @@ public static class DbInitializer
         // 3 MONTHS AGO — 3 completed, 1 cancelled (trend: 4)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h6 — FULL CYCLE: advanced 40 TND, two expenses, over advanced (org covers gap)
         var h6 = new Request(
             "Monthly invoice collection",
             "Collect invoices from 3 suppliers in La Marsa.",
@@ -232,16 +254,22 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m3.AddDays(3), 35m);
         h6.Assign(courier1.Id);
+        h6.SetAdvancedAmount(40m);
         h6.Start();
-        h6.Complete(32m, "All invoices collected.");
+        h6.Complete("All invoices collected.");
+        h6.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Transport across 3 supplier sites");
+        h6.AddExpense(ExpenseCategory.Other, 14m, "admin@errands.local", "Photocopying and admin fees");
+        h6.MarkReconciled(); // TotalExpenses=32, Advanced=40 → Difference=+8 (courier returns 8)
         h6.SubmitSurvey(5, "Fast and reliable.");
         SetCreatedAt(h6, m3);
         SetAuditLogDate(h6, "Created", m3);
         SetAuditLogDate(h6, "Assigned", m3.AddHours(3));
         SetAuditLogDate(h6, "Started", m3.AddDays(1));
         SetAuditLogDate(h6, "Completed", m3.AddDays(1).AddMinutes(75));
+        SetAuditLogDate(h6, "Reconciled", m3.AddDays(2));
         SetAssignmentDates(h6, m3.AddDays(1), m3.AddDays(1).AddMinutes(75));
 
+        // h7 — FULL CYCLE: advanced 60 TND, three expenses, over advanced (courier spent more)
         var h7 = new Request(
             "Legal documents notarization",
             "Take company documents to notary for official certification.",
@@ -249,16 +277,23 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m3.AddDays(5), 50m);
         h7.Assign(courier2.Id);
+        h7.SetAdvancedAmount(60m);
         h7.Start();
-        h7.Complete(50m, "Documents notarized and returned.");
+        h7.Complete("Documents notarized and returned.");
+        h7.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Taxi to notary");
+        h7.AddExpense(ExpenseCategory.Purchase, 38m, "admin@errands.local", "Notarization fees");
+        h7.AddExpense(ExpenseCategory.Other, 5m, "admin@errands.local", "Document copies");
+        h7.MarkReconciled(); // TotalExpenses=55, Advanced=60 → Difference=+5 (courier returns 5)
         h7.SubmitSurvey(4, "Professional and punctual.");
         SetCreatedAt(h7, m3.AddDays(1));
         SetAuditLogDate(h7, "Created", m3.AddDays(1));
         SetAuditLogDate(h7, "Assigned", m3.AddDays(1).AddHours(8));
         SetAuditLogDate(h7, "Started", m3.AddDays(2));
         SetAuditLogDate(h7, "Completed", m3.AddDays(2).AddMinutes(120));
+        SetAuditLogDate(h7, "Reconciled", m3.AddDays(3));
         SetAssignmentDates(h7, m3.AddDays(2), m3.AddDays(2).AddMinutes(120));
 
+        // h8 — FULL CYCLE: over budget scenario (expenses exceed advanced)
         var h8 = new Request(
             "IT peripherals order",
             "Purchase keyboards and mice from tech store and deliver.",
@@ -266,16 +301,22 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m3.AddDays(4), 180m);
         h8.Assign(courier1.Id);
+        h8.SetAdvancedAmount(150m);
         h8.Start();
-        h8.Complete(165m, "All items delivered, one keyboard substituted.");
+        h8.Complete("All items delivered, one keyboard substituted.");
+        h8.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Transport to tech store");
+        h8.AddExpense(ExpenseCategory.Purchase, 155m, "admin@errands.local", "Keyboards x3 + mice x3");
+        h8.MarkReconciled(); // TotalExpenses=170, Advanced=150 → Difference=-20 (org owes courier 20)
         h8.SubmitSurvey(4, "Good problem solving.");
         SetCreatedAt(h8, m3.AddDays(2));
         SetAuditLogDate(h8, "Created", m3.AddDays(2));
         SetAuditLogDate(h8, "Assigned", m3.AddDays(2).AddHours(1));
         SetAuditLogDate(h8, "Started", m3.AddDays(2).AddHours(4));
         SetAuditLogDate(h8, "Completed", m3.AddDays(3).AddMinutes(150));
+        SetAuditLogDate(h8, "Reconciled", m3.AddDays(4));
         SetAssignmentDates(h8, m3.AddDays(2).AddHours(4), m3.AddDays(3).AddMinutes(150));
 
+        // h9 — Cancelled, no finance
         var h9 = new Request(
             "Cancelled travel voucher run",
             "Deliver updated travel vouchers to airport liaison.",
@@ -291,6 +332,7 @@ public static class DbInitializer
         // 2 MONTHS AGO — 3 completed (trend: 3)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h10 — FULL CYCLE: no advanced amount (expenses only, no reconciliation possible)
         var h10 = new Request(
             "Customs clearance documents",
             "Deliver customs clearance paperwork to port authority.",
@@ -299,7 +341,9 @@ public static class DbInitializer
             m2.AddDays(1), null);
         h10.Assign(courier2.Id);
         h10.Start();
-        h10.Complete(null, "Paperwork submitted. Awaiting port authority confirmation.");
+        h10.Complete("Paperwork submitted. Awaiting port authority confirmation.");
+        h10.AddExpense(ExpenseCategory.Transport, 22m, "admin@errands.local", "Taxi to port authority");
+        // No advanced amount set → no reconciliation
         h10.SubmitSurvey(2, "Too slow — urgent request took almost a full day.");
         SetCreatedAt(h10, m2);
         SetAuditLogDate(h10, "Created", m2);
@@ -308,6 +352,7 @@ public static class DbInitializer
         SetAuditLogDate(h10, "Completed", m2.AddDays(1).AddMinutes(240));
         SetAssignmentDates(h10, m2.AddDays(1), m2.AddDays(1).AddMinutes(240));
 
+        // h11 — FULL CYCLE: large purchase, advanced matches closely, reconciled
         var h11 = new Request(
             "Office furniture delivery coordination",
             "Coordinate delivery of new chairs from warehouse to Lac office.",
@@ -315,16 +360,23 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m2.AddDays(4), 200m);
         h11.Assign(courier1.Id);
+        h11.SetAdvancedAmount(200m);
         h11.Start();
-        h11.Complete(195m, "Furniture delivered and arranged.");
+        h11.Complete("Furniture delivered and arranged.");
+        h11.AddExpense(ExpenseCategory.Transport, 25m, "admin@errands.local", "Delivery truck hire");
+        h11.AddExpense(ExpenseCategory.Purchase, 165m, "admin@errands.local", "Chair purchase at warehouse");
+        h11.AddExpense(ExpenseCategory.Other, 5m, "admin@errands.local", "Handling fees");
+        h11.MarkReconciled(); // TotalExpenses=195, Advanced=200 → Difference=+5 (courier returns 5)
         h11.SubmitSurvey(5, "Great coordination, zero issues.");
         SetCreatedAt(h11, m2.AddDays(1));
         SetAuditLogDate(h11, "Created", m2.AddDays(1));
         SetAuditLogDate(h11, "Assigned", m2.AddDays(2).AddHours(8));
         SetAuditLogDate(h11, "Started", m2.AddDays(2).AddHours(9));
         SetAuditLogDate(h11, "Completed", m2.AddDays(2).AddHours(9).AddMinutes(180));
+        SetAuditLogDate(h11, "Reconciled", m2.AddDays(3));
         SetAssignmentDates(h11, m2.AddDays(2).AddHours(9), m2.AddDays(2).AddHours(9).AddMinutes(180));
 
+        // h12 — FULL CYCLE: simple delivery, no advanced (expenses only)
         var h12 = new Request(
             "Courier to Ministry of Finance",
             "Deliver official correspondence to Ministry of Finance.",
@@ -333,8 +385,9 @@ public static class DbInitializer
             m2.AddDays(3), 15m);
         h12.Assign(courier2.Id);
         h12.Start();
-        h12.Complete(15m, "Delivered and signed for.");
-        // Intentionally no survey
+        h12.Complete("Delivered and signed for.");
+        h12.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Taxi to ministry");
+        // No survey, no reconciliation (no advance set)
         SetCreatedAt(h12, m2.AddDays(2));
         SetAuditLogDate(h12, "Created", m2.AddDays(2));
         SetAuditLogDate(h12, "Assigned", m2.AddDays(2).AddHours(5));
@@ -347,6 +400,7 @@ public static class DbInitializer
         // 1 MONTH AGO — 2 completed, 1 assigned, 1 pending (trend: 4)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h13 — FULL CYCLE: perfectly balanced reconciliation
         var h13 = new Request(
             "Bank document collection — STB Lac",
             "Collect certified bank statements from STB Lac branch.",
@@ -354,16 +408,21 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", "Please deliver between 5-6 PM.",
             m1.AddDays(3), 20m);
         h13.Assign(courier1.Id);
+        h13.SetAdvancedAmount(20m);
         h13.Start();
-        h13.Complete(18m, "Statements collected without issues.");
+        h13.Complete("Statements collected without issues.");
+        h13.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Transport to STB branch");
+        h13.MarkReconciled(); // TotalExpenses=18, Advanced=20 → Difference=+2 (courier returns 2)
         h13.SubmitSurvey(5, "Excellent service as always.");
         SetCreatedAt(h13, m1);
         SetAuditLogDate(h13, "Created", m1);
         SetAuditLogDate(h13, "Assigned", m1.AddHours(2));
         SetAuditLogDate(h13, "Started", m1.AddDays(1));
         SetAuditLogDate(h13, "Completed", m1.AddDays(1).AddMinutes(50));
+        SetAuditLogDate(h13, "Reconciled", m1.AddDays(2));
         SetAssignmentDates(h13, m1.AddDays(1), m1.AddDays(1).AddMinutes(50));
 
+        // h14 — FULL CYCLE: over advanced (org owes courier)
         var h14 = new Request(
             "Travel booking — executive trip",
             "Deliver confirmed executive travel pack to GM office.",
@@ -371,17 +430,23 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m1.AddDays(2), 60m);
         h14.Assign(courier2.Id);
+        h14.SetAdvancedAmount(50m);
         h14.Start();
-        h14.Complete(55m, "Travel pack delivered and acknowledged.");
+        h14.Complete("Travel pack delivered and acknowledged.");
+        h14.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Taxi to GM office");
+        h14.AddExpense(ExpenseCategory.Purchase, 38m, "admin@errands.local", "Printed travel pack materials");
+        h14.MarkReconciled(); // TotalExpenses=58, Advanced=50 → Difference=-8 (org owes courier 8)
         h14.SubmitSurvey(4, "Fast but the courier called twice to confirm address.");
         SetCreatedAt(h14, m1.AddDays(1));
         SetAuditLogDate(h14, "Created", m1.AddDays(1));
         SetAuditLogDate(h14, "Assigned", m1.AddDays(1).AddMinutes(30));
         SetAuditLogDate(h14, "Started", m1.AddDays(1).AddHours(2));
         SetAuditLogDate(h14, "Completed", m1.AddDays(1).AddHours(2).AddMinutes(65));
+        SetAuditLogDate(h14, "Reconciled", m1.AddDays(2));
         SetAssignmentDates(h14, m1.AddDays(1).AddHours(2),
                                           m1.AddDays(1).AddHours(2).AddMinutes(65));
 
+        // h15 — Assigned, advanced set, not yet started (shows advance-only state)
         var h15 = new Request(
             "Stationery restocking",
             "Purchase and deliver stationery from Papeterie Centrale.",
@@ -389,18 +454,19 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m1.AddDays(5), 80m);
         h15.Assign(courier1.Id);
-        // Assigned — not yet started
+        h15.SetAdvancedAmount(80m);
+        // Assigned — advance set, not yet started
         SetCreatedAt(h15, m1.AddDays(2));
         SetAuditLogDate(h15, "Created", m1.AddDays(2));
         SetAuditLogDate(h15, "Assigned", m1.AddDays(2).AddHours(6));
 
+        // h16 — Pending, no finance
         var h16 = new Request(
             "Document delivery to notary",
             "Urgent delivery of signed contracts to Maître Ben Ali office.",
             michael.Id, tunis, PriorityLevel.Urgent, RequestCategory.Other,
             "Sonia Mejri", "+216 71 890 123", null,
             m1.AddDays(4), 30m);
-        // Pending
         SetCreatedAt(h16, m1.AddDays(3));
         SetAuditLogDate(h16, "Created", m1.AddDays(3));
 
@@ -408,6 +474,7 @@ public static class DbInitializer
         // CURRENT MONTH — 1 completed, 1 in-progress, 2 pending (trend: 4)
         // ══════════════════════════════════════════════════════════════════════
 
+        // h17 — FULL CYCLE: high value, reconciled
         var h17 = new Request(
             "IT equipment pickup — Dell monitors",
             "Pick up 4 Dell monitors from supplier and deliver to IT room.",
@@ -415,17 +482,23 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m0.AddDays(3), 320m);
         h17.Assign(courier2.Id);
+        h17.SetAdvancedAmount(300m);
         h17.Start();
-        h17.Complete(310m, "Monitors delivered and tested by IT team.");
+        h17.Complete("Monitors delivered and tested by IT team.");
+        h17.AddExpense(ExpenseCategory.Transport, 30m, "admin@errands.local", "Van hire for monitors");
+        h17.AddExpense(ExpenseCategory.Purchase, 280m, "admin@errands.local", "4x Dell monitors");
+        h17.MarkReconciled(); // TotalExpenses=310, Advanced=300 → Difference=-10 (org owes courier 10)
         h17.SubmitSurvey(5, "Perfect execution.");
         SetCreatedAt(h17, m0.AddDays(-6));
         SetAuditLogDate(h17, "Created", m0.AddDays(-6));
         SetAuditLogDate(h17, "Assigned", m0.AddDays(-5));
         SetAuditLogDate(h17, "Started", m0.AddDays(-5).AddHours(3));
         SetAuditLogDate(h17, "Completed", m0.AddDays(-5).AddHours(3).AddMinutes(110));
+        SetAuditLogDate(h17, "Reconciled", m0.AddDays(-4));
         SetAssignmentDates(h17, m0.AddDays(-5).AddHours(3),
                                           m0.AddDays(-5).AddHours(3).AddMinutes(110));
 
+        // h18 — InProgress: advanced set, expenses added mid-execution (no reconciliation yet)
         var h18 = new Request(
             "Office supplies — toner cartridges",
             "Purchase toner cartridges for 3rd floor printers.",
@@ -433,14 +506,17 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m0.AddDays(4), 95m);
         h18.Assign(courier1.Id);
+        h18.SetAdvancedAmount(100m);
         h18.Start();
-        // InProgress — no CompletedAt
+        h18.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Transport to store");
+        // Still InProgress — no CompletedAt, no reconciliation
         SetCreatedAt(h18, m0.AddDays(-4));
         SetAuditLogDate(h18, "Created", m0.AddDays(-4));
         SetAuditLogDate(h18, "Assigned", m0.AddDays(-3).AddHours(10));
         SetAuditLogDate(h18, "Started", m0.AddDays(-3).AddHours(11));
-        SetAssignmentDates(h18, m0.AddDays(-3).AddHours(11)); // no completedAt
+        SetAssignmentDates(h18, m0.AddDays(-3).AddHours(11));
 
+        // h19 — Pending, no finance
         var h19 = new Request(
             "Facilities permit renewal",
             "Deliver permit renewal application to municipal office.",
@@ -448,28 +524,26 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777",
             "Ask for the permits desk on the 2nd floor.",
             m0.AddDays(5), 0m);
-        // Pending
         SetCreatedAt(h19, m0.AddDays(-2));
         SetAuditLogDate(h19, "Created", m0.AddDays(-2));
 
+        // h20 — Pending, no finance
         var h20 = new Request(
             "Travel documents — visa application",
             "Deliver passport and supporting documents to French consulate.",
             michael.Id, marsa, PriorityLevel.Urgent, RequestCategory.Travel,
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m0.AddDays(2), 40m);
-        // Pending
         SetCreatedAt(h20, m0.AddDays(-1));
         SetAuditLogDate(h20, "Created", m0.AddDays(-1));
-
-
 
         // ══════════════════════════════════════════════════════════════════════
         // ADDITIONAL DATA — richer filter coverage
         // ══════════════════════════════════════════════════════════════════════
 
-        // ── 5 MONTHS AGO — 2 more (trend: 4 total) ───────────────────────────
+        // ── 5 MONTHS AGO ─────────────────────────────────────────────────────
 
+        // h21 — FULL CYCLE: reconciled, balanced
         var h21 = new Request(
             "Legal contracts delivery",
             "Deliver signed legal contracts to law firm downtown.",
@@ -477,16 +551,22 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m5.AddDays(6), 40m);
         h21.Assign(courier2.Id);
+        h21.SetAdvancedAmount(40m);
         h21.Start();
-        h21.Complete(38m, "Contracts delivered and signed for.");
+        h21.Complete("Contracts delivered and signed for.");
+        h21.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Taxi to law firm");
+        h21.AddExpense(ExpenseCategory.Purchase, 28m, "admin@errands.local", "Certified copy fees");
+        h21.MarkReconciled(); // TotalExpenses=38, Advanced=40 → Difference=+2 (courier returns 2)
         h21.SubmitSurvey(5, "Punctual and professional.");
         SetCreatedAt(h21, m5.AddDays(3));
         SetAuditLogDate(h21, "Created", m5.AddDays(3));
         SetAuditLogDate(h21, "Assigned", m5.AddDays(3).AddHours(3));
         SetAuditLogDate(h21, "Started", m5.AddDays(4));
         SetAuditLogDate(h21, "Completed", m5.AddDays(4).AddMinutes(38));
+        SetAuditLogDate(h21, "Reconciled", m5.AddDays(5));
         SetAssignmentDates(h21, m5.AddDays(4), m5.AddDays(4).AddMinutes(38));
 
+        // h22 — FULL CYCLE: reconciled, expenses exceed advance
         var h22 = new Request(
             "Travel visa documents pickup",
             "Pick up visa application documents from travel agency.",
@@ -494,19 +574,25 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m5.AddDays(4), 55m);
         h22.Assign(courier1.Id);
+        h22.SetAdvancedAmount(45m);
         h22.Start();
-        h22.Complete(50m, "Documents picked up and delivered.");
+        h22.Complete("Documents picked up and delivered.");
+        h22.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Taxi La Marsa");
+        h22.AddExpense(ExpenseCategory.Purchase, 38m, "admin@errands.local", "Agency processing fees");
+        h22.MarkReconciled(); // TotalExpenses=53, Advanced=45 → Difference=-8 (org owes courier 8)
         h22.SubmitSurvey(4, "Quick turnaround on urgent request.");
         SetCreatedAt(h22, m5.AddDays(3));
         SetAuditLogDate(h22, "Created", m5.AddDays(3));
         SetAuditLogDate(h22, "Assigned", m5.AddDays(3).AddHours(1));
         SetAuditLogDate(h22, "Started", m5.AddDays(3).AddHours(3));
         SetAuditLogDate(h22, "Completed", m5.AddDays(3).AddHours(3).AddMinutes(50));
+        SetAuditLogDate(h22, "Reconciled", m5.AddDays(4));
         SetAssignmentDates(h22, m5.AddDays(3).AddHours(3),
                                 m5.AddDays(3).AddHours(3).AddMinutes(50));
 
-        // ── 4 MONTHS AGO — 3 more (trend: 6 total) ───────────────────────────
+        // ── 4 MONTHS AGO ─────────────────────────────────────────────────────
 
+        // h23 — FULL CYCLE: no purchase expenses, transport only
         var h23 = new Request(
             "IT server room access card",
             "Deliver new access cards to IT department from HR office.",
@@ -514,16 +600,21 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m4.AddDays(5), 0m);
         h23.Assign(courier1.Id);
+        h23.SetAdvancedAmount(20m);
         h23.Start();
-        h23.Complete(null, "Access cards delivered to IT manager.");
+        h23.Complete("Access cards delivered to IT manager.");
+        h23.AddExpense(ExpenseCategory.Transport, 14m, "admin@errands.local", "Transport Lac to HR office");
+        h23.MarkReconciled(); // TotalExpenses=14, Advanced=20 → Difference=+6 (courier returns 6)
         h23.SubmitSurvey(3, "Took longer than expected.");
         SetCreatedAt(h23, m4.AddDays(2));
         SetAuditLogDate(h23, "Created", m4.AddDays(2));
         SetAuditLogDate(h23, "Assigned", m4.AddDays(2).AddHours(5));
         SetAuditLogDate(h23, "Started", m4.AddDays(3));
         SetAuditLogDate(h23, "Completed", m4.AddDays(3).AddMinutes(120));
+        SetAuditLogDate(h23, "Reconciled", m4.AddDays(4));
         SetAssignmentDates(h23, m4.AddDays(3), m4.AddDays(3).AddMinutes(120));
 
+        // h24 — FULL CYCLE: large purchase, over budget variance
         var h24 = new Request(
             "Office renovation supplies",
             "Purchase paint and brushes from hardware store for office renovation.",
@@ -532,16 +623,22 @@ public static class DbInitializer
             "Ask for water-based paint only.",
             m4.AddDays(7), 150m);
         h24.Assign(courier2.Id);
+        h24.SetAdvancedAmount(160m);
         h24.Start();
-        h24.Complete(145m, "All renovation supplies delivered.");
+        h24.Complete("All renovation supplies delivered.");
+        h24.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Transport to hardware store");
+        h24.AddExpense(ExpenseCategory.Purchase, 130m, "admin@errands.local", "Paint cans x8 + brushes");
+        h24.MarkReconciled(); // TotalExpenses=148, Advanced=160 → Difference=+12 (courier returns 12)
         h24.SubmitSurvey(5, "Exactly what was requested, great job.");
         SetCreatedAt(h24, m4.AddDays(3));
         SetAuditLogDate(h24, "Created", m4.AddDays(3));
         SetAuditLogDate(h24, "Assigned", m4.AddDays(3).AddHours(4));
         SetAuditLogDate(h24, "Started", m4.AddDays(4));
         SetAuditLogDate(h24, "Completed", m4.AddDays(4).AddMinutes(95));
+        SetAuditLogDate(h24, "Reconciled", m4.AddDays(5));
         SetAssignmentDates(h24, m4.AddDays(4), m4.AddDays(4).AddMinutes(95));
 
+        // h25 — Cancelled, no finance
         var h25 = new Request(
             "Cancelled IT equipment order",
             "Pick up external hard drives from electronics store.",
@@ -553,8 +650,9 @@ public static class DbInitializer
         SetAuditLogDate(h25, "Created", m4.AddDays(3));
         SetAuditLogDate(h25, "Cancelled", m4.AddDays(3).AddHours(2));
 
-        // ── 3 MONTHS AGO — 3 more (trend: 7 total) ───────────────────────────
+        // ── 3 MONTHS AGO ─────────────────────────────────────────────────────
 
+        // h26 — FULL CYCLE: sensitive documents, reconciled
         var h26 = new Request(
             "Payroll documents delivery",
             "Deliver payroll summary documents to finance department.",
@@ -562,16 +660,22 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m3.AddDays(4), 25m);
         h26.Assign(courier2.Id);
+        h26.SetAdvancedAmount(25m);
         h26.Start();
-        h26.Complete(22m, "Documents delivered and acknowledged.");
+        h26.Complete("Documents delivered and acknowledged.");
+        h26.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Taxi to finance dept");
+        h26.AddExpense(ExpenseCategory.Other, 8m, "admin@errands.local", "Sealed envelope purchase");
+        h26.MarkReconciled(); // TotalExpenses=20, Advanced=25 → Difference=+5 (courier returns 5)
         h26.SubmitSurvey(4, "Fast and discreet handling of sensitive documents.");
         SetCreatedAt(h26, m3.AddDays(2));
         SetAuditLogDate(h26, "Created", m3.AddDays(2));
         SetAuditLogDate(h26, "Assigned", m3.AddDays(2).AddHours(2));
         SetAuditLogDate(h26, "Started", m3.AddDays(3));
         SetAuditLogDate(h26, "Completed", m3.AddDays(3).AddMinutes(22));
+        SetAuditLogDate(h26, "Reconciled", m3.AddDays(4));
         SetAssignmentDates(h26, m3.AddDays(3), m3.AddDays(3).AddMinutes(22));
 
+        // h27 — FULL CYCLE: no survey, reconciled
         var h27 = new Request(
             "Office supplies — ergonomic accessories",
             "Purchase wrist rests and monitor stands for engineering team.",
@@ -579,16 +683,22 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m3.AddDays(6), 120m);
         h27.Assign(courier1.Id);
+        h27.SetAdvancedAmount(120m);
         h27.Start();
-        h27.Complete(115m, "All accessories delivered and distributed.");
+        h27.Complete("All accessories delivered and distributed.");
+        h27.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Transport to office supplies store");
+        h27.AddExpense(ExpenseCategory.Purchase, 102m, "admin@errands.local", "Wrist rests x6 + monitor stands x4");
+        h27.MarkReconciled(); // TotalExpenses=114, Advanced=120 → Difference=+6 (courier returns 6)
         // No survey — tests null avg
         SetCreatedAt(h27, m3.AddDays(3));
         SetAuditLogDate(h27, "Created", m3.AddDays(3));
         SetAuditLogDate(h27, "Assigned", m3.AddDays(3).AddHours(6));
         SetAuditLogDate(h27, "Started", m3.AddDays(4));
         SetAuditLogDate(h27, "Completed", m3.AddDays(4).AddMinutes(115));
+        SetAuditLogDate(h27, "Reconciled", m3.AddDays(5));
         SetAssignmentDates(h27, m3.AddDays(4), m3.AddDays(4).AddMinutes(115));
 
+        // h28 — FULL CYCLE: reconciled, expenses under advance
         var h28 = new Request(
             "Flight booking confirmation delivery",
             "Deliver printed flight confirmations to executive assistant.",
@@ -596,19 +706,25 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m3.AddDays(3), 30m);
         h28.Assign(courier2.Id);
+        h28.SetAdvancedAmount(35m);
         h28.Start();
-        h28.Complete(28m, "Confirmations delivered before deadline.");
+        h28.Complete("Confirmations delivered before deadline.");
+        h28.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Express taxi La Marsa");
+        h28.AddExpense(ExpenseCategory.Other, 5m, "admin@errands.local", "Printing fees");
+        h28.MarkReconciled(); // TotalExpenses=25, Advanced=35 → Difference=+10 (courier returns 10)
         h28.SubmitSurvey(5, "Arrived 30 minutes early — excellent.");
         SetCreatedAt(h28, m3.AddDays(2));
         SetAuditLogDate(h28, "Created", m3.AddDays(2));
         SetAuditLogDate(h28, "Assigned", m3.AddDays(2).AddHours(1));
         SetAuditLogDate(h28, "Started", m3.AddDays(2).AddHours(2));
         SetAuditLogDate(h28, "Completed", m3.AddDays(2).AddHours(2).AddMinutes(28));
+        SetAuditLogDate(h28, "Reconciled", m3.AddDays(3));
         SetAssignmentDates(h28, m3.AddDays(2).AddHours(2),
                                 m3.AddDays(2).AddHours(2).AddMinutes(28));
 
-        // ── 2 MONTHS AGO — 3 more (trend: 6 total) ───────────────────────────
+        // ── 2 MONTHS AGO ─────────────────────────────────────────────────────
 
+        // h29 — FULL CYCLE: small value, reconciled
         var h29 = new Request(
             "HVAC maintenance coordination",
             "Deliver maintenance order forms to facilities team at Lac office.",
@@ -616,16 +732,21 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m2.AddDays(5), 10m);
         h29.Assign(courier1.Id);
+        h29.SetAdvancedAmount(15m);
         h29.Start();
-        h29.Complete(10m, "Forms delivered and signed.");
+        h29.Complete("Forms delivered and signed.");
+        h29.AddExpense(ExpenseCategory.Transport, 8m, "admin@errands.local", "Bus to Lac office");
+        h29.MarkReconciled(); // TotalExpenses=8, Advanced=15 → Difference=+7 (courier returns 7)
         h29.SubmitSurvey(4, "Reliable as always.");
         SetCreatedAt(h29, m2.AddDays(2));
         SetAuditLogDate(h29, "Created", m2.AddDays(2));
         SetAuditLogDate(h29, "Assigned", m2.AddDays(2).AddHours(3));
         SetAuditLogDate(h29, "Started", m2.AddDays(3));
         SetAuditLogDate(h29, "Completed", m2.AddDays(3).AddMinutes(40));
+        SetAuditLogDate(h29, "Reconciled", m2.AddDays(4));
         SetAssignmentDates(h29, m2.AddDays(3), m2.AddDays(3).AddMinutes(40));
 
+        // h30 — FULL CYCLE: urgent purchase, expenses exceed advance
         var h30 = new Request(
             "Printer cartridges emergency order",
             "Urgent purchase of ink cartridges — printer down on deadline day.",
@@ -634,17 +755,23 @@ public static class DbInitializer
             "Must be HP 305XL black — no substitutes.",
             m2.AddDays(2), 75m);
         h30.Assign(courier2.Id);
+        h30.SetAdvancedAmount(70m);
         h30.Start();
-        h30.Complete(72m, "Correct cartridges found and delivered.");
+        h30.Complete("Correct cartridges found and delivered.");
+        h30.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Urgent taxi");
+        h30.AddExpense(ExpenseCategory.Purchase, 65m, "admin@errands.local", "HP 305XL cartridges x3");
+        h30.MarkReconciled(); // TotalExpenses=75, Advanced=70 → Difference=-5 (org owes courier 5)
         h30.SubmitSurvey(5, "Saved the day — printer back up within the hour.");
         SetCreatedAt(h30, m2.AddDays(2));
         SetAuditLogDate(h30, "Created", m2.AddDays(2));
         SetAuditLogDate(h30, "Assigned", m2.AddDays(2).AddHours(1));
         SetAuditLogDate(h30, "Started", m2.AddDays(2).AddHours(1).AddMinutes(30));
         SetAuditLogDate(h30, "Completed", m2.AddDays(2).AddHours(1).AddMinutes(30).AddMinutes(55));
+        SetAuditLogDate(h30, "Reconciled", m2.AddDays(3));
         SetAssignmentDates(h30, m2.AddDays(2).AddHours(1).AddMinutes(30),
                                 m2.AddDays(2).AddHours(1).AddMinutes(30).AddMinutes(55));
 
+        // h31 — Cancelled, no finance
         var h31 = new Request(
             "Cancelled facilities inspection",
             "Coordinate external inspector visit to rooftop facilities.",
@@ -656,8 +783,9 @@ public static class DbInitializer
         SetAuditLogDate(h31, "Created", m2.AddDays(3));
         SetAuditLogDate(h31, "Cancelled", m2.AddDays(3).AddHours(4));
 
-        // ── 1 MONTH AGO — 3 more (trend: 7 total) ────────────────────────────
+        // ── 1 MONTH AGO ──────────────────────────────────────────────────────
 
+        // h32 — FULL CYCLE: IT cables, reconciled
         var h32 = new Request(
             "IT equipment — standing desk cables",
             "Purchase cable management kits and HDMI cables for new standing desks.",
@@ -665,16 +793,22 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m1.AddDays(6), 85m);
         h32.Assign(courier1.Id);
+        h32.SetAdvancedAmount(85m);
         h32.Start();
-        h32.Complete(80m, "All cables and kits delivered.");
+        h32.Complete("All cables and kits delivered.");
+        h32.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Transport to tech district");
+        h32.AddExpense(ExpenseCategory.Purchase, 68m, "admin@errands.local", "HDMI cables x5 + cable kits x4");
+        h32.MarkReconciled(); // TotalExpenses=80, Advanced=85 → Difference=+5 (courier returns 5)
         h32.SubmitSurvey(4, "Good job, minor delay finding parking.");
         SetCreatedAt(h32, m1.AddDays(3));
         SetAuditLogDate(h32, "Created", m1.AddDays(3));
         SetAuditLogDate(h32, "Assigned", m1.AddDays(3).AddHours(4));
         SetAuditLogDate(h32, "Started", m1.AddDays(4));
         SetAuditLogDate(h32, "Completed", m1.AddDays(4).AddMinutes(80));
+        SetAuditLogDate(h32, "Reconciled", m1.AddDays(5));
         SetAssignmentDates(h32, m1.AddDays(4), m1.AddDays(4).AddMinutes(80));
 
+        // h33 — FULL CYCLE: travel insurance, reconciled
         var h33 = new Request(
             "Travel insurance documents",
             "Collect travel insurance certificates from broker office.",
@@ -682,16 +816,21 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m1.AddDays(5), 20m);
         h33.Assign(courier2.Id);
+        h33.SetAdvancedAmount(25m);
         h33.Start();
-        h33.Complete(18m, "Certificates collected and delivered to HR.");
+        h33.Complete("Certificates collected and delivered to HR.");
+        h33.AddExpense(ExpenseCategory.Transport, 16m, "admin@errands.local", "Taxi to La Marsa broker");
+        h33.MarkReconciled(); // TotalExpenses=16, Advanced=25 → Difference=+9 (courier returns 9)
         h33.SubmitSurvey(5, "Very efficient.");
         SetCreatedAt(h33, m1.AddDays(3));
         SetAuditLogDate(h33, "Created", m1.AddDays(3));
         SetAuditLogDate(h33, "Assigned", m1.AddDays(3).AddHours(2));
         SetAuditLogDate(h33, "Started", m1.AddDays(4));
         SetAuditLogDate(h33, "Completed", m1.AddDays(4).AddMinutes(18));
+        SetAuditLogDate(h33, "Reconciled", m1.AddDays(5));
         SetAssignmentDates(h33, m1.AddDays(4), m1.AddDays(4).AddMinutes(18));
 
+        // h34 — FULL CYCLE: cleaning supplies, expenses exceed advance
         var h34 = new Request(
             "Office cleaning supplies",
             "Purchase cleaning products for weekly office cleaning.",
@@ -699,18 +838,24 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             m1.AddDays(7), 60m);
         h34.Assign(courier1.Id);
+        h34.SetAdvancedAmount(50m);
         h34.Start();
-        h34.Complete(55m, "All cleaning products delivered to facilities room.");
+        h34.Complete("All cleaning products delivered to facilities room.");
+        h34.AddExpense(ExpenseCategory.Transport, 8m, "admin@errands.local", "Transport to wholesale store");
+        h34.AddExpense(ExpenseCategory.Purchase, 48m, "admin@errands.local", "Cleaning products bulk pack");
+        h34.MarkReconciled(); // TotalExpenses=56, Advanced=50 → Difference=-6 (org owes courier 6)
         h34.SubmitSurvey(3, "Correct items but delivery was later than expected.");
         SetCreatedAt(h34, m1.AddDays(4));
         SetAuditLogDate(h34, "Created", m1.AddDays(4));
         SetAuditLogDate(h34, "Assigned", m1.AddDays(4).AddHours(7));
         SetAuditLogDate(h34, "Started", m1.AddDays(5));
         SetAuditLogDate(h34, "Completed", m1.AddDays(5).AddMinutes(55));
+        SetAuditLogDate(h34, "Reconciled", m1.AddDays(6));
         SetAssignmentDates(h34, m1.AddDays(5), m1.AddDays(5).AddMinutes(55));
 
-        // ── CURRENT MONTH — 5 more (trend: 9 total) ──────────────────────────
+        // ── CURRENT MONTH ─────────────────────────────────────────────────────
 
+        // h35 — FULL CYCLE: urgent contract, reconciled
         var h35 = new Request(
             "Urgent contract signing — notary",
             "Deliver corporate merger documents to notary for same-day signing.",
@@ -718,17 +863,23 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m0.AddDays(1), 70m);
         h35.Assign(courier2.Id);
+        h35.SetAdvancedAmount(70m);
         h35.Start();
-        h35.Complete(65m, "Documents signed and returned to legal team.");
+        h35.Complete("Documents signed and returned to legal team.");
+        h35.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Express taxi notary");
+        h35.AddExpense(ExpenseCategory.Purchase, 50m, "admin@errands.local", "Notarization and stamp fees");
+        h35.MarkReconciled(); // TotalExpenses=65, Advanced=70 → Difference=+5 (courier returns 5)
         h35.SubmitSurvey(5, "Critical request handled perfectly under pressure.");
         SetCreatedAt(h35, m0.AddDays(-8));
         SetAuditLogDate(h35, "Created", m0.AddDays(-8));
         SetAuditLogDate(h35, "Assigned", m0.AddDays(-8).AddHours(1));
         SetAuditLogDate(h35, "Started", m0.AddDays(-8).AddHours(2));
         SetAuditLogDate(h35, "Completed", m0.AddDays(-8).AddHours(2).AddMinutes(65));
+        SetAuditLogDate(h35, "Reconciled", m0.AddDays(-7));
         SetAssignmentDates(h35, m0.AddDays(-8).AddHours(2),
                                 m0.AddDays(-8).AddHours(2).AddMinutes(65));
 
+        // h36 — FULL CYCLE: small supplies, reconciled
         var h36 = new Request(
             "Office supplies — whiteboard markers",
             "Purchase whiteboard markers and erasers for all meeting rooms.",
@@ -736,16 +887,22 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             m0.AddDays(4), 35m);
         h36.Assign(courier1.Id);
+        h36.SetAdvancedAmount(35m);
         h36.Start();
-        h36.Complete(30m, "Markers and erasers distributed to all meeting rooms.");
+        h36.Complete("Markers and erasers distributed to all meeting rooms.");
+        h36.AddExpense(ExpenseCategory.Transport, 6m, "admin@errands.local", "Taxi to stationery shop");
+        h36.AddExpense(ExpenseCategory.Purchase, 24m, "admin@errands.local", "Markers x20 + erasers x10");
+        h36.MarkReconciled(); // TotalExpenses=30, Advanced=35 → Difference=+5 (courier returns 5)
         h36.SubmitSurvey(4, "Quick and efficient.");
         SetCreatedAt(h36, m0.AddDays(-7));
         SetAuditLogDate(h36, "Created", m0.AddDays(-7));
         SetAuditLogDate(h36, "Assigned", m0.AddDays(-7).AddHours(3));
         SetAuditLogDate(h36, "Started", m0.AddDays(-6));
         SetAuditLogDate(h36, "Completed", m0.AddDays(-6).AddMinutes(30));
+        SetAuditLogDate(h36, "Reconciled", m0.AddDays(-5));
         SetAssignmentDates(h36, m0.AddDays(-6), m0.AddDays(-6).AddMinutes(30));
 
+        // h37 — InProgress: advanced set, one expense already recorded
         var h37 = new Request(
             "Facilities — fire extinguisher inspection",
             "Coordinate fire extinguisher inspection with safety vendor.",
@@ -754,36 +911,40 @@ public static class DbInitializer
             "Vendor requires building manager present.",
             m0.AddDays(5), 0m);
         h37.Assign(courier2.Id);
+        h37.SetAdvancedAmount(30m);
         h37.Start();
-        // InProgress — second in-progress request this month
+        h37.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Transport to Lac office");
+        // Still InProgress — no reconciliation yet
         SetCreatedAt(h37, m0.AddDays(-5));
         SetAuditLogDate(h37, "Created", m0.AddDays(-5));
         SetAuditLogDate(h37, "Assigned", m0.AddDays(-4).AddHours(9));
         SetAuditLogDate(h37, "Started", m0.AddDays(-4).AddHours(10));
         SetAssignmentDates(h37, m0.AddDays(-4).AddHours(10));
 
+        // h38 — Assigned, advanced set, no expenses yet
         var h38 = new Request(
             "IT equipment — USB hubs procurement",
             "Purchase 10 USB-C hubs for the new hot-desk area.",
             sarah.Id, lac, PriorityLevel.Normal, RequestCategory.ITEquipment,
             "Ahmed Ben Ali", "+216 71 234 567", null,
             m0.AddDays(6), 250m);
-        // Assigned — not yet started
         h38.Assign(courier1.Id);
+        h38.SetAdvancedAmount(250m);
         SetCreatedAt(h38, m0.AddDays(-3));
         SetAuditLogDate(h38, "Created", m0.AddDays(-3));
         SetAuditLogDate(h38, "Assigned", m0.AddDays(-3).AddHours(5));
 
+        // h39 — Pending, no finance
         var h39 = new Request(
             "Travel booking — team offsite",
             "Deliver hotel and transport vouchers for team offsite event.",
             michael.Id, marsa, PriorityLevel.High, RequestCategory.Travel,
             "Ahmed Mohamed", "+216 77 777 777", null,
             m0.AddDays(3), 180m);
-        // Pending — high value pending request
         SetCreatedAt(h39, m0.AddDays(-1));
         SetAuditLogDate(h39, "Created", m0.AddDays(-1));
 
+        // h40 — Pending, no finance
         var h40 = new Request(
             "Office supplies — paper shredder bags",
             "Purchase shredder bags compatible with Fellowes shredder model 79CI.",
@@ -791,16 +952,13 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123",
             "Must be cross-cut compatible bags.",
             m0.AddDays(4), 25m);
-        // Pending
         SetCreatedAt(h40, m0.AddDays(-1));
         SetAuditLogDate(h40, "Created", m0.AddDays(-1));
-
 
         // ══════════════════════════════════════════════════════════════════════
         // DELIVERY BATCH DEMO DATA
         // ══════════════════════════════════════════════════════════════════════
 
-        // 3 months ago — 2 picked up
         var db1 = new DeliveryBatch(
             "Q3 Audit Report Package",
             "Deloitte Tunisia",
@@ -820,7 +978,6 @@ public static class DbInitializer
         db2.ConfirmPickup(reception2.Id, "Sonia Riahi");
         SetDeliveryBatchCreatedAt(db2, m3.AddDays(5));
 
-        // 2 months ago — 2 picked up, 1 cancelled
         var db3 = new DeliveryBatch(
             "Supplier Invoice Pack — October",
             "Fournitures Générales SA",
@@ -849,7 +1006,6 @@ public static class DbInitializer
         db5.Cancel(reception1.Id, "Event was postponed — materials no longer needed.");
         SetDeliveryBatchCreatedAt(db5, m2.AddDays(7));
 
-        // 1 month ago — 1 picked up, 1 cancelled, 1 handed to reception
         var db6 = new DeliveryBatch(
             "Notarized HR Documents",
             "Maître Leila Boussetta",
@@ -875,10 +1031,8 @@ public static class DbInitializer
             admin.Id,
             clientPhone: "+216 71 148 000");
         db8.MarkAsHandedToReception(admin.Id);
-        // Status: HandedToReception — waiting for pickup
         SetDeliveryBatchCreatedAt(db8, m1.AddDays(10));
 
-        // Current month — mix of all statuses
         var db9 = new DeliveryBatch(
             "Annual Report Print Run",
             "EY Client Relations",
@@ -895,7 +1049,6 @@ public static class DbInitializer
             admin.Id,
             clientPhone: "+216 71 735 000");
         db10.MarkAsHandedToReception(admin.Id);
-        // Status: HandedToReception — pending pickup at reception desk
         SetDeliveryBatchCreatedAt(db10, m0.AddDays(-5));
 
         var db11 = new DeliveryBatch(
@@ -904,7 +1057,6 @@ public static class DbInitializer
             admin.Id,
             clientPhone: "+216 71 861 000",
             pickupNote: "Confidential — hand directly to named recipient.");
-        // Status: Created — admin hasn't handed over yet
         SetDeliveryBatchCreatedAt(db11, m0.AddDays(-3));
 
         var db12 = new DeliveryBatch(
@@ -913,10 +1065,8 @@ public static class DbInitializer
             admin.Id,
             clientPhone: "+216 71 107 300",
             pickupNote: "Passport copies included — keep sealed.");
-        // Status: Created — ready for handover
         SetDeliveryBatchCreatedAt(db12, m0.AddDays(-1));
 
-        // ── Persist ──────────────────────────────────────────────────────────
         var allBatches = new[]
         {
             db1, db2, db3, db4, db5, db6,
@@ -933,8 +1083,6 @@ public static class DbInitializer
         logger.LogInformation(
             "DbInitializer: seeded {Count} delivery batches across 3 months.",
             allBatches.Length);
-
-
 
         // ══════════════════════════════════════════════════════════════════════
         // 2024 — OLDER HISTORICAL DATA (makes All time vs Last 6 months differ)
@@ -961,16 +1109,20 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             y2024_jan.AddDays(3), 350m);
         o1.Assign(courier1.Id);
+        o1.SetAdvancedAmount(330m);
         o1.Start();
-        o1.Complete(320m, "Full stock delivered and stored in supply room.");
+        o1.Complete("Full stock delivered and stored in supply room.");
+        o1.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Transport for bulk supplies");
+        o1.AddExpense(ExpenseCategory.Purchase, 300m, "admin@errands.local", "Paper reams + pens + folders bulk");
+        o1.MarkReconciled(); // TotalExpenses=320, Advanced=330 → Difference=+10
         o1.SubmitSurvey(5, "Excellent handling of a large order.");
         SetCreatedAt(o1, y2024_jan);
         SetAuditLogDate(o1, "Created", y2024_jan);
         SetAuditLogDate(o1, "Assigned", y2024_jan.AddHours(5));
         SetAuditLogDate(o1, "Started", y2024_jan.AddDays(1));
         SetAuditLogDate(o1, "Completed", y2024_jan.AddDays(1).AddMinutes(200));
-        SetAssignmentDates(o1, y2024_jan.AddDays(1),
-                               y2024_jan.AddDays(1).AddMinutes(200));
+        SetAuditLogDate(o1, "Reconciled", y2024_jan.AddDays(2));
+        SetAssignmentDates(o1, y2024_jan.AddDays(1), y2024_jan.AddDays(1).AddMinutes(200));
 
         // ── Feb 2024 ──────────────────────────────────────────────────────────
         var o2 = new Request(
@@ -980,16 +1132,20 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             y2024_feb.AddDays(2), 280m);
         o2.Assign(courier2.Id);
+        o2.SetAdvancedAmount(270m);
         o2.Start();
-        o2.Complete(265m, "All batteries replaced successfully.");
+        o2.Complete("All batteries replaced successfully.");
+        o2.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Transport to authorized vendor");
+        o2.AddExpense(ExpenseCategory.Purchase, 252m, "admin@errands.local", "Laptop batteries x5");
+        o2.MarkReconciled(); // TotalExpenses=267, Advanced=270 → Difference=+3
         o2.SubmitSurvey(4, "Good service, took slightly longer than estimated.");
         SetCreatedAt(o2, y2024_feb);
         SetAuditLogDate(o2, "Created", y2024_feb);
         SetAuditLogDate(o2, "Assigned", y2024_feb.AddHours(3));
         SetAuditLogDate(o2, "Started", y2024_feb.AddDays(1));
         SetAuditLogDate(o2, "Completed", y2024_feb.AddDays(1).AddMinutes(150));
-        SetAssignmentDates(o2, y2024_feb.AddDays(1),
-                               y2024_feb.AddDays(1).AddMinutes(150));
+        SetAuditLogDate(o2, "Reconciled", y2024_feb.AddDays(2));
+        SetAssignmentDates(o2, y2024_feb.AddDays(1), y2024_feb.AddDays(1).AddMinutes(150));
 
         // ── Mar 2024 ──────────────────────────────────────────────────────────
         var o3 = new Request(
@@ -999,16 +1155,20 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             y2024_mar.AddDays(1), 90m);
         o3.Assign(courier1.Id);
+        o3.SetAdvancedAmount(90m);
         o3.Start();
-        o3.Complete(85m, "All executive travel documents delivered.");
+        o3.Complete("All executive travel documents delivered.");
+        o3.AddExpense(ExpenseCategory.Transport, 25m, "admin@errands.local", "Express taxi La Marsa");
+        o3.AddExpense(ExpenseCategory.Purchase, 60m, "admin@errands.local", "Printed itineraries + insurance docs");
+        o3.MarkReconciled(); // TotalExpenses=85, Advanced=90 → Difference=+5
         o3.SubmitSurvey(5, "Fast and professional — critical delivery.");
         SetCreatedAt(o3, y2024_mar);
         SetAuditLogDate(o3, "Created", y2024_mar);
         SetAuditLogDate(o3, "Assigned", y2024_mar.AddHours(1));
         SetAuditLogDate(o3, "Started", y2024_mar.AddHours(3));
         SetAuditLogDate(o3, "Completed", y2024_mar.AddHours(3).AddMinutes(85));
-        SetAssignmentDates(o3, y2024_mar.AddHours(3),
-                               y2024_mar.AddHours(3).AddMinutes(85));
+        SetAuditLogDate(o3, "Reconciled", y2024_mar.AddDays(1));
+        SetAssignmentDates(o3, y2024_mar.AddHours(3), y2024_mar.AddHours(3).AddMinutes(85));
 
         var o4 = new Request(
             "Facilities — building permit renewal",
@@ -1030,16 +1190,20 @@ public static class DbInitializer
             "Must match existing navy blue color scheme.",
             y2024_apr.AddDays(4), 480m);
         o5.Assign(courier2.Id);
+        o5.SetAdvancedAmount(480m);
         o5.Start();
-        o5.Complete(460m, "Chairs delivered and assembled in reception area.");
+        o5.Complete("Chairs delivered and assembled in reception area.");
+        o5.AddExpense(ExpenseCategory.Transport, 35m, "admin@errands.local", "Van hire for furniture");
+        o5.AddExpense(ExpenseCategory.Purchase, 428m, "admin@errands.local", "Reception chairs x4");
+        o5.MarkReconciled(); // TotalExpenses=463, Advanced=480 → Difference=+17
         o5.SubmitSurvey(4, "Heavy items handled well, slight scratch on one chair.");
         SetCreatedAt(o5, y2024_apr);
         SetAuditLogDate(o5, "Created", y2024_apr);
         SetAuditLogDate(o5, "Assigned", y2024_apr.AddHours(8));
         SetAuditLogDate(o5, "Started", y2024_apr.AddDays(1));
         SetAuditLogDate(o5, "Completed", y2024_apr.AddDays(1).AddMinutes(240));
-        SetAssignmentDates(o5, y2024_apr.AddDays(1),
-                               y2024_apr.AddDays(1).AddMinutes(240));
+        SetAuditLogDate(o5, "Reconciled", y2024_apr.AddDays(2));
+        SetAssignmentDates(o5, y2024_apr.AddDays(1), y2024_apr.AddDays(1).AddMinutes(240));
 
         var o6 = new Request(
             "IT — network switch procurement",
@@ -1048,16 +1212,20 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             y2024_apr.AddDays(3), 620m);
         o6.Assign(courier1.Id);
+        o6.SetAdvancedAmount(600m);
         o6.Start();
-        o6.Complete(600m, "Switch delivered to IT team and installed.");
+        o6.Complete("Switch delivered to IT team and installed.");
+        o6.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Transport to tech supplier");
+        o6.AddExpense(ExpenseCategory.Purchase, 582m, "admin@errands.local", "Managed network switch");
+        o6.MarkReconciled(); // TotalExpenses=602, Advanced=600 → Difference=-2 (org owes courier 2)
         o6.SubmitSurvey(5, "Handled expensive equipment with care.");
         SetCreatedAt(o6, y2024_apr.AddDays(1));
         SetAuditLogDate(o6, "Created", y2024_apr.AddDays(1));
         SetAuditLogDate(o6, "Assigned", y2024_apr.AddDays(1).AddHours(4));
         SetAuditLogDate(o6, "Started", y2024_apr.AddDays(2));
         SetAuditLogDate(o6, "Completed", y2024_apr.AddDays(2).AddMinutes(180));
-        SetAssignmentDates(o6, y2024_apr.AddDays(2),
-                               y2024_apr.AddDays(2).AddMinutes(180));
+        SetAuditLogDate(o6, "Reconciled", y2024_apr.AddDays(3));
+        SetAssignmentDates(o6, y2024_apr.AddDays(2), y2024_apr.AddDays(2).AddMinutes(180));
 
         // ── May 2024 ──────────────────────────────────────────────────────────
         var o7 = new Request(
@@ -1067,16 +1235,20 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             y2024_may.AddDays(2), 45m);
         o7.Assign(courier2.Id);
+        o7.SetAdvancedAmount(45m);
         o7.Start();
-        o7.Complete(40m, "All registration packets delivered.");
+        o7.Complete("All registration packets delivered.");
+        o7.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Taxi to conference venue");
+        o7.AddExpense(ExpenseCategory.Other, 22m, "admin@errands.local", "Registration packet printing");
+        o7.MarkReconciled(); // TotalExpenses=40, Advanced=45 → Difference=+5
         o7.SubmitSurvey(3, "Delivery was on time but courier seemed lost initially.");
         SetCreatedAt(o7, y2024_may);
         SetAuditLogDate(o7, "Created", y2024_may);
         SetAuditLogDate(o7, "Assigned", y2024_may.AddHours(6));
         SetAuditLogDate(o7, "Started", y2024_may.AddDays(1));
         SetAuditLogDate(o7, "Completed", y2024_may.AddDays(1).AddMinutes(40));
-        SetAssignmentDates(o7, y2024_may.AddDays(1),
-                               y2024_may.AddDays(1).AddMinutes(40));
+        SetAuditLogDate(o7, "Reconciled", y2024_may.AddDays(2));
+        SetAssignmentDates(o7, y2024_may.AddDays(1), y2024_may.AddDays(1).AddMinutes(40));
 
         var o8 = new Request(
             "Office supplies — quarterly restock",
@@ -1085,16 +1257,20 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             y2024_may.AddDays(5), 220m);
         o8.Assign(courier1.Id);
+        o8.SetAdvancedAmount(220m);
         o8.Start();
-        o8.Complete(210m, "All departments restocked.");
+        o8.Complete("All departments restocked.");
+        o8.AddExpense(ExpenseCategory.Transport, 15m, "admin@errands.local", "Transport to office supplies wholesale");
+        o8.AddExpense(ExpenseCategory.Purchase, 196m, "admin@errands.local", "Q2 stationery and consumables");
+        o8.MarkReconciled(); // TotalExpenses=211, Advanced=220 → Difference=+9
         // No survey
         SetCreatedAt(o8, y2024_may.AddDays(1));
         SetAuditLogDate(o8, "Created", y2024_may.AddDays(1));
         SetAuditLogDate(o8, "Assigned", y2024_may.AddDays(1).AddHours(5));
         SetAuditLogDate(o8, "Started", y2024_may.AddDays(2));
         SetAuditLogDate(o8, "Completed", y2024_may.AddDays(2).AddMinutes(160));
-        SetAssignmentDates(o8, y2024_may.AddDays(2),
-                               y2024_may.AddDays(2).AddMinutes(160));
+        SetAuditLogDate(o8, "Reconciled", y2024_may.AddDays(3));
+        SetAssignmentDates(o8, y2024_may.AddDays(2), y2024_may.AddDays(2).AddMinutes(160));
 
         // ── Jun 2024 ──────────────────────────────────────────────────────────
         var o9 = new Request(
@@ -1105,15 +1281,16 @@ public static class DbInitializer
             y2024_jun.AddDays(3), 0m);
         o9.Assign(courier2.Id);
         o9.Start();
-        o9.Complete(null, "Forms delivered and acknowledged.");
+        o9.Complete("Forms delivered and acknowledged.");
+        o9.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Transport to building management");
+        // No advanced amount — expenses only, no reconciliation
         o9.SubmitSurvey(4, "Quick and hassle-free.");
         SetCreatedAt(o9, y2024_jun);
         SetAuditLogDate(o9, "Created", y2024_jun);
         SetAuditLogDate(o9, "Assigned", y2024_jun.AddHours(4));
         SetAuditLogDate(o9, "Started", y2024_jun.AddDays(1));
         SetAuditLogDate(o9, "Completed", y2024_jun.AddDays(1).AddMinutes(60));
-        SetAssignmentDates(o9, y2024_jun.AddDays(1),
-                               y2024_jun.AddDays(1).AddMinutes(60));
+        SetAssignmentDates(o9, y2024_jun.AddDays(1), y2024_jun.AddDays(1).AddMinutes(60));
 
         var o10 = new Request(
             "IT — printer fleet maintenance",
@@ -1122,16 +1299,20 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             y2024_jun.AddDays(4), 175m);
         o10.Assign(courier1.Id);
+        o10.SetAdvancedAmount(170m);
         o10.Start();
-        o10.Complete(165m, "Maintenance kits delivered to all floors.");
+        o10.Complete("Maintenance kits delivered to all floors.");
+        o10.AddExpense(ExpenseCategory.Transport, 14m, "admin@errands.local", "Transport between floors");
+        o10.AddExpense(ExpenseCategory.Purchase, 152m, "admin@errands.local", "Printer maintenance kits x3");
+        o10.MarkReconciled(); // TotalExpenses=166, Advanced=170 → Difference=+4
         o10.SubmitSurvey(5, "Thorough and efficient.");
         SetCreatedAt(o10, y2024_jun.AddDays(1));
         SetAuditLogDate(o10, "Created", y2024_jun.AddDays(1));
         SetAuditLogDate(o10, "Assigned", y2024_jun.AddDays(1).AddHours(3));
         SetAuditLogDate(o10, "Started", y2024_jun.AddDays(2));
         SetAuditLogDate(o10, "Completed", y2024_jun.AddDays(2).AddMinutes(165));
-        SetAssignmentDates(o10, y2024_jun.AddDays(2),
-                                y2024_jun.AddDays(2).AddMinutes(165));
+        SetAuditLogDate(o10, "Reconciled", y2024_jun.AddDays(3));
+        SetAssignmentDates(o10, y2024_jun.AddDays(2), y2024_jun.AddDays(2).AddMinutes(165));
 
         // ── Jul 2024 ──────────────────────────────────────────────────────────
         var o11 = new Request(
@@ -1141,16 +1322,20 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             y2024_jul.AddDays(2), 130m);
         o11.Assign(courier2.Id);
+        o11.SetAdvancedAmount(130m);
         o11.Start();
-        o11.Complete(125m, "All event materials delivered on time.");
+        o11.Complete("All event materials delivered on time.");
+        o11.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Van hire La Marsa");
+        o11.AddExpense(ExpenseCategory.Purchase, 106m, "admin@errands.local", "Event material boxes x8");
+        o11.MarkReconciled(); // TotalExpenses=126, Advanced=130 → Difference=+4
         o11.SubmitSurvey(5, "Handled multiple boxes with care — great job.");
         SetCreatedAt(o11, y2024_jul);
         SetAuditLogDate(o11, "Created", y2024_jul);
         SetAuditLogDate(o11, "Assigned", y2024_jul.AddHours(2));
         SetAuditLogDate(o11, "Started", y2024_jul.AddHours(4));
         SetAuditLogDate(o11, "Completed", y2024_jul.AddHours(4).AddMinutes(125));
-        SetAssignmentDates(o11, y2024_jul.AddHours(4),
-                                y2024_jul.AddHours(4).AddMinutes(125));
+        SetAuditLogDate(o11, "Reconciled", y2024_jul.AddDays(1));
+        SetAssignmentDates(o11, y2024_jul.AddHours(4), y2024_jul.AddHours(4).AddMinutes(125));
 
         var o12 = new Request(
             "Cancelled — office supplies duplicate order",
@@ -1172,16 +1357,20 @@ public static class DbInitializer
             "Generator must not fall below 20% capacity.",
             y2024_aug.AddDays(1), 380m);
         o13.Assign(courier1.Id);
+        o13.SetAdvancedAmount(380m);
         o13.Start();
-        o13.Complete(370m, "Fuel delivery coordinated and confirmed.");
+        o13.Complete("Fuel delivery coordinated and confirmed.");
+        o13.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Transport to fuel supplier");
+        o13.AddExpense(ExpenseCategory.Purchase, 352m, "admin@errands.local", "Generator fuel — 200L");
+        o13.MarkReconciled(); // TotalExpenses=372, Advanced=380 → Difference=+8
         o13.SubmitSurvey(2, "Urgent request took too long — generator nearly ran dry.");
         SetCreatedAt(o13, y2024_aug);
         SetAuditLogDate(o13, "Created", y2024_aug);
         SetAuditLogDate(o13, "Assigned", y2024_aug.AddHours(3));
         SetAuditLogDate(o13, "Started", y2024_aug.AddDays(1));
         SetAuditLogDate(o13, "Completed", y2024_aug.AddDays(1).AddMinutes(300));
-        SetAssignmentDates(o13, y2024_aug.AddDays(1),
-                                y2024_aug.AddDays(1).AddMinutes(300));
+        SetAuditLogDate(o13, "Reconciled", y2024_aug.AddDays(2));
+        SetAssignmentDates(o13, y2024_aug.AddDays(1), y2024_aug.AddDays(1).AddMinutes(300));
 
         var o14 = new Request(
             "IT — tablet procurement for field team",
@@ -1190,16 +1379,20 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             y2024_aug.AddDays(4), 890m);
         o14.Assign(courier2.Id);
+        o14.SetAdvancedAmount(870m);
         o14.Start();
-        o14.Complete(850m, "Tablets and cases delivered to field team lead.");
+        o14.Complete("Tablets and cases delivered to field team lead.");
+        o14.AddExpense(ExpenseCategory.Transport, 20m, "admin@errands.local", "Transport to tech retailer");
+        o14.AddExpense(ExpenseCategory.Purchase, 832m, "admin@errands.local", "Tablets x3 + cases x3");
+        o14.MarkReconciled(); // TotalExpenses=852, Advanced=870 → Difference=+18
         o14.SubmitSurvey(4, "Good handling of high-value items.");
         SetCreatedAt(o14, y2024_aug.AddDays(1));
         SetAuditLogDate(o14, "Created", y2024_aug.AddDays(1));
         SetAuditLogDate(o14, "Assigned", y2024_aug.AddDays(1).AddHours(6));
         SetAuditLogDate(o14, "Started", y2024_aug.AddDays(2));
         SetAuditLogDate(o14, "Completed", y2024_aug.AddDays(2).AddMinutes(210));
-        SetAssignmentDates(o14, y2024_aug.AddDays(2),
-                                y2024_aug.AddDays(2).AddMinutes(210));
+        SetAuditLogDate(o14, "Reconciled", y2024_aug.AddDays(3));
+        SetAssignmentDates(o14, y2024_aug.AddDays(2), y2024_aug.AddDays(2).AddMinutes(210));
 
         // ── Sep 2024 ──────────────────────────────────────────────────────────
         var o15 = new Request(
@@ -1209,16 +1402,20 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             y2024_sep.AddDays(3), 65m);
         o15.Assign(courier1.Id);
+        o15.SetAdvancedAmount(65m);
         o15.Start();
-        o15.Complete(60m, "All travel documentation delivered.");
+        o15.Complete("All travel documentation delivered.");
+        o15.AddExpense(ExpenseCategory.Transport, 22m, "admin@errands.local", "Taxi to consulate La Marsa");
+        o15.AddExpense(ExpenseCategory.Purchase, 40m, "admin@errands.local", "Document translation fees");
+        o15.MarkReconciled(); // TotalExpenses=62, Advanced=65 → Difference=+3
         o15.SubmitSurvey(4, "Reliable and on time.");
         SetCreatedAt(o15, y2024_sep);
         SetAuditLogDate(o15, "Created", y2024_sep);
         SetAuditLogDate(o15, "Assigned", y2024_sep.AddHours(4));
         SetAuditLogDate(o15, "Started", y2024_sep.AddDays(1));
         SetAuditLogDate(o15, "Completed", y2024_sep.AddDays(1).AddMinutes(60));
-        SetAssignmentDates(o15, y2024_sep.AddDays(1),
-                                y2024_sep.AddDays(1).AddMinutes(60));
+        SetAuditLogDate(o15, "Reconciled", y2024_sep.AddDays(2));
+        SetAssignmentDates(o15, y2024_sep.AddDays(1), y2024_sep.AddDays(1).AddMinutes(60));
 
         var o16 = new Request(
             "Office supplies — Q3 restock",
@@ -1227,16 +1424,20 @@ public static class DbInitializer
             "Ahmed Ben Ali", "+216 71 234 567", null,
             y2024_sep.AddDays(5), 195m);
         o16.Assign(courier2.Id);
+        o16.SetAdvancedAmount(195m);
         o16.Start();
-        o16.Complete(185m, "All consumables distributed to departments.");
+        o16.Complete("All consumables distributed to departments.");
+        o16.AddExpense(ExpenseCategory.Transport, 12m, "admin@errands.local", "Transport to wholesale");
+        o16.AddExpense(ExpenseCategory.Purchase, 175m, "admin@errands.local", "Q3 consumables bulk");
+        o16.MarkReconciled(); // TotalExpenses=187, Advanced=195 → Difference=+8
         o16.SubmitSurvey(5, "Always consistent and reliable.");
         SetCreatedAt(o16, y2024_sep.AddDays(1));
         SetAuditLogDate(o16, "Created", y2024_sep.AddDays(1));
         SetAuditLogDate(o16, "Assigned", y2024_sep.AddDays(1).AddHours(5));
         SetAuditLogDate(o16, "Started", y2024_sep.AddDays(2));
         SetAuditLogDate(o16, "Completed", y2024_sep.AddDays(2).AddMinutes(130));
-        SetAssignmentDates(o16, y2024_sep.AddDays(2),
-                                y2024_sep.AddDays(2).AddMinutes(130));
+        SetAuditLogDate(o16, "Reconciled", y2024_sep.AddDays(3));
+        SetAssignmentDates(o16, y2024_sep.AddDays(2), y2024_sep.AddDays(2).AddMinutes(130));
 
         // ── Oct 2024 ──────────────────────────────────────────────────────────
         var o17 = new Request(
@@ -1247,15 +1448,16 @@ public static class DbInitializer
             y2024_oct.AddDays(3), 0m);
         o17.Assign(courier1.Id);
         o17.Start();
-        o17.Complete(null, "Deep clean coordination confirmed with vendor.");
+        o17.Complete("Deep clean coordination confirmed with vendor.");
+        o17.AddExpense(ExpenseCategory.Transport, 8m, "admin@errands.local", "Transport to cleaning company");
+        // No advanced amount
         o17.SubmitSurvey(4, "Smooth coordination process.");
         SetCreatedAt(o17, y2024_oct);
         SetAuditLogDate(o17, "Created", y2024_oct);
         SetAuditLogDate(o17, "Assigned", y2024_oct.AddHours(3));
         SetAuditLogDate(o17, "Started", y2024_oct.AddDays(1));
         SetAuditLogDate(o17, "Completed", y2024_oct.AddDays(1).AddMinutes(90));
-        SetAssignmentDates(o17, y2024_oct.AddDays(1),
-                                y2024_oct.AddDays(1).AddMinutes(90));
+        SetAssignmentDates(o17, y2024_oct.AddDays(1), y2024_oct.AddDays(1).AddMinutes(90));
 
         var o18 = new Request(
             "IT — UPS battery replacements",
@@ -1264,16 +1466,20 @@ public static class DbInitializer
             "Ahmed Mohamed", "+216 77 777 777", null,
             y2024_oct.AddDays(4), 420m);
         o18.Assign(courier2.Id);
+        o18.SetAdvancedAmount(410m);
         o18.Start();
-        o18.Complete(400m, "UPS batteries replaced by IT team.");
+        o18.Complete("UPS batteries replaced by IT team.");
+        o18.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Transport to server room supplier");
+        o18.AddExpense(ExpenseCategory.Purchase, 384m, "admin@errands.local", "UPS batteries x4");
+        o18.MarkReconciled(); // TotalExpenses=402, Advanced=410 → Difference=+8
         o18.SubmitSurvey(3, "Delivery was fine but invoice was incorrect.");
         SetCreatedAt(o18, y2024_oct.AddDays(1));
         SetAuditLogDate(o18, "Created", y2024_oct.AddDays(1));
         SetAuditLogDate(o18, "Assigned", y2024_oct.AddDays(1).AddHours(7));
         SetAuditLogDate(o18, "Started", y2024_oct.AddDays(2));
         SetAuditLogDate(o18, "Completed", y2024_oct.AddDays(2).AddMinutes(200));
-        SetAssignmentDates(o18, y2024_oct.AddDays(2),
-                                y2024_oct.AddDays(2).AddMinutes(200));
+        SetAuditLogDate(o18, "Reconciled", y2024_oct.AddDays(3));
+        SetAssignmentDates(o18, y2024_oct.AddDays(2), y2024_oct.AddDays(2).AddMinutes(200));
 
         // ── Nov 2024 ──────────────────────────────────────────────────────────
         var o19 = new Request(
@@ -1284,16 +1490,20 @@ public static class DbInitializer
             "Must arrive before 8 AM.",
             y2024_nov.AddDays(1), 110m);
         o19.Assign(courier1.Id);
+        o19.SetAdvancedAmount(110m);
         o19.Start();
-        o19.Complete(105m, "Materials delivered at 7:45 AM — before deadline.");
+        o19.Complete("Materials delivered at 7:45 AM — before deadline.");
+        o19.AddExpense(ExpenseCategory.Transport, 30m, "admin@errands.local", "Early morning express taxi");
+        o19.AddExpense(ExpenseCategory.Purchase, 76m, "admin@errands.local", "Conference printouts and folders");
+        o19.MarkReconciled(); // TotalExpenses=106, Advanced=110 → Difference=+4
         o19.SubmitSurvey(5, "Arrived early on an urgent early-morning delivery.");
         SetCreatedAt(o19, y2024_nov);
         SetAuditLogDate(o19, "Created", y2024_nov);
         SetAuditLogDate(o19, "Assigned", y2024_nov.AddHours(2));
         SetAuditLogDate(o19, "Started", y2024_nov.AddHours(4));
         SetAuditLogDate(o19, "Completed", y2024_nov.AddHours(4).AddMinutes(105));
-        SetAssignmentDates(o19, y2024_nov.AddHours(4),
-                                y2024_nov.AddHours(4).AddMinutes(105));
+        SetAuditLogDate(o19, "Reconciled", y2024_nov.AddDays(1));
+        SetAssignmentDates(o19, y2024_nov.AddHours(4), y2024_nov.AddHours(4).AddMinutes(105));
 
         var o20 = new Request(
             "Office supplies — year-end stationery pack",
@@ -1302,16 +1512,20 @@ public static class DbInitializer
             "Sonia Mejri", "+216 71 890 123", null,
             y2024_nov.AddDays(4), 310m);
         o20.Assign(courier2.Id);
+        o20.SetAdvancedAmount(310m);
         o20.Start();
-        o20.Complete(295m, "Stationery packs distributed to all staff.");
+        o20.Complete("Stationery packs distributed to all staff.");
+        o20.AddExpense(ExpenseCategory.Transport, 18m, "admin@errands.local", "Transport to stationery wholesaler");
+        o20.AddExpense(ExpenseCategory.Purchase, 278m, "admin@errands.local", "Year-end stationery packs x40");
+        o20.MarkReconciled(); // TotalExpenses=296, Advanced=310 → Difference=+14
         o20.SubmitSurvey(4, "Large order handled efficiently.");
         SetCreatedAt(o20, y2024_nov.AddDays(1));
         SetAuditLogDate(o20, "Created", y2024_nov.AddDays(1));
         SetAuditLogDate(o20, "Assigned", y2024_nov.AddDays(1).AddHours(4));
         SetAuditLogDate(o20, "Started", y2024_nov.AddDays(2));
         SetAuditLogDate(o20, "Completed", y2024_nov.AddDays(2).AddMinutes(180));
-        SetAssignmentDates(o20, y2024_nov.AddDays(2),
-                                y2024_nov.AddDays(2).AddMinutes(180));
+        SetAuditLogDate(o20, "Reconciled", y2024_nov.AddDays(3));
+        SetAssignmentDates(o20, y2024_nov.AddDays(2), y2024_nov.AddDays(2).AddMinutes(180));
 
         // ── Dec 2024 ──────────────────────────────────────────────────────────
         var o21 = new Request(
@@ -1322,15 +1536,16 @@ public static class DbInitializer
             y2024_dec.AddDays(2), 0m);
         o21.Assign(courier1.Id);
         o21.Start();
-        o21.Complete(null, "Inspection checklist submitted and acknowledged.");
+        o21.Complete("Inspection checklist submitted and acknowledged.");
+        o21.AddExpense(ExpenseCategory.Transport, 14m, "admin@errands.local", "Transport to property management");
+        // No advanced amount
         o21.SubmitSurvey(5, "Handled important year-end documentation perfectly.");
         SetCreatedAt(o21, y2024_dec);
         SetAuditLogDate(o21, "Created", y2024_dec);
         SetAuditLogDate(o21, "Assigned", y2024_dec.AddHours(3));
         SetAuditLogDate(o21, "Started", y2024_dec.AddDays(1));
         SetAuditLogDate(o21, "Completed", y2024_dec.AddDays(1).AddMinutes(75));
-        SetAssignmentDates(o21, y2024_dec.AddDays(1),
-                                y2024_dec.AddDays(1).AddMinutes(75));
+        SetAssignmentDates(o21, y2024_dec.AddDays(1), y2024_dec.AddDays(1).AddMinutes(75));
 
         var o22 = new Request(
             "IT — year-end equipment audit",
@@ -1340,15 +1555,16 @@ public static class DbInitializer
             y2024_dec.AddDays(4), 0m);
         o22.Assign(courier2.Id);
         o22.Start();
-        o22.Complete(null, "Asset audit data collected from all floors.");
+        o22.Complete("Asset audit data collected from all floors.");
+        o22.AddExpense(ExpenseCategory.Transport, 10m, "admin@errands.local", "Transport between floors");
+        // No advanced amount
         o22.SubmitSurvey(4, "Methodical and thorough.");
         SetCreatedAt(o22, y2024_dec.AddDays(1));
         SetAuditLogDate(o22, "Created", y2024_dec.AddDays(1));
         SetAuditLogDate(o22, "Assigned", y2024_dec.AddDays(1).AddHours(5));
         SetAuditLogDate(o22, "Started", y2024_dec.AddDays(2));
         SetAuditLogDate(o22, "Completed", y2024_dec.AddDays(2).AddMinutes(120));
-        SetAssignmentDates(o22, y2024_dec.AddDays(2),
-                                y2024_dec.AddDays(2).AddMinutes(120));
+        SetAssignmentDates(o22, y2024_dec.AddDays(2), y2024_dec.AddDays(2).AddMinutes(120));
 
         var o23 = new Request(
             "Cancelled — holiday party supplies",
@@ -1361,11 +1577,7 @@ public static class DbInitializer
         SetAuditLogDate(o23, "Created", y2024_dec.AddDays(2));
         SetAuditLogDate(o23, "Cancelled", y2024_dec.AddDays(2).AddHours(4));
 
-
         // ── DEADLINE RISK ALERT TEST ──────────────────────────────────────────
-        // TotalDuration = 36min → Threshold = MAX(432s, 7200s) = 7200s (2h floor)
-        // RemainingTime at startup ≈ 7min = 420s → 420 <= 7200 → AT RISK ✓
-
         var riskTest = new Request(
             "[TEST] Deadline risk alert",
             "Seeded request to verify the DeadlineMonitoringService fires correctly.",
@@ -1379,6 +1591,7 @@ public static class DbInitializer
         SetCreatedAt(riskTest, now.AddMinutes(-29));
         SetAuditLogDate(riskTest, "Created", now.AddMinutes(-29));
         SetAuditLogDate(riskTest, "Assigned", now.AddMinutes(-5));
+
         // ── Persist ────────────────────────────────────────────────────────────
         var all = new[]
         {
