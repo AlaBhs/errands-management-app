@@ -587,4 +587,29 @@ internal sealed class StubUserRepository : IUserRepository
     public Task SaveChangesAsync(
         CancellationToken ct = default)
         => Task.CompletedTask;
+
+    public Task<Guid> CreateWithoutPasswordAsync(UserDto dto, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateProfileAsync(Guid userId, string fullName, string? profilePhotoUrl, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<UserDto?> GetApplicationUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }

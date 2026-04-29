@@ -254,6 +254,65 @@ public sealed class UserRepository : IUserRepository
         await _userManager.UpdateAsync(user);
     }
 
+    public async Task<Guid> CreateWithoutPasswordAsync(UserDto dto, CancellationToken ct = default)
+    {
+        var user = new ApplicationUser
+        {
+            Id = dto.Id,
+            FullName = dto.FullName,
+            Email = dto.Email,
+            UserName = dto.Email,
+            EmailConfirmed = false  // confirmed when the user sets their password
+        };
+        var result = await _userManager.CreateAsync(user);
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+        return user.Id;
+    }
+
+    public async Task<string> GenerateEmailConfirmationTokenAsync(
+        Guid userId, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+    }
+
+    public async Task SetPasswordAsync(
+        Guid userId, string token, string newPassword, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+
+        // Confirm email first — token is single-use and time-limited by Identity
+        var confirmResult = await _userManager.ConfirmEmailAsync(user, token);
+        if (!confirmResult.Succeeded)
+            throw new InvalidOperationException(
+                string.Join("; ", confirmResult.Errors.Select(e => e.Description)));
+
+        var addPwResult = await _userManager.AddPasswordAsync(user, newPassword);
+        if (!addPwResult.Succeeded)
+            throw new InvalidOperationException(
+                string.Join("; ", addPwResult.Errors.Select(e => e.Description)));
+    }
+
+    public async Task UpdateProfileAsync(
+        Guid userId, string fullName, string? profilePhotoUrl, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        user.FullName = fullName;
+        if (profilePhotoUrl is not null)
+            user.ProfilePhotoUrl = profilePhotoUrl;
+        await _userManager.UpdateAsync(user);
+    }
+
+    public async Task<UserDto?> GetApplicationUserAsync(
+        Guid userId, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        var roles = await _userManager.GetRolesAsync(user);
+        return ToDto(user, roles);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindUserByIdAsync(Guid userId)
