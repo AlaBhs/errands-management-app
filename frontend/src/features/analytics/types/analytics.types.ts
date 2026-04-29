@@ -10,6 +10,7 @@ export interface AnalyticsSummary {
   deadlineComplianceRate: number | null;
   totalEstimatedCost: number;
   totalActualCost: number;
+  budgetVariance: number | null;
 }
 
 export interface TrendPoint {
