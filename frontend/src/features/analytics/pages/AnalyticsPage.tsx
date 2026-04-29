@@ -465,12 +465,12 @@ export const AnalyticsPage = () => {
                 Cost Breakdown by Category
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Estimated vs actual spend with variance analysis
+                Budget vs itemized expenses · variance
               </p>
             </div>
             {costBreakdown.data && (
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">Total actual</p>
+                <p className="text-xs text-muted-foreground">Total expenses</p>
                 <p className="text-base font-bold tabular-nums">
                   {costBreakdown.data
                     .reduce((s, r) => s + r.actualCost, 0)
