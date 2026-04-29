@@ -29,7 +29,6 @@ export function QuickCompleteModal({
   title,
   onClose,
 }: QuickCompleteModalProps) {
-  const [actualCost, setActualCost] = useState("");
   const [note, setNote] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -54,7 +53,6 @@ export function QuickCompleteModal({
   const handleSubmit = () => {
     complete.mutate(
       {
-        actualCost: actualCost ? parseFloat(actualCost) : undefined,
         note: note || undefined,
         dischargePhoto: photo ?? undefined,
       },
@@ -76,30 +74,6 @@ export function QuickCompleteModal({
 
         {/* Body */}
         <div className="space-y-4">
-          {/* Actual cost */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">
-              Actual Cost
-              <span className="ml-1 text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </label>
-            <div className="relative">
-              tnd
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={actualCost}
-                onChange={(e) => setActualCost(e.target.value)}
-                placeholder="0.00"
-                className="w-full rounded-lg border border-border
-                           bg-background dark:bg-muted/50 py-2.5 pl-12 pr-4 text-sm
-                           text-foreground focus:border-foreground focus:bg-background
-                           dark:focus:bg-muted/70 focus:outline-none transition-colors"
-              />
-            </div>
-          </div>
 
           {/* Note */}
           <div className="space-y-1.5">
