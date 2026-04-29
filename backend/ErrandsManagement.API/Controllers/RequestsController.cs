@@ -177,7 +177,6 @@ public sealed class RequestsController : ControllerBase
     [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
     public async Task<IActionResult> Complete(
     Guid id,
-    [FromForm] decimal? actualCost,
     [FromForm] string? note,
     IFormFile? dischargePhoto,
     CancellationToken cancellationToken)
@@ -191,7 +190,6 @@ public sealed class RequestsController : ControllerBase
 
         var command = new CompleteRequestCommand(
             RequestId: id,
-            ActualCost: actualCost,
             Note: note,
             DischargePhotoFileName: dischargePhoto?.FileName,
             DischargePhotoContentType: dischargePhoto?.ContentType,
