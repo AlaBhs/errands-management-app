@@ -12,6 +12,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
                   .IsRequired()
                   .HasMaxLength(50);
 
+        builder.Property(u => u.ProfilePhotoUrl)
+                  .HasMaxLength(500);
+
         builder.Property(u => u.City)
                   .HasMaxLength(100);
 
