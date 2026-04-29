@@ -109,13 +109,14 @@ public class Request : BaseEntity
 
         AddAudit("Started", "Request marked as in progress.");
     }
-    public void Complete(decimal? actualCost = null, string? note = null)
+    public void Complete(string? note = null)
     {
         if (Status != RequestStatus.InProgress)
-            throw new InvalidRequestStateException("Only in-progress requests can be completed.");
+            throw new InvalidRequestStateException(
+                "Only in-progress requests can be completed.");
 
         var assignment = GetActiveAssignment();
-        assignment.Complete(actualCost, note);
+        assignment.Complete(note);
 
         Status = RequestStatus.Completed;
         RaiseDomainEvent(new RequestCompletedEvent(Id, RequesterId, Title));
@@ -277,9 +278,13 @@ public class Request : BaseEntity
     {
         var assignment = GetActiveOrLastAssignment();
         assignment.MarkReconciled();
-        MarkAsUpdated();
 
-        AddAudit("Reconciled", "Expense reconciliation marked.");
+        var totalExpenses = _expenseRecords.Sum(e => e.Amount);
+        assignment.LockActualCost(totalExpenses);
+
+        MarkAsUpdated();
+        AddAudit("Reconciled",
+            $"Expenses reconciled. ActualCost locked at {totalExpenses:F2}.");
     }
 
     private Assignment GetActiveOrLastAssignment()

@@ -43,7 +43,7 @@ public class Assignment : BaseEntity
         StartedAt = DateTime.UtcNow;
     }
 
-    public void Complete(decimal? actualCost, string? note = null)
+    public void Complete(string? note = null)
     {
         if (!IsStarted)
             throw new InvalidRequestStateException("Assignment must be started before completion.");
@@ -52,7 +52,6 @@ public class Assignment : BaseEntity
             throw new InvalidRequestStateException("Assignment already completed.");
 
         CompletedAt = DateTime.UtcNow;
-        ActualCost = actualCost;
         Note = note;
     }
 
@@ -78,6 +77,16 @@ public class Assignment : BaseEntity
             throw new BusinessRuleException("Assignment has already been reconciled.");
 
         ReconciledAt = DateTime.UtcNow;
+        MarkAsUpdated();
+    }
+
+    internal void LockActualCost(decimal totalExpenses)
+    {
+        if (ActualCost.HasValue)
+            throw new InvalidRequestStateException(
+                "ActualCost has already been locked.");
+
+        ActualCost = totalExpenses;
         MarkAsUpdated();
     }
 }
