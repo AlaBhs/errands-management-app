@@ -3,6 +3,7 @@ using ErrandsManagement.Application.CourierRecommendation.Settings;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.BackgroundJobs;
 using ErrandsManagement.Infrastructure.Data;
+using ErrandsManagement.Infrastructure.Email;
 using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
 using ErrandsManagement.Infrastructure.RealTime;
@@ -28,6 +29,10 @@ public static class DependencyInjection
         services.AddServices();
         services.AddRecommendationEngine(configuration);
         services.AddHostedService<DeadlineMonitoringService>();
+        services.AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection(EmailSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         return services;
     }
@@ -74,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
         services.AddScoped<IRequestTemplateRepository, RequestTemplateRepository>();
         services.AddScoped<IDeliveryBatchRepository, DeliveryBatchRepository>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
         return services;
     }
