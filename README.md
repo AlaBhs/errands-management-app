@@ -1,57 +1,39 @@
 # Errands Management App
 
-This branch adds a **Physical Delivery Tracking System** — an operational layer
-that lets admins register batches of physical items prepared for a client, hand
-them off to reception, and lets reception confirm the final pickup — with full
-traceability, real-time notifications, and signed proof at every step.
+This branch delivers an **Actual Cost Reconciliation System** — `ActualCost`
+moves from a manual guess made at completion time to a locked, auditable value
+derived automatically from expense records at reconciliation time.
 
-## What's New — `feature/physical-delivery-tracking`
+## What's Refactored — `refactor/finance-standardization`
 
-### Creating a Delivery Batch (Admin)
+### The Core Insight
 
-- On the **Delivery Batches** page, an Admin sees a **"New Batch"** button in
-  the top-right corner
-- Clicking it opens a creation form where the admin enters a batch title, the
-  client's name, an optional phone number, and any pickup instructions for
-  reception
-- Once submitted, the batch appears in the list with a **Created** status,
-  ready for handover
+`ActualCost` was being set at the wrong moment (completion) by the wrong person
+(whoever clicks complete). It is now set at the right moment (reconciliation)
+from the right data source (expense records). The field itself doesn't disappear
+— it becomes a locked, auditable confirmation rather than a manual guess.
 
-### Handing Over to Reception (Admin)
+### Reconciling a Request (Admin)
 
-- On any batch detail page, the admin sees a **"Hand Over to Reception"**
-  button when the batch is in the **Created** state
-- Clicking it opens a confirmation modal — one click records the handover with
-  the exact timestamp and the admin's identity
-- The batch status moves to **At Reception** and all reception users receive a
-  real-time notification instantly
+- On any completed request's detail page, an Admin sees a **"Mark Reconciled"**
+  button once all expense records have been entered
+- Clicking it sums every attached expense record and writes the total into
+  `ActualCost` automatically — no manual input required
+- The field is then locked and the request status moves to **Reconciled**
 
-### Confirming a Pickup (Reception)
+### Locked Actual Cost Field
 
-- Reception users see a dedicated **Deliveries** section in their sidebar with
-  only the batches relevant to them
-- On a batch detail page, a reception user sees a **"Confirm Pickup"** button
-  when the batch is **At Reception**
-- A small modal lets them optionally record the name of the person who collected
-  the items — useful for audit purposes
-- Once confirmed, the batch moves to **Picked Up** and the admin who created it
-  receives a real-time notification
+- Once reconciled, `ActualCost` is immutable and displayed in read-only mode
+  throughout the interface
+- Any request that already carried a manually entered `ActualCost` keeps its
+  original value — legacy data is fully preserved
 
-### Pickup Proof Attachments (Reception)
+### Analytics — Reconciled Cost Reporting
 
-- After confirming a pickup, reception can upload photo evidence or a signed
-  document directly on the detail page
-- Only image files (JPEG, PNG, WEBP) up to 10 MB are accepted — up to 3 files
-  per batch
-- Admins can view uploaded proof on the same detail page in read-only mode
-
-
-### User Management — Reception Role
-
-- Admins can now create **Reception** accounts from the User Management page
-- The role appears in the role dropdown and is displayed with its own colour
-  badge throughout the interface
-- Two reception accounts are pre-seeded in the database for immediate testing
+- The analytics dashboard now sources cost figures from reconciled expense
+  records rather than manually entered values
+- All existing filters, date ranges, and per-collaborator breakdowns reflect
+  the updated data source automatically
 
 
 ## How to Test with Docker
@@ -67,47 +49,40 @@ docker-compose up --build
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
 
-### Testing the Delivery Flow
+### Testing the Reconciliation Flow
 
-**Step 1 — Create a batch**
+**Step 1 — Complete a request**
 
-Log in as an Admin. Navigate to **Deliveries** in the sidebar and click
-**New Batch**. Fill in a title and client name, then submit.
+Log in as an Admin. Open any in-progress request and mark it as complete.
 
-**Step 2 — Hand it over**
+**Step 2 — Add expense records**
 
-Open the batch you just created and click **Hand Over to Reception**. Confirm
-in the modal. The status changes to **At Reception** and reception users receive
-a notification.
+Navigate to the **Expenses** section of the same request and add one or more
+expense records until the expected costs are fully captured.
 
-**Step 3 — Confirm pickup as Reception**
+**Step 3 — Reconcile**
 
-Log in as a reception user (see credentials below). The notification appears
-in the bell — clicking it takes you straight to the batch. Click
-**Confirm Pickup**, optionally enter the collector's name, and confirm.
+Click **Mark Reconciled**. The system sums all attached expense records, writes
+the total to `ActualCost`, and locks the field. The status updates to
+**Reconciled** immediately.
 
-**Step 4 — Upload proof**
+**Step 4 — Verify the lock**
 
-Still on the detail page as a reception user, scroll to the **Pickup Proof**
-section and upload a photo. The admin can see it on their view of the same page.
+Confirm that `ActualCost` is now read-only and displays the calculated total.
 
-**Step 5 — Check the admin notification**
+**Step 5 — Check analytics**
 
-Switch back to the admin account. A notification confirms that the batch was
-picked up. The batch list shows the **Picked Up** status immediately.
-
-**Step 6 — Try cancellation**
-
-Create a second batch, hand it over, then log in as reception and use the
-**Cancel** button. Add a reason — it is recorded on the detail page.
+Navigate to the **Analytics** dashboard and verify that cost figures reflect
+the expense records rather than any previously entered manual value.
 
 ## Notes
 
 - This branch includes all features from all previous branches, including the
-  Deadline Risk Alerting System, Request Messaging System, Courier Recommendation
-  Engine, Request Expense Tracking System, and the real-time notification system.
-- The delivery tracking system is entirely separate from the request system —
-  no existing data or workflow is affected.
+  Deadline Risk Alerting System, Request Messaging System, Courier
+  Recommendation Engine, Request Expense Tracking System, and the Physical
+  Delivery Tracking System.
+- The reconciliation change is backwards-compatible — no existing request,
+  expense record, or delivery batch is affected.
 
 ## Demo Credentials
 
