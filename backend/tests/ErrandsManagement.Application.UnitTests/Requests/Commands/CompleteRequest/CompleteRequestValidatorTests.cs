@@ -13,7 +13,6 @@ public class CompleteRequestValidatorTests
         string? note = "Delivered") =>
         new(
             RequestId: Guid.NewGuid(),
-            ActualCost: actualCost,
             Note: note,
             DischargePhotoFileName: null,
             DischargePhotoContentType: null,
@@ -36,27 +35,12 @@ public class CompleteRequestValidatorTests
         result.Errors.Should().Contain(e => e.PropertyName == "RequestId");
     }
 
-    [Fact]
-    public void Should_Fail_When_ActualCost_Is_Negative()
-    {
-        var result = _validator.Validate(ValidCommand(actualCost: -5m));
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "ActualCost");
-    }
-
-    [Fact]
-    public void Should_Pass_When_ActualCost_Is_Null()
-    {
-        var result = _validator.Validate(ValidCommand(actualCost: null));
-        result.IsValid.Should().BeTrue();
-    }
 
     [Fact]
     public void Should_Fail_When_Photo_ContentType_Is_Invalid()
     {
         var command = new CompleteRequestCommand(
             RequestId: Guid.NewGuid(),
-            ActualCost: null,
             Note: null,
             DischargePhotoFileName: "receipt.pdf",
             DischargePhotoContentType: "application/pdf",  // PDF not allowed
@@ -74,7 +58,6 @@ public class CompleteRequestValidatorTests
     {
         var command = new CompleteRequestCommand(
             RequestId: Guid.NewGuid(),
-            ActualCost: null,
             Note: null,
             DischargePhotoFileName: "photo.jpg",
             DischargePhotoContentType: "image/jpeg",
@@ -92,7 +75,6 @@ public class CompleteRequestValidatorTests
     {
         var command = new CompleteRequestCommand(
             RequestId: Guid.NewGuid(),
-            ActualCost: null,
             Note: null,
             DischargePhotoFileName: "photo.jpg",
             DischargePhotoContentType: "image/jpeg",

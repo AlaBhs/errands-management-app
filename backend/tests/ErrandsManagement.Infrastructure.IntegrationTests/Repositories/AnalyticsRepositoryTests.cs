@@ -56,7 +56,6 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
         result.AvgSurveyRating.Should().BeNull();
         result.DeadlineComplianceRate.Should().BeNull();
         result.TotalEstimatedCost.Should().Be(0m);
-        result.TotalActualCost.Should().Be(0m);
     }
 
     [Fact]
@@ -101,17 +100,6 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
         result.TotalEstimatedCost.Should().Be(300m);
     }
 
-    [Fact]
-    public async Task GetSummaryAsync_Should_Sum_ActualCost_Across_Assignments()
-    {
-        var r1 = MakeCompletedRequest(Courier1Id, actualCost: 80m);
-        var r2 = MakeCompletedRequest(Courier2Id, actualCost: 120m);
-        await SeedAsync(r1, r2);
-
-        var result = await _repo.GetSummaryAsync(null, null, CT);
-
-        result.TotalActualCost.Should().Be(200m);
-    }
 
     [Fact]
     public async Task GetSummaryAsync_Should_Calculate_AvgSurveyRating()
@@ -166,7 +154,7 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     public async Task GetSummaryAsync_Should_Return_Null_DeadlineCompliance_When_No_Deadlines()
     {
         // Completed request with no deadline
-        var r = MakeCompletedRequest(Courier1Id, actualCost: 50m, deadline: null);
+        var r = MakeCompletedRequest(Courier1Id, deadline: null);
         await SeedAsync(r);
 
         var result = await _repo.GetSummaryAsync(null, null, CT);
@@ -180,14 +168,12 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
         // r1: completed before deadline — on time
         var r1 = MakeCompletedRequest(
             Courier1Id,
-            actualCost: 50m,
             deadline: DateTime.UtcNow.AddDays(2),
             completedAt: DateTime.UtcNow.AddDays(-1));
 
         // r2: completed after deadline — late
         var r2 = MakeCompletedRequest(
             Courier2Id,
-            actualCost: 50m,
             deadline: DateTime.UtcNow.AddDays(-3),
             completedAt: DateTime.UtcNow.AddDays(-1));
 
@@ -290,32 +276,7 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
         facilities.EstimatedCost.Should().Be(200m);
     }
 
-    [Fact]
-    public async Task GetCostBreakdownAsync_Should_Sum_ActualCost_By_Category()
-    {
-        var r1 = MakeCompletedRequest(Courier1Id, actualCost: 90m,
-            category: RequestCategory.Travel);
-        var r2 = MakeCompletedRequest(Courier2Id, actualCost: 60m,
-            category: RequestCategory.Travel);
-        await SeedAsync(r1, r2);
 
-        var result = await _repo.GetCostBreakdownAsync(null, null, CT);
-
-        var travel = result.Single(r => r.Category == "Travel");
-        travel.ActualCost.Should().Be(150m);
-    }
-
-    [Fact]
-    public async Task GetCostBreakdownAsync_Should_Default_ActualCost_To_Zero_When_No_Assignments()
-    {
-        var r = MakeRequest(category: RequestCategory.Other, estimatedCost: 100m);
-        await SeedAsync(r);
-
-        var result = await _repo.GetCostBreakdownAsync(null, null, CT);
-
-        var other = result.Single(r => r.Category == "Other");
-        other.ActualCost.Should().Be(0m);
-    }
 
     [Fact]
     public async Task GetCostBreakdownAsync_Should_Filter_By_Date_Range()
@@ -346,8 +307,8 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetCourierPerformanceAsync_Should_Return_One_Row_Per_Courier()
     {
-        var r1 = MakeCompletedRequest(Courier1Id, actualCost: 50m);
-        var r2 = MakeCompletedRequest(Courier2Id, actualCost: 60m);
+        var r1 = MakeCompletedRequest(Courier1Id);
+        var r2 = MakeCompletedRequest(Courier2Id);
         await SeedAsync(r1, r2);
 
         var result = await _repo.GetCourierPerformanceAsync(null, null, CT);
@@ -360,8 +321,8 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetCourierPerformanceAsync_Should_Count_Completed_Correctly()
     {
-        var c1 = MakeCompletedRequest(Courier1Id, actualCost: 50m);
-        var c2 = MakeCompletedRequest(Courier1Id, actualCost: 60m);
+        var c1 = MakeCompletedRequest(Courier1Id);
+        var c2 = MakeCompletedRequest(Courier1Id);
         var a = MakeAssignedRequest(Courier1Id);
         await SeedAsync(c1, c2, a);
 
@@ -376,7 +337,7 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     public async Task GetCourierPerformanceAsync_Should_Return_Null_OnTimeRate_When_No_Deadlines()
     {
         // Completed request with no deadline
-        var r = MakeCompletedRequest(Courier1Id, actualCost: 50m, deadline: null);
+        var r = MakeCompletedRequest(Courier1Id, deadline: null);
         await SeedAsync(r);
 
         var result = await _repo.GetCourierPerformanceAsync(null, null, CT);
@@ -389,12 +350,12 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     {
         // On time
         var r1 = MakeCompletedRequest(
-            Courier1Id, actualCost: 50m,
+            Courier1Id,
             deadline: DateTime.UtcNow.AddDays(2),
             completedAt: DateTime.UtcNow.AddDays(-1));
         // Late
         var r2 = MakeCompletedRequest(
-            Courier1Id, actualCost: 50m,
+            Courier1Id,
             deadline: DateTime.UtcNow.AddDays(-3),
             completedAt: DateTime.UtcNow.AddDays(-1));
         await SeedAsync(r1, r2);
@@ -407,10 +368,8 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetCourierPerformanceAsync_Should_Filter_By_Date_Range()
     {
-        var old = MakeCompletedRequest(Courier1Id, actualCost: 50m,
-            createdAt: DateTime.UtcNow.AddYears(-1));
-        var recent = MakeCompletedRequest(Courier2Id, actualCost: 60m,
-            createdAt: DateTime.UtcNow.AddDays(-5));
+        var old = MakeCompletedRequest(Courier1Id, createdAt: DateTime.UtcNow.AddYears(-1));
+        var recent = MakeCompletedRequest(Courier2Id, createdAt: DateTime.UtcNow.AddDays(-5));
         await SeedAsync(old, recent);
 
         var from = DateTime.UtcNow.AddDays(-10);
@@ -446,7 +405,6 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
 
     private static Request MakeCompletedRequest(
         Guid courierId,
-        decimal? actualCost = null,
         decimal? estimatedCost = null,
         RequestCategory category = RequestCategory.Other,
         DateTime? deadline = null,
@@ -461,7 +419,7 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
 
         r.Assign(courierId);
         r.Start();
-        r.Complete(actualCost, null);
+        r.Complete(null);
 
         var startedAt = completedAt?.AddMinutes(-60) ?? DateTime.UtcNow.AddMinutes(-60);
         var finishedAt = completedAt ?? DateTime.UtcNow;
@@ -476,10 +434,9 @@ public class AnalyticsRepositoryTests : IAsyncLifetime
 
     private static Request MakeCompletedRequestWithSurvey(
         Guid courierId,
-        int rating,
-        decimal? actualCost = null)
+        int rating)
     {
-        var r = MakeCompletedRequest(courierId, actualCost);
+        var r = MakeCompletedRequest(courierId);
         r.SubmitSurvey(rating, null);
         return r;
     }
