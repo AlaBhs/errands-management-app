@@ -26,7 +26,7 @@ public sealed class CompleteRequestHandler : IRequestHandler<CompleteRequestComm
             .GetByIdAsync(command.RequestId, cancellationToken)
             ?? throw new NotFoundException("Request to complete not found.");
 
-        request.Complete(command.ActualCost, command.Note);
+        request.Complete(command.Note);
 
         if (command.DischargePhotoStream is not null &&
             command.DischargePhotoFileName is not null &&
