@@ -1,4 +1,5 @@
 ﻿using ErrandsManagement.API.Hubs;
+using ErrandsManagement.Application.Common.Settings;
 using ErrandsManagement.Application.Interfaces;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -28,7 +29,8 @@ internal sealed class UtcDateTimeConverter : JsonConverter<DateTime>
 public static class ApiExtensions
 {
     public static IServiceCollection AddApiServices(
-        this IServiceCollection services)
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services
             .AddControllers()
@@ -45,6 +47,11 @@ public static class ApiExtensions
                 options.JsonSerializerOptions.Converters.Add(
                     new UtcDateTimeConverter());
             });
+
+        services.AddOptions<AppSettings>()
+            .Bind(configuration.GetSection(AppSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddScoped<INotificationHubProxy, SignalRHubProxy>();
 

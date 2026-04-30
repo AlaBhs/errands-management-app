@@ -51,6 +51,12 @@ public interface IUserRepository
     // Updates FullName and optional ProfilePhotoUrl
     Task UpdateProfileAsync(Guid userId, string fullName, string? profilePhotoUrl, CancellationToken ct = default);
 
-    // Returns the ApplicationUser entity (needed by ChangePasswordCommand)
+    // Returns the UserDto
     Task<UserDto?> GetApplicationUserAsync(Guid userId, CancellationToken ct = default);
+
+    Task ChangePasswordAsync(
+    Guid userId,
+    string currentPassword,
+    string newPassword,
+    CancellationToken ct = default);
 }

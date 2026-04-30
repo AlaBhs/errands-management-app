@@ -612,4 +612,9 @@ internal sealed class StubUserRepository : IUserRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }

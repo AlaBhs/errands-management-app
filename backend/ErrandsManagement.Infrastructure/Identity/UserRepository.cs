@@ -313,6 +313,16 @@ public sealed class UserRepository : IUserRepository
         return ToDto(user, roles);
     }
 
+    public async Task ChangePasswordAsync(
+    Guid userId, string currentPassword, string newPassword, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindUserByIdAsync(Guid userId)
