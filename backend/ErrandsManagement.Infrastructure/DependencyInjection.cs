@@ -26,13 +26,9 @@ public static class DependencyInjection
         services.AddIdentityConfiguration();
         services.AddRepositories();
         services.AddStorage();
-        services.AddServices();
+        services.AddServices(configuration);
         services.AddRecommendationEngine(configuration);
         services.AddHostedService<DeadlineMonitoringService>();
-        services.AddOptions<EmailSettings>()
-            .Bind(configuration.GetSection(EmailSettings.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
 
         return services;
     }
@@ -59,10 +55,14 @@ public static class DependencyInjection
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
                 options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedEmail = true;
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        // Email confirmation tokens expire after 24 hours
+        services.Configure<DataProtectionTokenProviderOptions>(o =>
+            o.TokenLifespan = TimeSpan.FromHours(24));
 
         return services;
     }
@@ -79,29 +79,38 @@ public static class DependencyInjection
         services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
         services.AddScoped<IRequestTemplateRepository, RequestTemplateRepository>();
         services.AddScoped<IDeliveryBatchRepository, DeliveryBatchRepository>();
-        services.AddScoped<IEmailService, SmtpEmailService>();
 
         return services;
     }
 
     private static IServiceCollection AddStorage(
-    this IServiceCollection services)
+        this IServiceCollection services)
     {
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
 
     private static IServiceCollection AddServices(
-    this IServiceCollection services)
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddScoped<INotificationRealtimeService, SignalRNotificationService>();
         services.AddScoped<IRequestMessagingRealtimeService, SignalRRequestMessagingService>();
+
+        services
+            .AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection(EmailSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddScoped<IEmailService, SmtpEmailService>();
+
         return services;
     }
 
     private static IServiceCollection AddRecommendationEngine(
-    this IServiceCollection services,
-    IConfiguration configuration)
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services
             .AddOptions<RecommendationEngineSettings>()
@@ -117,5 +126,4 @@ public static class DependencyInjection
 
         return services;
     }
-
 }

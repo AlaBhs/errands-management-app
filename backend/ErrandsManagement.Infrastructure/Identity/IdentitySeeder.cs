@@ -23,8 +23,7 @@ public static class IdentitySeeder
     // ── Private helpers ────────────────────────────────────────────────────
 
     private static async Task SeedRolesAsync(
-        RoleManager<IdentityRole<Guid>> roleManager,
-        ILogger logger)
+        RoleManager<IdentityRole<Guid>> roleManager, ILogger logger)
     {
         foreach (var role in Roles)
         {
@@ -41,8 +40,7 @@ public static class IdentitySeeder
     }
 
     private static async Task SeedDefaultAdminAsync(
-        UserManager<ApplicationUser> userManager,
-        ILogger logger)
+        UserManager<ApplicationUser> userManager, ILogger logger)
     {
         const string adminEmail = "admin@errands.local";
         const string adminPassword = "Admin123!";
@@ -50,7 +48,6 @@ public static class IdentitySeeder
         var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
         if (existingAdmin is not null)
         {
-            // Ensure the seeded admin is always active after migrations
             if (!existingAdmin.IsActive)
             {
                 existingAdmin.IsActive = true;
@@ -67,6 +64,7 @@ public static class IdentitySeeder
             Email = adminEmail,
             UserName = adminEmail,
             EmailConfirmed = true,
+            IsActive = true,
         };
 
         var createResult = await userManager.CreateAsync(admin, adminPassword);
@@ -84,15 +82,15 @@ public static class IdentitySeeder
             logger.LogError("Failed to assign Admin role to seeded user: {Errors}",
                 string.Join(", ", roleResult.Errors.Select(e => e.Description)));
     }
+
     private static async Task SeedDefaultReceptionUsersAsync(
-    UserManager<ApplicationUser> userManager,
-    ILogger logger)
+        UserManager<ApplicationUser> userManager, ILogger logger)
     {
         var accounts = new[]
         {
-        (Email: "reception1@errands.local", FullName: "Amira Belhaj"),
-        (Email: "reception2@errands.local", FullName: "Youssef Mansour"),
-    };
+            (Email: "reception1@errands.local", FullName: "Amira Belhaj"),
+            (Email: "reception2@errands.local", FullName: "Youssef Mansour"),
+        };
 
         const string receptionPassword = "Reception123!";
 
@@ -140,5 +138,4 @@ public static class IdentitySeeder
                     string.Join(", ", roleResult.Errors.Select(e => e.Description)));
         }
     }
-
 }
