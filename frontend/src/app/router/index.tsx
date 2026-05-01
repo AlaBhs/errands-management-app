@@ -7,147 +7,115 @@ import { UserRole } from "@/features/auth";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { lazy, Suspense } from "react";
 
-// Heavy pages — loaded only when visited
 const DashboardPage = lazy(() =>
-  import("@/features/dashboard/pages/DashboardPage").then((m) => ({
-    default: m.DashboardPage,
-  })),
+  import("@/features/dashboard/pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
 const RequestsListPage = lazy(() =>
-  import("@/features/requests/pages/RequestsListPage").then((m) => ({
-    default: m.RequestsListPage,
-  })),
+  import("@/features/requests/pages/RequestsListPage").then((m) => ({ default: m.RequestsListPage })),
 );
 const RequestDetailsPage = lazy(() =>
-  import("@/features/requests/pages/RequestDetailsPage").then((m) => ({
-    default: m.RequestDetailsPage,
-  })),
+  import("@/features/requests/pages/RequestDetailsPage").then((m) => ({ default: m.RequestDetailsPage })),
 );
 const CreateRequestPage = lazy(() =>
-  import("@/features/requests/pages/CreateRequestPage").then((m) => ({
-    default: m.CreateRequestPage,
-  })),
+  import("@/features/requests/pages/CreateRequestPage").then((m) => ({ default: m.CreateRequestPage })),
 );
 const MyRequestsPage = lazy(() =>
-  import("@/features/requests/pages/MyRequestsPage").then((m) => ({
-    default: m.MyRequestsPage,
-  })),
+  import("@/features/requests/pages/MyRequestsPage").then((m) => ({ default: m.MyRequestsPage })),
 );
 const MySchedulePage = lazy(() =>
-  import("@/features/requests/pages/MySchedulePage").then((m) => ({
-    default: m.MySchedulePage,
-  })),
+  import("@/features/requests/pages/MySchedulePage").then((m) => ({ default: m.MySchedulePage })),
 );
 const AdminPage = lazy(() =>
-  import("@/features/admin/pages/AdminPage").then((m) => ({
-    default: m.AdminPage,
-  })),
+  import("@/features/admin/pages/AdminPage").then((m) => ({ default: m.AdminPage })),
 );
 const AnalyticsPage = lazy(() =>
-  import("@/features/analytics/pages/AnalyticsPage").then((m) => ({
-    default: m.AnalyticsPage,
-  })),
+  import("@/features/analytics/pages/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage })),
 );
 const UserManagementPage = lazy(() =>
-  import("@/features/users/pages/UserManagementPage").then((m) => ({
-    default: m.UserManagementPage,
-  })),
+  import("@/features/users/pages/UserManagementPage").then((m) => ({ default: m.UserManagementPage })),
 );
 const NotificationsPage = lazy(() =>
-  import("@/features/notifications/pages/NotificationsPage").then((m) => ({
-    default: m.NotificationsPage,
-  })),
+  import("@/features/notifications/pages/NotificationsPage").then((m) => ({ default: m.NotificationsPage })),
 );
 const DeliveryBatchesPage = lazy(() =>
-  import("@/features/delivery/pages/DeliveryBatchesPage").then((m) => ({
-    default: m.DeliveryBatchesPage,
-  })),
+  import("@/features/delivery/pages/DeliveryBatchesPage").then((m) => ({ default: m.DeliveryBatchesPage })),
 );
 const DeliveryBatchDetailsPage = lazy(() =>
-  import("@/features/delivery/pages/DeliveryBatchDetailsPage").then((m) => ({
-    default: m.DeliveryBatchDetailsPage,
-  })),
+  import("@/features/delivery/pages/DeliveryBatchDetailsPage").then((m) => ({ default: m.DeliveryBatchDetailsPage })),
 );
 const CreateDeliveryBatchPage = lazy(() =>
-  import("@/features/delivery/pages/CreateDeliveryBatchPage").then((m) => ({
-    default: m.CreateDeliveryBatchPage,
-  })),
+  import("@/features/delivery/pages/CreateDeliveryBatchPage").then((m) => ({ default: m.CreateDeliveryBatchPage })),
 );
 const PublicOrDashboard = lazy(() =>
-  import("@/app/router/PublicOrDashboard").then((m) => ({
-    default: m.PublicOrDashboard,
-  })),
+  import("@/app/router/PublicOrDashboard").then((m) => ({ default: m.PublicOrDashboard })),
 );
 const MyTemplatesPage = lazy(() =>
-  import("@/features/request-templates/pages/MyTemplatesPage").then((m) => ({
-    default: m.MyTemplatesPage,
-  })),
+  import("@/features/request-templates/pages/MyTemplatesPage").then((m) => ({ default: m.MyTemplatesPage })),
 );
 const NotFoundPage = lazy(() =>
-  import("../pages/NotFoundPage").then((m) => ({
-    default: m.NotFoundPage,
-  })),
+  import("../pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 );
+
+// ── New pages ─────────────────────────────────────────────────────────────────
+
+const SetPasswordPage = lazy(() =>
+  import("@/features/auth/pages/SetPasswordPage").then((m) => ({ default: m.SetPasswordPage })),
+);
+const ProfilePage = lazy(() =>
+  import("@/features/users/pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+
+// ── Router ────────────────────────────────────────────────────────────────────
 
 export function AppRouter() {
   return (
     <Suspense fallback={<PageSpinner />}>
       <Routes>
-        {/* Public */}
+        {/* ── Public ───────────────────────────────────────────────── */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
         <Route index element={<PublicOrDashboard />} />
-        {/* Protected */}
+
+        {/* ── Protected ────────────────────────────────────────────── */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
 
-            {/* ── Admin only ─────────────────────────────── */}
+            {/* Profile — all authenticated roles */}
+            <Route path="/profile" element={<ProfilePage />} />
+
+            {/* ── Admin only ──────────────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
               <Route path="/requests" element={<RequestsListPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
-              <Route
-                path="/delivery/new"
-                element={<CreateDeliveryBatchPage />}
-              />
+              <Route path="/delivery/new" element={<CreateDeliveryBatchPage />} />
             </Route>
 
-            {/* ── Delivery — Admin + Reception ──────────────────────── */}
-            <Route
-              element={
-                <RoleGuard allowed={[UserRole.Admin, UserRole.Reception]} />
-              }
-            >
+            {/* ── Admin + Reception ───────────────────────────────── */}
+            <Route element={<RoleGuard allowed={[UserRole.Admin, UserRole.Reception]} />}>
               <Route path="/delivery" element={<DeliveryBatchesPage />} />
-              <Route
-                path="/delivery/:id"
-                element={<DeliveryBatchDetailsPage />}
-              />
+              <Route path="/delivery/:id" element={<DeliveryBatchDetailsPage />} />
             </Route>
 
-            {/* ── Collaborator only ─────────────────────────────── */}
+            {/* ── Collaborator only ───────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
               <Route path="/requests/mine" element={<MyRequestsPage />} />
               <Route path="/requests/new" element={<CreateRequestPage />} />
               <Route path="/templates" element={<MyTemplatesPage />} />
             </Route>
-            {/* ── Courier only ─────────────────────────────── */}
+
+            {/* ── Courier only ────────────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
               <Route path="/assignments" element={<MySchedulePage />} />
             </Route>
 
-            {/* ── All except Reception ──────────────────────── */}
+            {/* ── All except Reception ────────────────────────────── */}
             <Route
               element={
-                <RoleGuard
-                  allowed={[
-                    UserRole.Admin,
-                    UserRole.Courier,
-                    UserRole.Collaborator,
-                  ]}
-                />
+                <RoleGuard allowed={[UserRole.Admin, UserRole.Courier, UserRole.Collaborator]} />
               }
             >
               <Route path="/requests/:id" element={<RequestDetailsPage />} />

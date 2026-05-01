@@ -19,14 +19,14 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/users": "User Management",
   "/delivery": "Deliveries",
   "/notifications": "Notifications",
+  "/profile": "My Profile",
 };
 
 function getPageTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   if (pathname.startsWith("/requests/") && pathname !== "/requests/new")
     return "Request Details";
-  if (pathname.startsWith("/delivery/"))
-    return "Delivery Details";
+  if (pathname.startsWith("/delivery/")) return "Delivery Details";
   return "EY Errands";
 }
 
@@ -43,9 +43,9 @@ export function Topbar() {
   return (
     <header
       className="h-16 bg-white dark:bg-card border-b border-border flex z-50
-                       items-center justify-between px-6 gap-4"
+                 items-center justify-between px-6 gap-4"
     >
-      {/* ── Left — page title ─────────────────────────────────────── */}
+      {/* ── Left — page title ──────────────────────────────────────── */}
       <div className="flex items-center gap-2 text-sm min-w-0">
         <span className="text-gray-400 dark:text-gray-500 hidden md:block">
           EY Errands
@@ -55,17 +55,17 @@ export function Topbar() {
         </span>
         <span className="font-medium text-[var(--ey-dark)] dark:text-foreground truncate">
           {pageTitle}
-        </span>{" "}
+        </span>
       </div>
 
-      {/* ── Right — actions ───────────────────────────────────────── */}
+      {/* ── Right — actions ────────────────────────────────────────── */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Search — placeholder for feat/request-filters */}
+        {/* Search */}
         <button
           className="flex items-center h-[stretch] gap-2 rounded-lg border
-            border-border bg-muted/40 px-3 py-1.5 text-sm
-            text-muted-foreground hover:bg-muted transition-colors
-            w-48 hidden md:flex"
+                     border-border bg-muted/40 px-3 py-1.5 text-sm
+                     text-muted-foreground hover:bg-muted transition-colors
+                     w-48 hidden md:flex"
           onClick={() =>
             toast.info(
               "Global search coming soon — use filters on each page for now.",
@@ -76,22 +76,21 @@ export function Topbar() {
           <Search className="h-4 w-4 shrink-0" />
           <span className="text-xs">Search requests...</span>
           <kbd
-            className="ml-auto rounded border border-border
-              bg-background px-1.5 py-0.5 text-[10px]
-              text-muted-foreground font-mono hidden lg:block"
+            className="ml-auto rounded border border-border bg-background
+                          px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono hidden lg:block"
           >
             ⌘K
           </kbd>
         </button>
 
-        {/* Quick action — role-based */}
+        {/* Quick action */}
         {user?.role === UserRole.Collaborator && (
           <button
             onClick={() => navigate("/requests/new")}
             className="flex items-center gap-1.5 rounded-lg h-[stretch]
-                        bg-[var(--ey-dark)] px-3 py-1.5 text-xs font-semibold
-                        text-white hover:bg-[var(--ey-text-hover)] transition-colors
-                        hidden sm:flex"
+                       bg-[var(--ey-dark)] px-3 py-1.5 text-xs font-semibold
+                       text-white hover:bg-[var(--ey-text-hover)] transition-colors
+                       hidden sm:flex"
           >
             <Plus className="h-3.5 w-3.5" />
             New Request
@@ -105,8 +104,8 @@ export function Topbar() {
         <button
           onClick={toggle}
           className="flex h-9 w-9 items-center justify-center rounded-lg
-             text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10
-             dark:text-gray-400 transition-colors"
+                     text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10
+                     dark:text-gray-400 transition-colors"
           aria-label="Toggle dark mode"
         >
           {theme === "dark" ? (
@@ -119,27 +118,32 @@ export function Topbar() {
         {/* Divider */}
         <div className="h-6 w-px bg-border mx-1" />
 
-        {/* User info */}
-        <div className="flex items-center gap-2.5">
+        {/* User avatar — clickable → /profile */}
+        <button
+          onClick={() => navigate("/profile")}
+          className="flex items-center gap-2.5 rounded-lg px-2 py-1
+                     hover:bg-accent transition-colors"
+          title="My Profile"
+          aria-label="Go to profile"
+        >
           <div className="text-right hidden sm:block">
             <p className="text-xs font-medium text-foreground leading-tight">
               {user?.fullName ?? "—"}
             </p>
             <span
-              className={`text-[10px] font-medium
-                             ${roleBadgeClass(user?.role)}`}
+              className={`text-[10px] font-medium ${roleBadgeClass(user?.role)}`}
             >
               {user?.role ?? "—"}
             </span>
           </div>
           <div
             className="flex h-8 w-8 items-center justify-center
-                          rounded-full bg-[var(--ey-dark)] text-xs font-bold
-                          text-[var(--ey-yellow)]"
+                       rounded-full bg-[var(--ey-dark)] text-xs font-bold
+                       text-[var(--ey-yellow)]"
           >
             {getInitials(user?.fullName)}
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );
@@ -165,6 +169,8 @@ function roleBadgeClass(role?: string): string {
       return "text-blue-600 dark:text-blue-400";
     case "Courier":
       return "text-amber-600 dark:text-amber-400";
+    case "Reception":
+      return "text-green-600 dark:text-green-400";
     default:
       return "text-gray-500 dark:text-gray-400";
   }
