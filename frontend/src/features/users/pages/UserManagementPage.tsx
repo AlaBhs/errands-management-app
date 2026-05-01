@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UserMinus, UserCheck, Search } from "lucide-react";
+import { UserMinus, UserCheck, Search, Mail } from "lucide-react";
 import { useUsers, useUserMutations } from "@/features/users";
 import { useAuthStore } from "@/features/auth";
 import { isApiError } from "@/shared/api/client";
@@ -18,23 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const createUserSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
+  fullName: z.string().min(1, "Full name is required").max(50),
   email: z.email("Invalid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Must contain at least one digit")
-    .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
   role: z.enum([UserRole.Collaborator, UserRole.Courier, UserRole.Reception]),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
-  city: z.string().nullable().optional(),
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
@@ -49,7 +39,6 @@ export function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Confirm modal state
   const [deactivateTarget, setDeactivateTarget] = useState<{
     id: string;
     name: string;
@@ -75,40 +64,14 @@ export function UserManagementPage() {
     handleSubmit,
     reset,
     control,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      role: UserRole.Collaborator,
-      latitude: null,
-      longitude: null,
-      city: null,
-    },
+    defaultValues: { role: UserRole.Collaborator },
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const roleValue = watch("role");
-  const [isCourier, setIsCourier] = useState(roleValue === UserRole.Courier);
-
-  useEffect(() => {
-    setIsCourier(roleValue === UserRole.Courier);
-  }, [roleValue]);
-
   const onCreateUser = handleSubmit((values) => {
-    create.mutate(
-      {
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        role: values.role,
-        latitude: values.latitude ?? null,
-        longitude: values.longitude ?? null,
-        city: values.city ?? null,
-      },
-      { onSuccess: () => reset() },
-    );
+    create.mutate(values, { onSuccess: () => reset() });
   });
 
   const handleDeactivateConfirm = () => {
@@ -129,7 +92,7 @@ export function UserManagementPage() {
 
   return (
     <div className="space-y-8">
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div>
         <h1 className="text-2xl font-semibold text-foreground">
           User Management
@@ -140,9 +103,9 @@ export function UserManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* ── User list ─────────────────────────────────────────────── */}
+        {/* ── User list ──────────────────────────────────────────────── */}
         <div className="xl:col-span-2 space-y-4">
-          {/* Filters toolbar */}
+          {/* Filters */}
           <div
             className="flex flex-wrap items-center gap-x-3 gap-y-2
                           rounded-xl border bg-card px-4 py-3 shadow-sm"
@@ -170,8 +133,8 @@ export function UserManagementPage() {
               <span className="text-xs text-muted-foreground">Role</span>
               <Select
                 value={roleFilter}
-                onValueChange={(val) => {
-                  setRoleFilter(val);
+                onValueChange={(v) => {
+                  setRoleFilter(v);
                   setPage(1);
                 }}
               >
@@ -193,8 +156,8 @@ export function UserManagementPage() {
               <span className="text-xs text-muted-foreground">Status</span>
               <Select
                 value={statusFilter}
-                onValueChange={(val) => {
-                  setStatusFilter(val);
+                onValueChange={(v) => {
+                  setStatusFilter(v);
                   setPage(1);
                 }}
               >
@@ -210,7 +173,6 @@ export function UserManagementPage() {
             </div>
           </div>
 
-          {/* Error */}
           {isError && (
             <ErrorMessage
               message={
@@ -228,7 +190,7 @@ export function UserManagementPage() {
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-medium
-                                   text-muted-foreground uppercase tracking-wider"
+                                 text-muted-foreground uppercase tracking-wider"
                     >
                       {h}
                     </th>
@@ -250,8 +212,7 @@ export function UserManagementPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-10 text-center text-sm
-                                   text-muted-foreground"
+                      className="px-4 py-10 text-center text-sm text-muted-foreground"
                     >
                       No users found.
                     </td>
@@ -279,8 +240,7 @@ export function UserManagementPage() {
                       <td className="px-4 py-3.5">
                         <span
                           className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5",
-                            "text-xs font-medium",
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
                             user.isActive
                               ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                               : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
@@ -299,12 +259,9 @@ export function UserManagementPage() {
                               })
                             }
                             disabled={user.id === currentUserId}
-                            className="inline-flex items-center gap-1
-                                       text-xs text-red-500 hover:text-red-700
-                                       dark:text-red-400 dark:hover:text-red-300
-                                       disabled:opacity-40
-                                       disabled:cursor-not-allowed
-                                       transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-red-500
+                                       hover:text-red-700 dark:text-red-400 dark:hover:text-red-300
+                                       disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           >
                             <UserMinus className="h-3.5 w-3.5" />
                             Deactivate
@@ -317,11 +274,9 @@ export function UserManagementPage() {
                                 name: user.fullName,
                               })
                             }
-                            className="inline-flex items-center gap-1
-                                       text-xs text-emerald-600
-                                       hover:text-emerald-800
-                                       dark:text-emerald-400 dark:hover:text-emerald-300
-                                       transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-emerald-600
+                                       hover:text-emerald-800 dark:text-emerald-400
+                                       dark:hover:text-emerald-300 transition-colors"
                           >
                             <UserCheck className="h-3.5 w-3.5" />
                             Activate
@@ -337,10 +292,7 @@ export function UserManagementPage() {
 
           {/* Pagination */}
           {data && (
-            <div
-              className="flex items-center justify-between
-                            text-sm text-muted-foreground"
-            >
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>
                 {data.totalCount === 0
                   ? "No results"
@@ -353,8 +305,8 @@ export function UserManagementPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-lg border px-3 py-1.5 text-xs
-                             font-medium transition-colors hover:bg-accent
+                  className="rounded-lg border px-3 py-1.5 text-xs font-medium
+                             transition-colors hover:bg-accent
                              disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Previous
@@ -362,8 +314,8 @@ export function UserManagementPage() {
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page * PAGE_SIZE >= data.totalCount}
-                  className="rounded-lg border px-3 py-1.5 text-xs
-                             font-medium transition-colors hover:bg-accent
+                  className="rounded-lg border px-3 py-1.5 text-xs font-medium
+                             transition-colors hover:bg-accent
                              disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next
@@ -373,13 +325,18 @@ export function UserManagementPage() {
           )}
         </div>
 
-        {/* ── Create user form ──────────────────────────────────────── */}
+        {/* ── Invite user form ────────────────────────────────────────── */}
         <div className="space-y-4">
-
           <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
-                      <h2 className="text-base font-semibold text-foreground">
-            Create User
-          </h2>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">
+                Invite User
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                An activation email will be sent automatically.
+              </p>
+            </div>
+
             {[
               {
                 label: "Full Name",
@@ -393,28 +350,19 @@ export function UserManagementPage() {
                 type: "email",
                 placeholder: "jane@ey.com",
               },
-              {
-                label: "Password",
-                name: "password" as const,
-                type: "password",
-                placeholder: "Min 8 chars…",
-              },
             ].map((field) => (
               <div key={field.name}>
-                <label
-                  className="block text-xs font-medium
-                                  text-muted-foreground mb-1.5"
-                >
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   {field.label}
                 </label>
                 <input
                   {...register(field.name)}
                   type={field.type}
                   placeholder={field.placeholder}
-                  className="w-full rounded-xl border border-border
-                             bg-background px-3 py-2.5 text-sm text-foreground
-                             focus:border-ring focus:outline-none
-                             focus:ring-2 focus:ring-ring transition-colors"
+                  className="w-full rounded-xl border border-border bg-background
+                             px-3 py-2.5 text-sm text-foreground
+                             focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring
+                             transition-colors"
                 />
                 {errors[field.name] && (
                   <p className="mt-1 text-xs text-red-500">
@@ -449,43 +397,13 @@ export function UserManagementPage() {
                 )}
               />
             </div>
-            {isCourier && (
-              <div className="space-y-3 border-t border-border pt-4">
-                <label className="text-xs font-medium text-foreground">
-                  Courier Location
-                </label>
-                <Controller
-                  name="latitude"
-                  control={control}
-                  render={({ field: latField }) => (
-                    <Controller
-                      name="longitude"
-                      control={control}
-                      render={({ field: lngField }) => (
-                        <AddressMapPicker
-                          latitude={latField.value ?? undefined}
-                          longitude={lngField.value ?? undefined}
-                          onCoordinatesChange={(lat, lng) => {
-                            latField.onChange(lat);
-                            lngField.onChange(lng);
-                          }}
-                          onAddressChange={(address) => {
-                            if (address.city) setValue("city", address.city);
-                          }}
-                        />
-                      )}
-                    />
-                  )}
-                />
-              </div>
-            )}
 
             {create.isError && (
               <ErrorMessage
                 message={
                   isApiError(create.error)
                     ? create.error.message
-                    : "Failed to create user."
+                    : "Failed to invite user."
                 }
               />
             )}
@@ -493,22 +411,22 @@ export function UserManagementPage() {
             <button
               onClick={onCreateUser}
               disabled={create.isPending}
-              className="w-full rounded-xl bg-primary px-4 py-2.5
-                         text-sm font-semibold text-primary-foreground
-                         hover:bg-primary/90 disabled:opacity-50
-                         transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl
+                         bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground
+                         hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {create.isPending ? "Creating…" : "Create User"}
+              <Mail className="h-4 w-4" />
+              {create.isPending ? "Sending invitation…" : "Send Invitation"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Deactivate confirm modal ───────────────────────────────── */}
+      {/* ── Modals ────────────────────────────────────────────────────── */}
       {deactivateTarget && (
         <ConfirmModal
           title="Deactivate User"
-          description={`${deactivateTarget.name} will lose access to the system immediately. You can reactivate them at any time.`}
+          description={`${deactivateTarget.name} will lose access to the system immediately.`}
           confirmLabel="Deactivate"
           isPending={deactivate.isPending}
           icon={<UserMinus className="h-5 w-5 text-red-600" />}
@@ -516,12 +434,10 @@ export function UserManagementPage() {
           onClose={() => setDeactivateTarget(null)}
         />
       )}
-
-      {/* ── Activate confirm modal ────────────────────────────────── */}
       {activateTarget && (
         <ConfirmModal
           title="Activate User"
-          description={`${activateTarget.name} will regain full access to the system based on their role.`}
+          description={`${activateTarget.name} will regain full access based on their role.`}
           confirmLabel="Activate"
           confirmClass="bg-emerald-600 hover:bg-emerald-700 text-white"
           isPending={activate.isPending}
