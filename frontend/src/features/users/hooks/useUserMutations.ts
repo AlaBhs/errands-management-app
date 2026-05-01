@@ -1,9 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authApi } from "@/features/auth/api/auth.api";
 import { usersApi } from "../api/users.api";
 import { userKeys } from "./userKeys";
 import type { CreateUserPayload } from "../types";
-import type { UserRole } from "@/features/auth";
 import { isApiError } from "@/shared/api/client";
 import { toast } from "sonner";
 
@@ -14,16 +12,10 @@ export function useUserMutations() {
     queryClient.invalidateQueries({ queryKey: userKeys.all });
 
   const create = useMutation({
-    mutationFn: (payload: CreateUserPayload) =>
-      authApi.register({
-        fullName: payload.fullName,
-        email: payload.email,
-        password: payload.password,
-        role: payload.role as UserRole,
-      }),
+    mutationFn: (payload: CreateUserPayload) => usersApi.create(payload),
     onSuccess: (_, { email }) => {
       invalidateUsers();
-      toast.success(`User ${email} created successfully.`);
+      toast.success(`Invitation sent to ${email}.`);
     },
     onError: (err) =>
       toast.error(isApiError(err) ? err.message : "Failed to create user."),
