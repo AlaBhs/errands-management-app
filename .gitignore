@@ -367,3 +367,8 @@ FodyWeavers.xsd
 
 # Directory for uploaded files, which may contain sensitive information and can be large in size
 uploads/
+
+# Application configuration files that may contain sensitive information such as database connection strings, API keys, or other secrets. It's important to keep these files out of version control to prevent accidental exposure of sensitive data.
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json

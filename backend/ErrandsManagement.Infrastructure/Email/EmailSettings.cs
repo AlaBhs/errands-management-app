@@ -11,4 +11,5 @@ public sealed class EmailSettings
     public string FromAddress { get; init; } = string.Empty;
     public string FromName { get; init; } = "ErrandsManagement";
     public string FrontendBaseUrl { get; init; } = "http://localhost:5173";
+    public string LogoUrl { get; init; } = "https://cdn.brandfetch.io/idB8IjfqRq/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B";
 }
