@@ -4,7 +4,7 @@ namespace ErrandsManagement.Application.Users.Commands.CreateUser;
 
 public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
 {
-    private static readonly string[] AllowedRoles = ["Admin", "Manager", "Courier", "Requester"];
+    private static readonly string[] AllowedRoles = ["Admin", "Collaborator", "Courier", "Reception"];
 
     public CreateUserValidator()
     {

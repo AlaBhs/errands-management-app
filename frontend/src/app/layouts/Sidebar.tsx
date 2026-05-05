@@ -373,12 +373,11 @@ export function Sidebar() {
         <Link
           to="/profile"
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5
-                text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white
-                transition-colors
+                hover:bg-[var(--ey-gray)] hover:text-white transition-colors
                 ${
                   location.pathname === "/profile"
                     ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
-                    : ""
+                    : "text-gray-400"
                 }
                 ${collapsed ? "justify-center px-2" : ""}`}
           title={collapsed ? "My Profile" : undefined}
