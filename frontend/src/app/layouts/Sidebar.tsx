@@ -14,6 +14,7 @@ import {
   BookTemplate,
   Truck,
   UserCircle,
+  BrainCircuit,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -46,6 +47,8 @@ const adminNav: NavGroup[] = [
       { path: "/requests", label: "All Requests", icon: FileText, exact: true },
       { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
       { path: "/analytics", label: "Analytics", icon: BarChart3, exact: true },
+      { path: "/operational-reports",  label: "Operational Reports",  icon: BrainCircuit,    exact: true },
+  
     ],
   },
   {

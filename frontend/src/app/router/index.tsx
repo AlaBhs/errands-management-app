@@ -43,6 +43,11 @@ const DeliveryBatchesPage = lazy(() =>
 const DeliveryBatchDetailsPage = lazy(() =>
   import("@/features/delivery/pages/DeliveryBatchDetailsPage").then((m) => ({ default: m.DeliveryBatchDetailsPage })),
 );
+const OperationalReportPage = lazy(() =>
+  import("@/features/operational-reports/pages/OperationalReportPage").then((m) => ({
+    default: m.OperationalReportPage,
+  })),
+);
 const CreateDeliveryBatchPage = lazy(() =>
   import("@/features/delivery/pages/CreateDeliveryBatchPage").then((m) => ({ default: m.CreateDeliveryBatchPage })),
 );
@@ -89,6 +94,7 @@ export function AppRouter() {
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
               <Route path="/requests" element={<RequestsListPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/operational-reports"  element={<OperationalReportPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/delivery/new" element={<CreateDeliveryBatchPage />} />
