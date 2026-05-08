@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ErrandsManagement.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260508100700_AddOperationalReports")]
+    [Migration("20260508130317_AddOperationalReports")]
     partial class AddOperationalReports
     {
         /// <inheritdoc />
