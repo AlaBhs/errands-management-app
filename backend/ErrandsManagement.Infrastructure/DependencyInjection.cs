@@ -1,6 +1,8 @@
-﻿using ErrandsManagement.Application.CourierRecommendation.Interfaces;
+﻿using ErrandsManagement.Application.Common.Settings;
+using ErrandsManagement.Application.CourierRecommendation.Interfaces;
 using ErrandsManagement.Application.CourierRecommendation.Settings;
 using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Infrastructure.AI;
 using ErrandsManagement.Infrastructure.BackgroundJobs;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.Email;
@@ -79,6 +81,7 @@ public static class DependencyInjection
         services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
         services.AddScoped<IRequestTemplateRepository, RequestTemplateRepository>();
         services.AddScoped<IDeliveryBatchRepository, DeliveryBatchRepository>();
+        services.AddScoped<IOperationalReportRepository, OperationalReportRepository>();
 
         return services;
     }
@@ -104,6 +107,18 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddScoped<IEmailService, SmtpEmailService>();
+
+        services.AddHttpClient<IOperationalAiService, GeminiOperationalAiService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(
+                configuration.GetSection(GeminiSettings.SectionName)
+                    .GetValue<int>("TimeoutSeconds", 30));
+        });
+
+        services
+            .AddOptions<GeminiSettings>()
+            .Bind(configuration.GetSection(GeminiSettings.SectionName))
+            .ValidateOnStart();
 
         return services;
     }

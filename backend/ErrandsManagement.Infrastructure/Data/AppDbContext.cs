@@ -28,6 +28,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<DeliveryBatchAttachment> DeliveryBatchAttachments => Set<DeliveryBatchAttachment>();
 
+    public DbSet<OperationalReport> OperationalReports => Set<OperationalReport>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
