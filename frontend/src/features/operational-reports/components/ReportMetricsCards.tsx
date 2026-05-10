@@ -1,52 +1,7 @@
 import { KpiCard } from "@/features/analytics/components/KpiCard";
 import type { MetricsSnapshot } from "../types/operationalReport.types";
+import { Inbox, CheckCircle, Clock, Star, Timer } from "lucide-react";
 
-// ── Icons (inline SVG — no new dep) ───────────────────────────────────────────
-const IconInbox = () => (
-  <svg
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={1.8}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"
-    />
-  </svg>
-);
-const IconCheck = () => (
-  <svg
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={1.8}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
-const IconClock = () => (
-  <svg
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={1.8}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
 const IconCurrency = () => (
   <svg
     className="h-5 w-5"
@@ -69,66 +24,122 @@ interface Props {
 
 export function ReportMetricsCards({ metrics }: Props) {
   const variance =
-    metrics.totalEstimatedCost > 0
+    metrics.TotalEstimatedCost > 0
       ? (
-          ((metrics.totalActualCost - metrics.totalEstimatedCost) /
-            metrics.totalEstimatedCost) *
+          ((metrics.TotalActualCost - metrics.TotalEstimatedCost) /
+            metrics.TotalEstimatedCost) *
           100
         ).toFixed(1) + "%"
       : "—";
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <KpiCard
         label="Total Requests"
-        value={metrics.totalRequests}
-        icon={<IconInbox />}
+        value={metrics.TotalRequests}
+        icon={<Inbox className="h-5 w-5" />}
         accent="slate"
       />
       <KpiCard
         label="Deadline Compliance"
         value={
-          metrics.deadlineComplianceRate != null
-            ? `${metrics.deadlineComplianceRate.toFixed(1)}%`
+          metrics.DeadlineComplianceRate != null
+            ? `${metrics.DeadlineComplianceRate.toFixed(1)}%`
             : "—"
         }
         subVariant={
-          metrics.deadlineComplianceRate == null
+          metrics.DeadlineComplianceRate == null
             ? "default"
-            : metrics.deadlineComplianceRate >= 80
+            : metrics.DeadlineComplianceRate >= 80
               ? "success"
-              : metrics.deadlineComplianceRate >= 50
+              : metrics.DeadlineComplianceRate >= 50
                 ? "warning"
                 : "danger"
         }
-        icon={<IconCheck />}
+        icon={<CheckCircle className="h-5 w-5" />}
         accent="green"
       />
       <KpiCard
         label="Cost Variance"
         value={variance}
-        sub={`Est. ${metrics.totalEstimatedCost.toFixed(2)} · Act. ${metrics.totalActualCost.toFixed(2)}`}
+        sub={`Est. ${metrics.TotalEstimatedCost.toFixed(2)} · Act. ${metrics.TotalActualCost.toFixed(2)}`}
         subVariant={
-          metrics.totalActualCost <= metrics.totalEstimatedCost
+          metrics.TotalActualCost <= metrics.TotalEstimatedCost
             ? "success"
             : "danger"
         }
         icon={<IconCurrency />}
-        accent={
-          metrics.totalActualCost <= metrics.totalEstimatedCost
-            ? "green"
-            : "red"
-        }
+        accent="blue"
       />
       <KpiCard
         label="Avg Execution"
         value={
-          metrics.avgExecutionMinutes != null
-            ? `${metrics.avgExecutionMinutes.toFixed(1)} min`
+          metrics.AvgExecutionMinutes != null
+            ? `${metrics.AvgExecutionMinutes.toFixed(1)} min`
             : "—"
         }
-        icon={<IconClock />}
-        accent="blue"
+        icon={<Clock className="h-5 w-5" />}
+        accent="red"
+      />
+      <KpiCard
+        label="Avg Survey Rating"
+        value={
+          metrics.AvgSurveyRating != null
+            ? `${metrics.AvgSurveyRating.toFixed(2)} / 5`
+            : "—"
+        }
+        sub={
+          metrics.AvgSurveyRating == null
+            ? "No surveys yet"
+            : metrics.AvgSurveyRating >= 4
+              ? "High satisfaction"
+              : metrics.AvgSurveyRating >= 3
+                ? "Room for improvement"
+                : "Low satisfaction"
+        }
+        subVariant={
+          metrics.AvgSurveyRating == null
+            ? "default"
+            : metrics.AvgSurveyRating >= 4
+              ? "success"
+              : metrics.AvgSurveyRating >= 3
+                ? "warning"
+                : "danger"
+        }
+        icon={<Star className="h-5 w-5" />}
+        accent="purple"
+      />
+      <KpiCard
+        label="Avg Queue Wait"
+        value={
+          metrics.AvgQueueWaitMinutes != null
+            ? `${metrics.AvgQueueWaitMinutes.toFixed(0)} min`
+            : "—"
+        }
+        sub={
+          metrics.AvgQueueWaitMinutes != null &&
+          metrics.AvgExecutionMinutes != null
+            ? metrics.AvgQueueWaitMinutes > metrics.AvgExecutionMinutes
+              ? "Queue exceeds execution — bottleneck"
+              : "Queue within normal range"
+            : undefined
+        }
+        subVariant={
+          metrics.AvgQueueWaitMinutes != null &&
+          metrics.AvgExecutionMinutes != null
+            ? metrics.AvgQueueWaitMinutes > metrics.AvgExecutionMinutes
+              ? "warning"
+              : "success"
+            : "default"
+        }
+        icon={<Timer className="h-5 w-5" />}
+        accent={
+          metrics.AvgQueueWaitMinutes != null &&
+          metrics.AvgExecutionMinutes != null &&
+          metrics.AvgQueueWaitMinutes > metrics.AvgExecutionMinutes
+            ? "amber"
+            : "purple"
+        }
       />
     </div>
   );
