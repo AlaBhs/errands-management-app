@@ -9,19 +9,41 @@ namespace ErrandsManagement.Infrastructure.AI;
 public sealed class GeminiOperationalAiService : IOperationalAiService
 {
     private const string SystemPrompt =
-        """
-        You are an operations analyst for a courier errand management platform.
-        Based ONLY on the metrics provided below, return a JSON object with exactly this structure:
-        {
-          "anomalies": ["string", "string"],
-          "causes": ["string", "string"],
-          "actions": ["string", "string"]
-        }
-        - anomalies: exactly 2 strings, each describing one metric that stands out as unusual or concerning
-        - causes: exactly 2 strings, each a concise hypothesis for why the anomaly exists
-        - actions: exactly 2 strings, each a specific, concrete action a manager can take today
-        Rules: Be concise. Use plain language. Never invent data not present in the metrics. Return ONLY the JSON object, no markdown, no preamble.
-        """;
+    """
+    You are a senior facilities operations analyst reviewing a monthly errand management report.
+    Your audience is a facilities manager who needs to act today.
+
+    Based ONLY on the metrics below, return a JSON object with exactly this structure:
+    {
+      "anomalies": ["string", "string", "string"],
+      "causes": ["string", "string", "string"],
+      "actions": ["string", "string", "string"],
+      "highlights": ["string", "string"]
+    }
+
+    - anomalies: exactly 3 strings. Flag metric outliers, imbalances between couriers,
+      cost vs estimate gaps, queue bottlenecks, and workload concentration by category.
+    - causes: exactly 3 strings. One hypothesis per anomaly, grounded only in the data provided.
+    - actions: exactly 3 strings. Specific actions a manager can take this week.
+      Include who should act and on what (e.g. courier name, category name).
+    - highlights: exactly 2 strings. Positive results worth acknowledging to the team.
+
+    Important rules for courier analysis:
+    - Do NOT compare courier execution times directly as a performance indicator.
+      Different couriers handle different request categories with different inherent durations.
+      A courier handling Facilities requests will naturally show higher execution minutes than
+      one handling Office Supplies. Only flag execution time as an anomaly if it is extreme
+      relative to that courier's own assignment volume and category mix.
+    - On-time rate is the most reliable courier performance indicator — flag it if below 90%.
+    - Workload balance matters: flag if one courier holds more than 60% of total assignments.
+
+    General rules:
+    - Reference specific numbers from the metrics (percentages, minutes, names).
+    - All monetary values are in Tunisian Dinar (TND) — always use "TND" as the currency symbol, never "$".
+    - Never invent data not present in the metrics.
+    - Be direct. Skip filler phrases like "it appears" or "it seems".
+    - Return ONLY the JSON object, no markdown, no preamble.
+    """;
 
     private readonly HttpClient _httpClient;
     private readonly GeminiSettings _settings;
@@ -36,25 +58,34 @@ public sealed class GeminiOperationalAiService : IOperationalAiService
     {
         try
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_settings.ApiKey}";
+            var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
-            var requestBody = new
+            var body = new
             {
                 contents = new[]
                 {
-                    new
+                new
+                {
+                    parts = new[]
                     {
-                        parts = new[]
-                        {
-                            new { text = $"{SystemPrompt}\n\n{metricsSummaryText}" }
-                        }
+                        new { text = $"{SystemPrompt}\n\n{metricsSummaryText}" }
                     }
                 }
+            }
             };
 
-            var response = await _httpClient.PostAsJsonAsync(url, requestBody, ct);
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("X-goog-api-key", _settings.ApiKey);
+            request.Content = JsonContent.Create(body);
+
+            var response = await _httpClient.SendAsync(request, ct);
+
             if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(ct);
+                Console.WriteLine($"Gemini {(int)response.StatusCode}: {error}");
                 return null;
+            }
 
             var responseContent = await response.Content.ReadAsStringAsync(ct);
             using var doc = JsonDocument.Parse(responseContent);
@@ -70,7 +101,6 @@ public sealed class GeminiOperationalAiService : IOperationalAiService
             if (string.IsNullOrWhiteSpace(rawText))
                 return null;
 
-            // Strip markdown code fences if present
             var cleaned = rawText.Trim();
             if (cleaned.StartsWith("```"))
             {
@@ -81,12 +111,12 @@ public sealed class GeminiOperationalAiService : IOperationalAiService
                     cleaned = cleaned[..^3].TrimEnd();
             }
 
-            // Validate it's parseable JSON before returning
             using var _ = JsonDocument.Parse(cleaned);
             return cleaned;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"Gemini failed: {ex.GetType().Name}: {ex.Message}");
             return null;
         }
     }
