@@ -119,7 +119,7 @@ export const DateRangeFilter = ({
         ))}
       </div>
 
-      <Separator orientation="vertical" className="hidden h-5 sm:block" />
+      <Separator orientation="vertical" className="hidden h-9 sm:block" />
 
       {/* Year dropdown */}
       <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export const DateRangeFilter = ({
         </Select>
       </div>
 
-      <Separator orientation="vertical" className="hidden h-5 sm:block" />
+      <Separator orientation="vertical" className="hidden h-9 sm:block" />
 
       {/* Custom range */}
       <div className="flex flex-wrap items-center gap-2 h-[stretch]">
