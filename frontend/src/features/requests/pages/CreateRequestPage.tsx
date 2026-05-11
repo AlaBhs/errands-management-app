@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { isApiError } from "@/shared/api/client";
 import { RequestCategory } from "@/features/requests/types/request.enums";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
 import type { RequestDetailsDto } from "../types";
@@ -33,18 +33,13 @@ import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
 import type { RequestTemplateListItemDto } from "@/features/request-templates";
 import { TemplatePicker } from "@/features/request-templates";
 import { templatesApi } from "@/features/request-templates/api/templates.api";
+import { usePublicConfig } from "@/features/settings/hooks/useSystemConfig";
+import { useUserPreferences } from "@/features/settings/hooks/useUserPreferences";
+import { CATEGORY_LABELS } from "@/features/settings/types/systemConfig.types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PRIORITY_LEVELS = ["Low", "Normal", "High", "Urgent"] as const;
-
-const CATEGORY_OPTIONS: { value: RequestCategory; label: string }[] = [
-  { value: RequestCategory.OfficeSupplies, label: "Office Supplies" },
-  { value: RequestCategory.ITEquipment, label: "IT Equipment" },
-  { value: RequestCategory.Travel, label: "Travel" },
-  { value: RequestCategory.Facilities, label: "Facilities" },
-  { value: RequestCategory.Other, label: "Other" },
-];
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -63,57 +58,59 @@ const formatBytes = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const minDeadlineDate = (): string => {
-  const d = new Date();
-  d.setHours(d.getHours() + 24);
-  return d.toISOString().split("T")[0];
-};
-
 // ── Schema ────────────────────────────────────────────────────────────────────
 
-const schema = z.object({
-  title: z.string().min(1, "Title is required").max(100),
-  description: z.string().min(1, "Description is required").max(500),
-  priority: z.number().min(0).max(3),
-  category: z.enum(
-    [
-      RequestCategory.OfficeSupplies,
-      RequestCategory.ITEquipment,
-      RequestCategory.Travel,
-      RequestCategory.Facilities,
-      RequestCategory.Other,
-    ],
-    { message: "Category is required" },
-  ),
-  contactPerson: z.string().max(100).optional(),
-  contactPhone: z.string().max(20).optional(),
-  comment: z.string().max(500).optional(),
-  deadline: z
-    .string()
-    .optional()
-    .refine((val) => {
-      if (!val) return true;
-      return new Date(val) >= new Date(minDeadlineDate());
-    }, "Deadline must be at least 24 hours from now."),
-  estimatedCost: z
-    .string()
-    .optional()
-    .refine(
-      (val) => val === "" || val === undefined || !isNaN(parseFloat(val)),
-      "Estimated cost must be a valid number",
-    ),
-  deliveryAddress: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    postalCode: z.string().optional(),
-    country: z.string().optional(),
-    note: z.string().optional(),
-    latitude: z.number().min(-90).max(90).optional(),
-    longitude: z.number().min(-180).max(180).optional(),
-  }),
-});
+function createSchema(minHours: number) {
+  return z.object({
+    title: z.string().min(1, "Title is required").max(100),
 
-type FormValues = z.infer<typeof schema>;
+    description: z.string().min(1, "Description is required").max(500),
+
+    priority: z.number().min(0).max(3),
+
+    category: z.nativeEnum(RequestCategory, {
+      message: "Category is required",
+    }),
+
+    contactPerson: z.string().max(100).optional(),
+
+    contactPhone: z.string().max(20).optional(),
+
+    comment: z.string().max(500).optional(),
+
+    deadline: z
+      .string()
+      .optional()
+      .refine((val) => {
+        if (!val) return true;
+
+        const d = new Date();
+        d.setHours(d.getHours() + minHours);
+
+        return new Date(val) >= d;
+      }, `Deadline must be at least ${minHours} hours from now.`),
+
+    estimatedCost: z
+      .string()
+      .optional()
+      .refine(
+        (val) => val === "" || val === undefined || !isNaN(parseFloat(val)),
+        "Estimated cost must be a valid number",
+      ),
+
+    deliveryAddress: z.object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      postalCode: z.string().optional(),
+      country: z.string().optional(),
+      note: z.string().optional(),
+      latitude: z.number().min(-90).max(90).optional(),
+      longitude: z.number().min(-180).max(180).optional(),
+    }),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof createSchema>>;
 
 // ── Prefill helper — maps RequestDetailsDto → FormValues ──────────────────────
 
@@ -162,6 +159,8 @@ const inputCls =
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: prefs } = useUserPreferences();
+  const { data: publicConfig } = usePublicConfig();
 
   /** Router-state prefill: set by the Resubmit button in MyRequestsPage */
   const resubmitSource = location.state?.resubmitFrom as
@@ -186,6 +185,25 @@ export function CreateRequestPage() {
 
   const [mapKey, setMapKey] = useState(0);
 
+  const enabledCategories =
+    publicConfig?.enabledCategories ?? Object.values(RequestCategory);
+
+  const categoryOptions = enabledCategories.map((value) => ({
+    value,
+    label: CATEGORY_LABELS[value] ?? value,
+  }));
+  const minDeadlineHours = publicConfig?.minDeadlineAdvanceHours ?? 24;
+  const minDeadlineDate = () => {
+    const d = new Date();
+
+    d.setHours(d.getHours() + minDeadlineHours);
+
+    return d.toISOString().split("T")[0];
+  };
+  const schema = useMemo(
+    () => createSchema(minDeadlineHours),
+    [minDeadlineHours],
+  );
   const {
     register,
     handleSubmit,
@@ -198,6 +216,48 @@ export function CreateRequestPage() {
     defaultValues: buildDefaultValues(resubmitSource),
   });
 
+  useEffect(() => {
+  if (!prefs?.collaboratorDefaults || resubmitSource) return;
+
+  const d = prefs.collaboratorDefaults;
+
+  if (d.defaultCategory) {
+    setValue("category", d.defaultCategory, {
+      shouldDirty: false,
+    });
+  }
+
+  if (d.defaultPriority) {
+    const map: Record<string, number> = {
+      Low: 0,
+      Normal: 1,
+      High: 2,
+      Urgent: 3,
+    };
+
+    setValue(
+      "priority",
+      map[d.defaultPriority] ?? 1,
+      { shouldDirty: false },
+    );
+  }
+
+  if (d.defaultContactPerson) {
+    setValue(
+      "contactPerson",
+      d.defaultContactPerson,
+      { shouldDirty: false },
+    );
+  }
+
+  if (d.defaultContactPhone) {
+    setValue(
+      "contactPhone",
+      d.defaultContactPhone,
+      { shouldDirty: false },
+    );
+  }
+}, [prefs, resubmitSource, setValue]);
   // ── File handling ──────────────────────────────────────────────────────────
 
   const validateFile = (file: File): string | null => {
@@ -232,7 +292,7 @@ export function CreateRequestPage() {
       return next;
     });
   };
-
+// -- Template handling ─────────────────────────────────────────────────────────
   const applyTemplate = async (template: RequestTemplateListItemDto) => {
     setIsApplyingTemplate(true);
     try {
@@ -288,7 +348,7 @@ export function CreateRequestPage() {
             shouldValidate: true,
           });
         }
-        setMapKey(prev => prev + 1);
+        setMapKey((prev) => prev + 1);
       }
 
       setAppliedTemplate(template);
@@ -302,7 +362,7 @@ export function CreateRequestPage() {
   const clearTemplate = () => {
     setAppliedTemplate(undefined);
     reset({ priority: 1 });
-    setMapKey(prev => prev + 1);
+    setMapKey((prev) => prev + 1);
   };
   // ── Submit ─────────────────────────────────────────────────────────────────
 
@@ -491,7 +551,7 @@ export function CreateRequestPage() {
                             <SelectValue placeholder="Select a category…" />
                           </SelectTrigger>
                           <SelectContent>
-                            {CATEGORY_OPTIONS.map(({ value, label }) => (
+                            {categoryOptions.map(({ value, label }) => (
                               <SelectItem key={value} value={value}>
                                 {label}
                               </SelectItem>

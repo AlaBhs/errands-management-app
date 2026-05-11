@@ -14,6 +14,9 @@ import {
   BookTemplate,
   Truck,
   BrainCircuit,
+  Settings2,
+  SlidersHorizontal,
+  Users,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -26,7 +29,7 @@ type NavItem = {
   label: string;
   icon: React.ElementType;
   exact?: boolean;
-  children?: Omit<NavItem, "icon" | "children">[];
+  children?: Omit<NavItem, "children">[];
 };
 
 type NavGroup = {
@@ -37,11 +40,27 @@ type NavGroup = {
 const adminNav: NavGroup[] = [
   {
     items: [
-      { path: "/dashboard",            label: "Dashboard",      icon: LayoutDashboard, exact: true },
-      { path: "/requests",             label: "All Requests",   icon: FileText,        exact: true },
-      { path: "/delivery",             label: "Deliveries",     icon: Truck,           exact: true },
-      { path: "/analytics",            label: "Analytics",      icon: BarChart3,       exact: true },
-      { path: "/operational-reports",  label: "Operational Reports",   icon: BrainCircuit,    exact: true },
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      { path: "/requests", label: "All Requests", icon: FileText, exact: true },
+      { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
+      { path: "/analytics", label: "Analytics", icon: BarChart3, exact: true },
+      {
+        path: "/operational-reports",
+        label: "Operational Reports",
+        icon: BrainCircuit,
+        exact: true,
+      },
+      {
+        path: "/settings/preferences",
+        label: "My Preferences",
+        icon: SlidersHorizontal,
+        exact: true,
+      },
     ],
   },
   {
@@ -53,9 +72,18 @@ const adminNav: NavGroup[] = [
         icon: Settings,
         exact: true,
         children: [
-          { path: "/admin/users",       label: "User Management", exact: true },
-          { path: "/admin/categories",  label: "Categories (soon)" },
-          { path: "/admin/settings",    label: "Settings (soon)" },
+          {
+            path: "/admin/users",
+            label: "User Management",
+            icon: Users,
+            exact: true,
+          },
+          {
+            path: "/settings/system",
+            label: "System Settings",
+            icon: Settings2,
+            exact: true,
+          },
         ],
       },
     ],
@@ -65,10 +93,36 @@ const adminNav: NavGroup[] = [
 const collaboratorNav: NavGroup[] = [
   {
     items: [
-      { path: "/dashboard",     label: "Dashboard",    icon: LayoutDashboard, exact: true },
-      { path: "/requests/mine", label: "My Requests",  icon: FileText,        exact: true },
-      { path: "/requests/new",  label: "New Request",  icon: PlusCircle,      exact: true },
-      { path: "/templates",     label: "My Templates", icon: BookTemplate,    exact: true },
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        path: "/requests/mine",
+        label: "My Requests",
+        icon: FileText,
+        exact: true,
+      },
+      {
+        path: "/requests/new",
+        label: "New Request",
+        icon: PlusCircle,
+        exact: true,
+      },
+      {
+        path: "/templates",
+        label: "My Templates",
+        icon: BookTemplate,
+        exact: true,
+      },
+      {
+        path: "/settings/preferences",
+        label: "My Preferences",
+        icon: SlidersHorizontal,
+        exact: true,
+      },
     ],
   },
 ];
@@ -76,8 +130,24 @@ const collaboratorNav: NavGroup[] = [
 const courierNav: NavGroup[] = [
   {
     items: [
-      { path: "/dashboard",   label: "Dashboard",  icon: LayoutDashboard, exact: true },
-      { path: "/assignments", label: "My Schedule", icon: CalendarClock,  exact: true },
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        path: "/assignments",
+        label: "My Schedule",
+        icon: CalendarClock,
+        exact: true,
+      },
+      {
+        path: "/settings/preferences",
+        label: "My Preferences",
+        icon: SlidersHorizontal,
+        exact: true,
+      },
     ],
   },
 ];
@@ -85,8 +155,19 @@ const courierNav: NavGroup[] = [
 const receptionNav: NavGroup[] = [
   {
     items: [
-      { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { path: "/delivery",  label: "Deliveries", icon: Truck,          exact: true },
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
+      {
+        path: "/settings/preferences",
+        label: "My Preferences",
+        icon: SlidersHorizontal,
+        exact: true,
+      },
     ],
   },
 ];
@@ -163,6 +244,7 @@ function NavItemRow({
       {hasChildren && !collapsed && open && (
         <ul className="mt-0.5 space-y-0.5 ml-4 pl-3 border-l border-[var(--ey-gray)]">
           {item.children!.map((child) => {
+            const ChildIcon = child.icon;
             const childSelfActive = child.exact
               ? pathname === child.path
               : pathname.startsWith(child.path);
@@ -179,6 +261,7 @@ function NavItemRow({
                                   : "text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white"
                               }`}
                 >
+                  <ChildIcon className="h-4 w-4 shrink-0" />
                   <span className="truncate">{child.label}</span>
                 </Link>
               </li>
@@ -192,11 +275,16 @@ function NavItemRow({
 
 function getNavGroups(role?: UserRole): NavGroup[] {
   switch (role) {
-    case UserRole.Admin:       return adminNav;
-    case UserRole.Collaborator: return collaboratorNav;
-    case UserRole.Courier:     return courierNav;
-    case UserRole.Reception:   return receptionNav;
-    default:                   return [];
+    case UserRole.Admin:
+      return adminNav;
+    case UserRole.Collaborator:
+      return collaboratorNav;
+    case UserRole.Courier:
+      return courierNav;
+    case UserRole.Reception:
+      return receptionNav;
+    default:
+      return [];
   }
 }
 
@@ -234,14 +322,18 @@ export function Sidebar() {
             </button>
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ey-yellow)] mx-auto">
-              <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
+              <span className="text-sm font-black text-[var(--ey-dark)]">
+                EY
+              </span>
             </div>
           )
         ) : (
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--ey-yellow)]">
-                <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
+                <span className="text-sm font-black text-[var(--ey-dark)]">
+                  EY
+                </span>
               </div>
               <div className="leading-tight">
                 <p className="text-sm font-semibold">EY Errands</p>

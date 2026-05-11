@@ -108,6 +108,17 @@ function OperationalReportPage() {
   );
 }
 
+const AdminSettingsPage = lazy(() =>
+  import('@/features/settings/pages/AdminSettingsPage').then((m) => ({
+    default: m.AdminSettingsPage,
+  })),
+);
+const UserPreferencesPage = lazy(() =>
+  import('@/features/settings/pages/UserPreferencesPage').then((m) => ({
+    default: m.UserPreferencesPage,
+  })),
+);
+
 export function AppRouter() {
   return (
     <Suspense fallback={<PageSpinner />}>
@@ -121,6 +132,7 @@ export function AppRouter() {
           <Route element={<MainLayout />}>
             <Route path="/dashboard"     element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/settings/preferences" element={<UserPreferencesPage />} />
 
             {/* ── Admin only ──────────────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
@@ -130,6 +142,7 @@ export function AppRouter() {
               <Route path="/admin"               element={<AdminPage />} />
               <Route path="/admin/users"         element={<UserManagementPage />} />
               <Route path="/delivery/new"        element={<CreateDeliveryBatchPage />} />
+              <Route path="/settings/system" element={<AdminSettingsPage />} />
             </Route>
 
             {/* ── Delivery — Admin + Reception ───────────────────── */}
