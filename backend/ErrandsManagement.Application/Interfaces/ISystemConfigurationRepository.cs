@@ -1,11 +1,11 @@
 ﻿using ErrandsManagement.Domain.Entities;
-
+using SystemConfigurationEntity = ErrandsManagement.Domain.Entities.SystemConfiguration;
 namespace ErrandsManagement.Application.Interfaces;
 
 public interface ISystemConfigurationRepository
 {
-    Task<SystemConfiguration> GetAsync(CancellationToken ct = default);
-    Task UpdateAsync(SystemConfiguration config, CancellationToken ct = default);
+    Task<SystemConfigurationEntity> GetAsync(CancellationToken ct = default);
+    Task UpdateAsync(SystemConfigurationEntity config, CancellationToken ct = default);
     Task AddChangeLogAsync(ConfigurationChangeLog log, CancellationToken ct = default);
     Task<List<ConfigurationChangeLog>> GetChangeLogsPagedAsync(
         string? section, int page, int pageSize, CancellationToken ct = default);

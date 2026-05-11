@@ -1,8 +1,8 @@
-﻿using ErrandsManagement.Domain.Entities;
+﻿using SystemConfigurationEntity = ErrandsManagement.Domain.Entities.SystemConfiguration;
 
 namespace ErrandsManagement.Application.Interfaces;
 
 public interface ISystemConfigReader
 {
-    Task<SystemConfiguration> GetAsync(CancellationToken ct = default);
+    Task<SystemConfigurationEntity> GetAsync(CancellationToken ct = default);
 }

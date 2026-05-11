@@ -1,10 +1,10 @@
-﻿using ErrandsManagement.Domain.Entities;
-
+﻿
+using UserPreferencesEntity = ErrandsManagement.Domain.Entities.UserPreferences;
 namespace ErrandsManagement.Application.Interfaces;
 
 public interface IUserPreferencesRepository
 {
-    Task<UserPreferences?> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
-    Task AddAsync(UserPreferences prefs, CancellationToken ct = default);
+    Task<UserPreferencesEntity?> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
+    Task AddAsync(UserPreferencesEntity prefs, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }
