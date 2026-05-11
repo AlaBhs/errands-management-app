@@ -7,6 +7,8 @@ using ErrandsManagement.Domain.Events;
 using FluentAssertions;
 using MediatR;
 using Moq;
+using SystemConfigurationEntity = ErrandsManagement.Domain.Entities.SystemConfiguration;
+using UserPreferencesEntity = ErrandsManagement.Domain.Entities.UserPreferences;
 
 namespace ErrandsManagement.Application.UnitTests.DeliveryBatches.Notifications;
 
@@ -14,12 +16,28 @@ public class CreateNotificationOnDeliveryHandedToReceptionTests
 {
     private readonly Mock<INotificationRepository> _repoMock = new();
     private readonly Mock<IUserRepository> _userRepoMock = new();
+    private readonly Mock<ISystemConfigReader> _configReaderMock = new();
+    private readonly Mock<IUserPreferencesRepository> _prefsRepoMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly CreateNotificationOnDeliveryHandedToReception _handler;
 
     public CreateNotificationOnDeliveryHandedToReceptionTests()
-        => _handler = new CreateNotificationOnDeliveryHandedToReception(
-            _repoMock.Object, _userRepoMock.Object, _mediatorMock.Object);
+    {
+        _configReaderMock
+            .Setup(r => r.GetAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SystemConfigurationEntity.CreateDefault());
+
+        _prefsRepoMock
+            .Setup(r => r.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserPreferencesEntity?)null);
+
+        _handler = new CreateNotificationOnDeliveryHandedToReception(
+            _repoMock.Object,
+            _userRepoMock.Object,
+            _configReaderMock.Object,
+            _prefsRepoMock.Object,
+            _mediatorMock.Object);
+    }
 
     private static User MakeReceptionUser()
         => new("Reception User", "reception@test.com", UserRole.Reception);
@@ -39,8 +57,10 @@ public class CreateNotificationOnDeliveryHandedToReceptionTests
 
         _repoMock.Verify(r => r.AddAsync(
             It.IsAny<Notification>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+
+        // SaveChangesAsync called once per recipient inside the loop
         _repoMock.Verify(r => r.SaveChangesAsync(
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]

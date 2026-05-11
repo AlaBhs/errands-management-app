@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Notifications.Events;
+using ErrandsManagement.Application.Notifications.Helpers;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.Events;
@@ -7,26 +8,26 @@ using MediatR;
 
 namespace ErrandsManagement.Application.Notifications.Handlers;
 
-/// <summary>
-/// Listens to DeliveryBatchHandedToReceptionEvent.
-/// Persists one notification per Reception user.
-/// Real-time delivery is handled by the existing
-/// SendRealtimeOnNotificationCreated handler.
-/// </summary>
 public sealed class CreateNotificationOnDeliveryHandedToReception
     : INotificationHandler<DeliveryBatchHandedToReceptionEvent>
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ISystemConfigReader _configReader;
+    private readonly IUserPreferencesRepository _prefsRepo;
     private readonly IMediator _mediator;
 
     public CreateNotificationOnDeliveryHandedToReception(
         INotificationRepository notificationRepository,
         IUserRepository userRepository,
+        ISystemConfigReader configReader,
+        IUserPreferencesRepository prefsRepo,
         IMediator mediator)
     {
         _notificationRepository = notificationRepository;
         _userRepository = userRepository;
+        _configReader = configReader;
+        _prefsRepo = prefsRepo;
         _mediator = mediator;
     }
 
@@ -34,28 +35,26 @@ public sealed class CreateNotificationOnDeliveryHandedToReception
         DeliveryBatchHandedToReceptionEvent notification,
         CancellationToken cancellationToken)
     {
-        var receptionUsers = await _userRepository
-            .GetByRoleAsync(UserRole.Reception, cancellationToken);
+        var receptionUsers = await _userRepository.GetByRoleAsync(UserRole.Reception, cancellationToken);
+        if (!receptionUsers.Any()) return;
 
-        if (!receptionUsers.Any())
-            return;
+        foreach (var user in receptionUsers)
+        {
+            if (!await NotificationGate.IsAllowedAsync(
+                    user.Id, UserRole.Reception,
+                    NotificationType.DeliveryHandedToReception,
+                    _configReader, _prefsRepo, cancellationToken))
+                continue;
 
-        var notifications = receptionUsers
-            .Select(user => Notification.Create(
+            var entity = Notification.Create(
                 userId: user.Id,
                 message: $"New delivery ready for pickup: '{notification.BatchTitle}' (Client: {notification.ClientName}).",
                 type: NotificationType.DeliveryHandedToReception,
-                referenceId: notification.BatchId))
-            .ToList();
+                referenceId: notification.BatchId);
 
-        foreach (var entity in notifications)
             await _notificationRepository.AddAsync(entity, cancellationToken);
-
-        await _notificationRepository.SaveChangesAsync(cancellationToken);
-
-        // Fire a NotificationCreatedEvent per notification —
-        // SendRealtimeOnNotificationCreated delivers each via SignalR.
-        foreach (var entity in notifications)
+            await _notificationRepository.SaveChangesAsync(cancellationToken);
             await _mediator.Publish(new NotificationCreatedEvent(entity), cancellationToken);
+        }
     }
 }

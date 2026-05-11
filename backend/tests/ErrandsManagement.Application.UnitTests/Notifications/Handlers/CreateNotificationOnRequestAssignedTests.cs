@@ -7,21 +7,33 @@ using ErrandsManagement.Domain.Events;
 using FluentAssertions;
 using MediatR;
 using Moq;
-
+using SystemConfigurationEntity = ErrandsManagement.Domain.Entities.SystemConfiguration;
+using UserPreferencesEntity = ErrandsManagement.Domain.Entities.UserPreferences;
 namespace ErrandsManagement.Application.UnitTests.Notifications.Handlers;
 
 public class CreateNotificationOnRequestAssignedTests
 {
-    private readonly Mock<INotificationRepository> _repositoryMock;
-    private readonly Mock<IMediator> _mediatorMock;
+    private readonly Mock<INotificationRepository> _repositoryMock = new();
+    private readonly Mock<ISystemConfigReader> _configReaderMock = new();
+    private readonly Mock<IUserPreferencesRepository> _prefsRepoMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly CreateNotificationOnRequestAssigned _handler;
 
     public CreateNotificationOnRequestAssignedTests()
     {
-        _repositoryMock = new Mock<INotificationRepository>();
-        _mediatorMock = new Mock<IMediator>();
+        _configReaderMock
+            .Setup(r => r.GetAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SystemConfigurationEntity.CreateDefault());
+
+        _prefsRepoMock
+            .Setup(r => r.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserPreferencesEntity?)null);
+
         _handler = new CreateNotificationOnRequestAssigned(
-            _repositoryMock.Object, _mediatorMock.Object);
+            _repositoryMock.Object,
+            _configReaderMock.Object,
+            _prefsRepoMock.Object,
+            _mediatorMock.Object);
     }
 
     [Fact]
@@ -92,5 +104,31 @@ public class CreateNotificationOnRequestAssignedTests
         await _handler.Handle(domainEvent, CancellationToken.None);
 
         captured!.Message.Should().Contain("Deliver Package");
+    }
+
+    [Fact]
+    public async Task Handle_Should_Not_Persist_When_System_Policy_Blocks_Notification()
+    {
+        var policy = new Domain.ValueObjects.NotificationPolicy
+        {
+            DisabledTypesByRole = new Dictionary<NotificationType, HashSet<UserRole>>
+            {
+                { NotificationType.RequestAssigned, new HashSet<UserRole> { UserRole.Courier } }
+            }
+        };
+        var blockedConfig = SystemConfigurationEntity.CreateDefault();
+        blockedConfig.UpdateNotificationPolicy(policy, Guid.NewGuid());
+
+        _configReaderMock
+            .Setup(r => r.GetAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(blockedConfig);
+
+        await _handler.Handle(
+            new RequestAssignedEvent(Guid.NewGuid(), Guid.NewGuid(), "Test"),
+            CancellationToken.None);
+
+        _repositoryMock.Verify(
+            r => r.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

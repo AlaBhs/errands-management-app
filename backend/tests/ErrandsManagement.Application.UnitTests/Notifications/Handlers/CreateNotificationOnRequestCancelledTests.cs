@@ -8,20 +8,33 @@ using FluentAssertions;
 using MediatR;
 using Moq;
 
+using SystemConfigurationEntity = ErrandsManagement.Domain.Entities.SystemConfiguration;
+using UserPreferencesEntity = ErrandsManagement.Domain.Entities.UserPreferences;
 namespace ErrandsManagement.Application.UnitTests.Notifications.Handlers;
 
 public class CreateNotificationOnRequestCancelledTests
 {
-    private readonly Mock<INotificationRepository> _repositoryMock;
-    private readonly Mock<IMediator> _mediatorMock;
+    private readonly Mock<INotificationRepository> _repositoryMock = new();
+    private readonly Mock<ISystemConfigReader> _configReaderMock = new();
+    private readonly Mock<IUserPreferencesRepository> _prefsRepoMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly CreateNotificationOnRequestCancelled _handler;
 
     public CreateNotificationOnRequestCancelledTests()
     {
-        _repositoryMock = new Mock<INotificationRepository>();
-        _mediatorMock = new Mock<IMediator>();
+        _configReaderMock
+            .Setup(r => r.GetAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SystemConfigurationEntity.CreateDefault());
+
+        _prefsRepoMock
+            .Setup(r => r.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserPreferencesEntity?)null);
+
         _handler = new CreateNotificationOnRequestCancelled(
-            _repositoryMock.Object, _mediatorMock.Object);
+            _repositoryMock.Object,
+            _configReaderMock.Object,
+            _prefsRepoMock.Object,
+            _mediatorMock.Object);
     }
 
     [Fact]

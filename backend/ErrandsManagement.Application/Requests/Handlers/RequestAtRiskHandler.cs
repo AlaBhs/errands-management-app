@@ -1,5 +1,6 @@
 ﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Notifications.Events;
+using ErrandsManagement.Application.Notifications.Helpers;
 using ErrandsManagement.Application.Requests.Commands.MarkRequestRiskAlertSent;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
@@ -10,55 +11,64 @@ namespace ErrandsManagement.Application.Requests.Handlers;
 
 /// <summary>
 /// Handles RequestAtRiskEvent:
-///   1. Fetches Admin user IDs
-///   2. Creates notifications for Admin(s), Requester (Collaborator), and Courier (if assigned)
-///   3. Persists each notification and fires NotificationCreatedEvent for SignalR push
-///   4. Stamps the request as alerted via MarkRequestRiskAlertSentCommand
+///   1. Builds a recipient list: all admins + requester + assigned courier (if any)
+///   2. Deduplicates by UserId (in case requester or courier is also an admin)
+///   3. Runs two-level gate per recipient — skip if either gate blocks
+///   4. Creates, persists, and pushes a notification for each passing recipient
+///   5. Stamps the request as alerted to prevent duplicate alerts
 /// </summary>
 public sealed class RequestAtRiskHandler : INotificationHandler<RequestAtRiskEvent>
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ISystemConfigReader _configReader;
+    private readonly IUserPreferencesRepository _prefsRepo;
     private readonly IMediator _mediator;
 
     public RequestAtRiskHandler(
         INotificationRepository notificationRepository,
         IUserRepository userRepository,
+        ISystemConfigReader configReader,
+        IUserPreferencesRepository prefsRepo,
         IMediator mediator)
     {
         _notificationRepository = notificationRepository;
         _userRepository = userRepository;
+        _configReader = configReader;
+        _prefsRepo = prefsRepo;
         _mediator = mediator;
     }
 
     public async Task Handle(RequestAtRiskEvent evt, CancellationToken cancellationToken)
     {
-        var message = $"Request \"{evt.Title}\" is at risk of missing its deadline on "
-                    + $"{evt.Deadline:yyyy-MM-dd HH:mm} UTC.";
-
-        // ── 1. Collect recipient IDs ─────────────────────────────────────
-        var recipientIds = new List<Guid>();
+        // ── 1. Build recipient list with their roles ──────────────────────
+        var recipients = new List<(Guid UserId, UserRole Role)>();
 
         var admins = await _userRepository.GetByRoleAsync(UserRole.Admin, cancellationToken);
-        recipientIds.AddRange(admins.Select(a => a.Id));
+        recipients.AddRange(admins.Select(a => (a.Id, UserRole.Admin)));
 
-        // Requester (Collaborator role user who owns the request)
-        recipientIds.Add(evt.RequesterId);
+        recipients.Add((evt.RequesterId, UserRole.Collaborator));
 
-        // Assigned courier (optional)
         if (evt.AssignedCourierId.HasValue)
-            recipientIds.Add(evt.AssignedCourierId.Value);
+            recipients.Add((evt.AssignedCourierId.Value, UserRole.Courier));
 
-        // Deduplicate (admin may coincidentally be the requester in edge cases)
-        var uniqueRecipients = recipientIds.Distinct();
+        // ── 2. Deduplicate by UserId ──────────────────────────────────────
+        var seen = new HashSet<Guid>();
+        var uniqueRecipients = recipients.Where(r => seen.Add(r.UserId)).ToList();
 
-        // ── 2. Persist & push each notification ──────────────────────────
-        foreach (var userId in uniqueRecipients)
+        // ── 3. Gate check + persist per recipient ─────────────────────────
+        var metadata = System.Text.Json.JsonSerializer.Serialize(new
         {
-            var metadata = System.Text.Json.JsonSerializer.Serialize(new
-            {
-                deadlineUtc = evt.Deadline.ToString("O")
-            });
+            deadlineUtc = evt.Deadline.ToString("O")
+        });
+
+        foreach (var (userId, role) in uniqueRecipients)
+        {
+            if (!await NotificationGate.IsAllowedAsync(
+                    userId, role,
+                    NotificationType.DeadlineRisk,
+                    _configReader, _prefsRepo, cancellationToken))
+                continue;
 
             var notification = Notification.Create(
                 userId: userId,
@@ -69,16 +79,12 @@ public sealed class RequestAtRiskHandler : INotificationHandler<RequestAtRiskEve
 
             await _notificationRepository.AddAsync(notification, cancellationToken);
             await _notificationRepository.SaveChangesAsync(cancellationToken);
-
-            // Triggers SignalR push via SendRealtimeOnNotificationCreated
             await _mediator.Publish(
-                new NotificationCreatedEvent(notification),
-                cancellationToken);
+                new NotificationCreatedEvent(notification), cancellationToken);
         }
 
-        // ── 3. Stamp idempotency flag ─────────────────────────────────────
+        // ── 4. Stamp idempotency flag ─────────────────────────────────────
         await _mediator.Send(
-            new MarkRequestRiskAlertSentCommand(evt.RequestId),
-            cancellationToken);
+            new MarkRequestRiskAlertSentCommand(evt.RequestId), cancellationToken);
     }
 }
