@@ -1,4 +1,6 @@
-﻿using ErrandsManagement.Domain.Entities;
+﻿using System.Text.Json;
+using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,6 +9,11 @@ namespace ErrandsManagement.Infrastructure.Data.Configurations;
 public sealed class UserPreferencesConfiguration
     : IEntityTypeConfiguration<UserPreferences>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = false
+    };
+
     public void Configure(EntityTypeBuilder<UserPreferences> builder)
     {
         builder.HasKey(p => p.Id);
@@ -18,16 +25,27 @@ public sealed class UserPreferencesConfiguration
         builder.Property(p => p.Theme).HasMaxLength(20);
         builder.Property(p => p.DefaultView).HasMaxLength(20);
 
-        // Store as JSON column
         builder.Property(p => p.DisabledNotificationTypes)
+            .HasColumnName("DisabledNotificationTypes")
             .HasColumnType("nvarchar(max)")
             .HasConversion(
-                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                v => System.Text.Json.JsonSerializer.Deserialize<HashSet<Domain.Enums.NotificationType>>(v,
-                         (System.Text.Json.JsonSerializerOptions?)null)
-                     ?? new HashSet<Domain.Enums.NotificationType>());
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                v => JsonSerializer.Deserialize<HashSet<Domain.Enums.NotificationType>>(v, JsonOptions)
+                     ?? new HashSet<Domain.Enums.NotificationType>())
+            .IsRequired();
 
-        builder.OwnsOne(p => p.CollaboratorDefaults, cd => cd.ToJson());
-        builder.OwnsOne(p => p.CourierDefaults, cd => cd.ToJson());
+        builder.Property(p => p.CollaboratorDefaults)
+            .HasColumnName("CollaboratorDefaults")
+            .HasColumnType("nvarchar(max)")
+            .HasConversion(
+                v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                v => v == null ? null : JsonSerializer.Deserialize<CollaboratorDefaults>(v, JsonOptions));
+
+        builder.Property(p => p.CourierDefaults)
+            .HasColumnName("CourierDefaults")
+            .HasColumnType("nvarchar(max)")
+            .HasConversion(
+                v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                v => v == null ? null : JsonSerializer.Deserialize<CourierDefaults>(v, JsonOptions));
     }
 }
