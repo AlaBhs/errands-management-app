@@ -29,7 +29,7 @@ public static class DependencyInjection
         services.AddRepositories();
         services.AddStorage();
         services.AddServices(configuration);
-        services.AddRecommendationEngine(configuration);
+        services.AddSystemConfiguration(configuration);
         services.AddHostedService<DeadlineMonitoringService>();
 
         return services;
@@ -82,6 +82,12 @@ public static class DependencyInjection
         services.AddScoped<IRequestTemplateRepository, RequestTemplateRepository>();
         services.AddScoped<IDeliveryBatchRepository, DeliveryBatchRepository>();
         services.AddScoped<IOperationalReportRepository, OperationalReportRepository>();
+        services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
+        services.AddScoped<SystemConfigurationRepository>();
+        services.AddScoped<ISystemConfigurationRepository>(sp =>
+            sp.GetRequiredService<SystemConfigurationRepository>());
+        services.AddScoped<ISystemConfigReader>(sp =>
+            sp.GetRequiredService<SystemConfigurationRepository>());
 
         return services;
     }
@@ -123,22 +129,11 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddRecommendationEngine(
+    private static IServiceCollection AddSystemConfiguration(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services
-            .AddOptions<RecommendationEngineSettings>()
-            .Bind(configuration.GetSection(RecommendationEngineSettings.SectionName))
-            .PostConfigure(s =>
-            {
-                s.NormalPriority.Validate();
-                s.UrgentPriority.Validate();
-            })
-            .ValidateOnStart();
-
-        services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
-
         return services;
     }
+
 }

@@ -30,6 +30,12 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<OperationalReport> OperationalReports => Set<OperationalReport>();
 
+    public DbSet<SystemConfiguration> SystemConfigurations => Set<SystemConfiguration>();
+
+    public DbSet<ConfigurationChangeLog> ConfigurationChangeLogs => Set<ConfigurationChangeLog>();
+
+    public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
