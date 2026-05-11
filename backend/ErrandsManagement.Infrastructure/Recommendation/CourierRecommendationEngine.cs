@@ -1,13 +1,11 @@
 ﻿using ErrandsManagement.Application.CourierRecommendation.DTOs;
 using ErrandsManagement.Application.CourierRecommendation.Interfaces;
 using ErrandsManagement.Application.CourierRecommendation.Models;
-using ErrandsManagement.Application.CourierRecommendation.Settings;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.ValueObjects;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace ErrandsManagement.Infrastructure.Recommendation;
 
@@ -15,22 +13,25 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
 {
     private readonly AppDbContext _db;
     private readonly IAnalyticsRepository _analytics;
-    private readonly RecommendationEngineSettings _settings;
+    private readonly ISystemConfigReader _configReader;
 
     public CourierRecommendationEngine(
         AppDbContext db,
         IAnalyticsRepository analytics,
-        IOptions<RecommendationEngineSettings> settings)
+        ISystemConfigReader configReader)
     {
         _db = db;
         _analytics = analytics;
-        _settings = settings.Value;
+        _configReader = configReader;
     }
 
     public async Task<List<CourierScore>> RecommendAsync(
         RecommendationRequestDto request,
         CancellationToken ct)
     {
+        var config = await _configReader.GetAsync(ct);
+        var policy = config.RecommendationPolicy;
+
         // ── 1. Load all active couriers with location data ────────────────
         var courierRoleName = UserRole.Courier.ToString();
 
@@ -63,14 +64,12 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
          .Select(g => new { CourierId = g.Key, Count = g.Count() })
          .ToDictionaryAsync(x => x.CourierId, x => x.Count, ct);
 
-        // ── 3. Performance data (reuse existing analytics logic) ──────────
-        var performanceData = await _analytics
-            .GetCourierPerformanceAsync(null, null, ct);
-
+        // ── 3. Performance data ────────────────────────────────────────────
+        var performanceData = await _analytics.GetCourierPerformanceAsync(null, null, ct);
         var perfByCourier = performanceData.ToDictionary(p => p.CourierId);
 
         // ── 4. Weights for this request's priority ────────────────────────
-        var weights = _settings.GetWeights(request.Priority);
+        var weights = policy.GetWeights(request.Priority);
 
         // ── 5. Score each courier ─────────────────────────────────────────
         var scores = couriers.Select(courier =>
@@ -78,11 +77,11 @@ public sealed class CourierRecommendationEngine : ICourierRecommendationEngine
             var activeCount = activeCountsByCourier.GetValueOrDefault(courier.Id, 0);
             perfByCourier.TryGetValue(courier.Id, out var perf);
 
-            var availScore = CourierScoring.ComputeAvailabilityScore(activeCount, _settings.MaxActiveAssignments);
+            var availScore = CourierScoring.ComputeAvailabilityScore(activeCount, policy.MaxActiveAssignments);
             var proxScore = CourierScoring.ComputeProximityScore(
                 courier.Latitude, courier.Longitude,
                 request.DeliveryLatitude, request.DeliveryLongitude,
-                _settings.MaxScoringDistanceKm,
+                policy.MaxScoringDistanceKm,
                 out var distanceKm);
             var perfScore = CourierScoring.ComputePerformanceScore(
                 perf?.TotalAssignments ?? 0,

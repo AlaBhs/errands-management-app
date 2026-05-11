@@ -1,4 +1,5 @@
-﻿using ErrandsManagement.Application.Requests.Queries.GetAtRiskRequests;
+﻿using ErrandsManagement.Application.Interfaces;
+using ErrandsManagement.Application.Requests.Queries.GetAtRiskRequests;
 using ErrandsManagement.Domain.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,13 +9,14 @@ using Microsoft.Extensions.Logging;
 namespace ErrandsManagement.Infrastructure.BackgroundJobs;
 
 /// <summary>
-/// Runs every 5 minutes, detects at-risk requests, and publishes
-/// RequestAtRiskEvent for each one. Contains ZERO business logic —
-/// all detection and notification logic lives in the Application layer.
+/// Runs on a configurable interval read from SlaPolicy at runtime,
+/// detects at-risk requests, and publishes RequestAtRiskEvent for each one.
+/// Contains ZERO business logic — all detection and notification logic
+/// lives in the Application layer.
 /// </summary>
 public sealed class DeadlineMonitoringService : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(5);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DeadlineMonitoringService> _logger;
@@ -29,16 +31,30 @@ public sealed class DeadlineMonitoringService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(
-            "[DeadlineMonitor] Service started. Interval: {Interval}.", Interval);
+        _logger.LogInformation("[DeadlineMonitor] Service started.");
 
-        // Delay first run slightly to let the app finish startup
         await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var interval = await GetIntervalAsync(stoppingToken);
             await RunCycleAsync(stoppingToken);
-            await Task.Delay(Interval, stoppingToken);
+            await Task.Delay(interval, stoppingToken);
+        }
+    }
+
+    private async Task<TimeSpan> GetIntervalAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var configReader = scope.ServiceProvider.GetRequiredService<ISystemConfigReader>();
+            var config = await configReader.GetAsync(stoppingToken);
+            return TimeSpan.FromMinutes(config.SlaPolicy.MonitorIntervalMinutes);
+        }
+        catch
+        {
+            return DefaultInterval;
         }
     }
 
@@ -73,10 +89,8 @@ public sealed class DeadlineMonitoringService : BackgroundService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // Log and continue — a single cycle failure must not crash the host
             _logger.LogError(ex,
-                "[DeadlineMonitor] Unhandled error during scan cycle. Will retry in {Interval}.",
-                Interval);
+                "[DeadlineMonitor] Unhandled error during scan cycle. Will retry on next interval.");
         }
     }
 }
