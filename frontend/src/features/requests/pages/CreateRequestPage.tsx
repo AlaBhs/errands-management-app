@@ -34,8 +34,10 @@ import type { RequestTemplateListItemDto } from "@/features/request-templates";
 import { TemplatePicker } from "@/features/request-templates";
 import { templatesApi } from "@/features/request-templates/api/templates.api";
 import { usePublicConfig } from "@/features/settings/hooks/useSystemConfig";
-import { useUserPreferences } from "@/features/settings/hooks/useUserPreferences";
 import { CATEGORY_LABELS } from "@/features/settings/types/systemConfig.types";
+import { useQuery } from "@tanstack/react-query";
+import { settingsKeys } from "@/features/settings/hooks/settingsKeys";
+import { userPreferencesApi } from "@/features/settings/api/userPreferences.api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -159,7 +161,11 @@ const inputCls =
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: prefs } = useUserPreferences();
+  const { data: prefs } = useQuery({
+    queryKey: settingsKeys.prefs(),
+    queryFn: userPreferencesApi.getPreferences,
+    staleTime: 0,
+  });
   const { data: publicConfig } = usePublicConfig();
 
   /** Router-state prefill: set by the Resubmit button in MyRequestsPage */
@@ -217,47 +223,35 @@ export function CreateRequestPage() {
   });
 
   useEffect(() => {
-  if (!prefs?.collaboratorDefaults || resubmitSource) return;
+    if (!prefs?.collaboratorDefaults || resubmitSource) return;
 
-  const d = prefs.collaboratorDefaults;
+    const d = prefs.collaboratorDefaults;
 
-  if (d.defaultCategory) {
-    setValue("category", d.defaultCategory, {
-      shouldDirty: false,
-    });
-  }
+    if (d.defaultCategory) {
+      setValue("category", d.defaultCategory, {
+        shouldDirty: false,
+      });
+    }
 
-  if (d.defaultPriority) {
-    const map: Record<string, number> = {
-      Low: 0,
-      Normal: 1,
-      High: 2,
-      Urgent: 3,
-    };
+    if (d.defaultPriority) {
+      const map: Record<string, number> = {
+        Low: 0,
+        Normal: 1,
+        High: 2,
+        Urgent: 3,
+      };
 
-    setValue(
-      "priority",
-      map[d.defaultPriority] ?? 1,
-      { shouldDirty: false },
-    );
-  }
+      setValue("priority", map[d.defaultPriority] ?? 1, { shouldDirty: false });
+    }
 
-  if (d.defaultContactPerson) {
-    setValue(
-      "contactPerson",
-      d.defaultContactPerson,
-      { shouldDirty: false },
-    );
-  }
+    if (d.defaultContactPerson) {
+      setValue("contactPerson", d.defaultContactPerson, { shouldDirty: false });
+    }
 
-  if (d.defaultContactPhone) {
-    setValue(
-      "contactPhone",
-      d.defaultContactPhone,
-      { shouldDirty: false },
-    );
-  }
-}, [prefs, resubmitSource, setValue]);
+    if (d.defaultContactPhone) {
+      setValue("contactPhone", d.defaultContactPhone, { shouldDirty: false });
+    }
+  }, [prefs, resubmitSource, setValue]);
   // ── File handling ──────────────────────────────────────────────────────────
 
   const validateFile = (file: File): string | null => {
@@ -292,7 +286,7 @@ export function CreateRequestPage() {
       return next;
     });
   };
-// -- Template handling ─────────────────────────────────────────────────────────
+  // -- Template handling ─────────────────────────────────────────────────────────
   const applyTemplate = async (template: RequestTemplateListItemDto) => {
     setIsApplyingTemplate(true);
     try {
