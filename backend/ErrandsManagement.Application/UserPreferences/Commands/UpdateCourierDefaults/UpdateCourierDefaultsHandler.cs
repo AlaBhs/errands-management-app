@@ -63,6 +63,18 @@ public sealed class UpdateCourierDefaultsHandler
             await _repo.AddAsync(prefs, ct);
 
         await _repo.SaveChangesAsync(ct);
+
+        // ── Sync location to user profile so the recommendation engine picks it up ──
+        if (cmd.BaseLatitude.HasValue && cmd.BaseLongitude.HasValue)
+        {
+            await _userRepository.UpdateLocationAsync(
+                cmd.UserId,
+                cmd.BaseLatitude.Value,
+                cmd.BaseLongitude.Value,
+                cmd.BaseCity,
+                ct);
+        }
+
         return Unit.Value;
     }
 }

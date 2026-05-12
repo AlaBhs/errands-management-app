@@ -305,6 +305,19 @@ public sealed class UserRepository : IUserRepository
         await _userManager.UpdateAsync(user);
     }
 
+    public async Task UpdateLocationAsync(
+    Guid userId, double latitude, double longitude, string? city, CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        if (user is null) return;
+
+        user.Latitude = latitude;
+        user.Longitude = longitude;
+
+        if (city is not null)
+            user.City = city;
+        await _userManager.UpdateAsync(user);
+    }
     public async Task<UserDto?> GetApplicationUserAsync(
         Guid userId, CancellationToken ct = default)
     {

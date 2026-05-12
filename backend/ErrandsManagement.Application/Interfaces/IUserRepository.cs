@@ -51,6 +51,8 @@ public interface IUserRepository
     // Updates FullName and optional ProfilePhotoUrl
     Task UpdateProfileAsync(Guid userId, string fullName, string? profilePhotoUrl, CancellationToken ct = default);
 
+    Task UpdateLocationAsync(Guid userId, double latitude, double longitude, string? city, CancellationToken ct = default);
+
     // Returns the UserDto
     Task<UserDto?> GetApplicationUserAsync(Guid userId, CancellationToken ct = default);
 

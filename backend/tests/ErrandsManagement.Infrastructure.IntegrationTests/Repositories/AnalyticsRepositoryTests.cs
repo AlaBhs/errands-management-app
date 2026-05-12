@@ -617,4 +617,9 @@ internal sealed class StubUserRepository : IUserRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task UpdateLocationAsync(Guid userId, double latitude, double longitude, string? city, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }
