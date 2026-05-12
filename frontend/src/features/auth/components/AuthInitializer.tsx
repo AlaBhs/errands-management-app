@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { authApi } from '../api/auth.api';
 import { extractUserFromToken } from '../utils/jwtUtils';
 import { PageSpinner } from '@/shared/components/PageSpinner';
+import { signalr } from '@/shared/api/signalr';
 
 export function AuthInitializer({ children }: { children: ReactNode }) {
   const { setAuth, clearAuth, setInitializing, isInitializing } = useAuthStore();
@@ -15,6 +16,7 @@ export function AuthInitializer({ children }: { children: ReactNode }) {
       .then(({ accessToken }) => {
         const user = extractUserFromToken(accessToken);
         setAuth(user, accessToken);
+        signalr.connect(() => useAuthStore.getState().accessToken ?? '');
       })
       .catch(() => {
         clearAuth();

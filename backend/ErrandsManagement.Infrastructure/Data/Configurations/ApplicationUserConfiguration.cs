@@ -11,5 +11,12 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.FullName)
                   .IsRequired()
                   .HasMaxLength(50);
+
+        builder.Property(u => u.City)
+                  .HasMaxLength(100);
+
+        builder.Property(u => u.Latitude);
+
+        builder.Property(u => u.Longitude);
     }
 }

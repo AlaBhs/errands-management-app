@@ -7,6 +7,9 @@ export interface CreateUserPayload {
   email: string;
   password: string;
   role: string;
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
 }
 
 // --- Query Params ---

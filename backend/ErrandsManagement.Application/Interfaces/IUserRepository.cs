@@ -2,6 +2,8 @@
 using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Users.DTOs;
 using ErrandsManagement.Application.Users.Queries.GetAllUsers;
+using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.Enums;
 
 namespace ErrandsManagement.Application.Interfaces;
 
@@ -10,6 +12,8 @@ public interface IUserRepository
     Task<UserDto?> FindByEmailAsync(string email, CancellationToken ct = default);
 
     Task<UserDto?> FindByIdAsync(Guid userId, CancellationToken ct = default);
+
+    Task<List<User>> GetByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
 
     Task<UserListItemDto?> FindListItemByIdAsync(Guid userId, CancellationToken ct = default);
 
@@ -32,4 +36,6 @@ public interface IUserRepository
     Task<PagedResult<UserListItemDto>> GetPagedAsync(UserQueryParameters parameters, CancellationToken ct = default);
 
     Task SetIsActiveAsync(Guid userId, bool isActive, CancellationToken ct = default);
+
+    Task UpdateLocationAsync(Guid userId, UpdateLocationDto location, CancellationToken ct = default);
 }

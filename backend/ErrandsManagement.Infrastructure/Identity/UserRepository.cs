@@ -3,6 +3,9 @@ using ErrandsManagement.Application.DTOs;
 using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Users.DTOs;
 using ErrandsManagement.Application.Users.Queries.GetAllUsers;
+using ErrandsManagement.Domain.Common;
+using ErrandsManagement.Domain.Entities;
+using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +46,30 @@ public sealed class UserRepository : IUserRepository
         return ToDto(user, roles);
     }
 
+    public async Task<List<User>> GetByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        var roleName = role.ToString();
+
+        var applicationUsers = await (
+            from user in _context.Users
+            join userRole in _context.UserRoles on user.Id equals userRole.UserId
+            join r in _context.Roles on userRole.RoleId equals r.Id
+            where r.Name == roleName && user.IsActive
+            select user
+        ).ToListAsync(cancellationToken);
+
+        return applicationUsers
+            .Select(u =>
+            {
+                var domainUser = new User(u.FullName, u.Email!, role);
+                typeof(BaseEntity)
+                    .GetProperty(nameof(BaseEntity.Id))!
+                    .SetValue(domainUser, u.Id);
+                return domainUser;
+            })
+            .ToList();
+    }
+
     public async Task<UserListItemDto?> FindListItemByIdAsync(Guid userId, CancellationToken ct = default)
     {
         return await (
@@ -71,6 +98,9 @@ public sealed class UserRepository : IUserRepository
             FullName = dto.FullName,
             Email = dto.Email,
             UserName = dto.Email,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
+            City = dto.City
         };
 
         var result = await _userManager.CreateAsync(user, password);
@@ -212,6 +242,18 @@ public sealed class UserRepository : IUserRepository
         await _userManager.UpdateAsync(user);
     }
 
+    public async Task UpdateLocationAsync(
+    Guid userId,
+    UpdateLocationDto location,
+    CancellationToken ct = default)
+    {
+        var user = await FindUserByIdAsync(userId);
+        user.Latitude = location.Latitude;
+        user.Longitude = location.Longitude;
+        user.City = location.City;
+        await _userManager.UpdateAsync(user);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────
 
     private async Task<ApplicationUser> FindUserByIdAsync(Guid userId)
@@ -219,5 +261,6 @@ public sealed class UserRepository : IUserRepository
            ?? throw new InvalidOperationException($"User {userId} not found.");
 
     private static UserDto ToDto(ApplicationUser user, IEnumerable<string> roles)
-        => new(user.Id, user.Email!, user.FullName, roles, user.IsActive);
+        => new(user.Id, user.Email!, user.FullName, roles, user.IsActive,
+           user.Latitude, user.Longitude, user.City);
 }

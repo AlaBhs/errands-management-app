@@ -1,5 +1,7 @@
 ﻿using ErrandsManagement.API.Common.Responses;
 using ErrandsManagement.Application.Common.Pagination;
+using ErrandsManagement.Application.CourierRecommendation.DTOs;
+using ErrandsManagement.Application.CourierRecommendation.Queries.GetCourierCandidates;
 using ErrandsManagement.Application.Requests.Commands.AssignRequest;
 using ErrandsManagement.Application.Requests.Commands.CancelRequest;
 using ErrandsManagement.Application.Requests.Commands.CompleteRequest;
@@ -113,6 +115,7 @@ public sealed class RequestsController : ControllerBase
             StatusCodes.Status200OK,
             HttpContext.TraceIdentifier));
     }
+    
     [HttpGet("assignments")]
     [Authorize(Roles = "Courier")]
     public async Task<IActionResult> GetMyAssignments(
@@ -234,6 +237,21 @@ public sealed class RequestsController : ControllerBase
             HttpContext.TraceIdentifier));
     }
 
+    [HttpGet("{id:guid}/candidates")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetCandidates(
+    Guid id,
+    CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new GetCourierCandidatesQuery(id),
+            cancellationToken);
+
+        return Ok(ApiResponse<List<CourierScoreDto>>.SuccessResponse(
+            result,
+            StatusCodes.Status200OK,
+            HttpContext.TraceIdentifier));
+    }
     // ── Private helpers ────────────────────────────────────────────────────
 
     private Guid GetCurrentUserId()

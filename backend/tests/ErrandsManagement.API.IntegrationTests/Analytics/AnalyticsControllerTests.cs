@@ -6,11 +6,6 @@ using FluentAssertions;
 
 namespace ErrandsManagement.API.IntegrationTests.Analytics;
 
-/// <summary>
-/// Integration tests for the analytics endpoints.
-/// All four endpoints are Admin-only — tests verify authorization
-/// for each role and response shape for valid Admin requests.
-/// </summary>
 public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
@@ -82,11 +77,12 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        json.GetProperty("totalRequests").GetInt32().Should().BeGreaterThanOrEqualTo(0);
-        json.GetProperty("byStatus").ValueKind.Should().Be(JsonValueKind.Object);
-        json.GetProperty("byCategory").ValueKind.Should().Be(JsonValueKind.Object);
-        json.GetProperty("totalEstimatedCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
-        json.GetProperty("totalActualCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
+        var data = json.GetProperty("data");
+        data.GetProperty("totalRequests").GetInt32().Should().BeGreaterThanOrEqualTo(0);
+        data.GetProperty("byStatus").ValueKind.Should().Be(JsonValueKind.Object);
+        data.GetProperty("byCategory").ValueKind.Should().Be(JsonValueKind.Object);
+        data.GetProperty("totalEstimatedCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
+        data.GetProperty("totalActualCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -102,7 +98,10 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        json.GetProperty("totalRequests").GetInt32().Should().Be(0);
+        json.GetProperty("data")
+            .GetProperty("totalRequests")
+            .GetInt32()
+            .Should().Be(0);
     }
 
     // ── GET /api/analytics/trend ──────────────────────────────────────────────
@@ -155,7 +154,9 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        json.GetArrayLength().Should().Be(6);
+        json.GetProperty("data")
+            .GetArrayLength()
+            .Should().Be(6);
     }
 
     [Fact]
@@ -170,8 +171,9 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        // Jan, Feb, Mar = 3 months
-        json.GetArrayLength().Should().Be(3);
+        json.GetProperty("data")
+            .GetArrayLength()
+            .Should().Be(3);
     }
 
     [Fact]
@@ -186,7 +188,7 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        var first = json[0];
+        var first = json.GetProperty("data")[0];
         first.GetProperty("year").GetInt32().Should().BeGreaterThan(2000);
         first.GetProperty("month").GetInt32().Should().BeInRange(1, 12);
         first.GetProperty("count").GetInt32().Should().BeGreaterThanOrEqualTo(0);
@@ -242,7 +244,7 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        json.ValueKind.Should().Be(JsonValueKind.Array);
+        json.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
     [Fact]
@@ -257,10 +259,11 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        // Only validate shape if there is data — empty array is also valid
-        if (json.GetArrayLength() > 0)
+        var data = json.GetProperty("data");
+
+        if (data.GetArrayLength() > 0)
         {
-            var first = json[0];
+            var first = data[0];
             first.GetProperty("category").GetString().Should().NotBeNullOrEmpty();
             first.GetProperty("estimatedCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
             first.GetProperty("actualCost").GetDecimal().Should().BeGreaterThanOrEqualTo(0);
@@ -329,7 +332,7 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        json.ValueKind.Should().Be(JsonValueKind.Array);
+        json.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
     [Fact]
@@ -344,9 +347,11 @@ public class AnalyticsControllerTests : IClassFixture<CustomWebApplicationFactor
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(
             TestContext.Current.CancellationToken);
 
-        if (json.GetArrayLength() > 0)
+        var data = json.GetProperty("data");
+
+        if (data.GetArrayLength() > 0)
         {
-            var first = json[0];
+            var first = data[0];
             first.GetProperty("courierId").GetGuid().Should().NotBeEmpty();
             first.GetProperty("courierName").GetString().Should().NotBeNullOrEmpty();
             first.GetProperty("totalAssignments").GetInt32().Should().BeGreaterThanOrEqualTo(0);

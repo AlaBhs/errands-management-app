@@ -16,6 +16,8 @@ export type {
   AssignmentDto,
   AuditLogDto,
   SurveyDto,
+  ScoreBreakdownDto,
+  CourierScoreDto
 } from "./types";
 
 // Hooks

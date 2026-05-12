@@ -8,7 +8,7 @@ interface CostBreakdownTableProps {
 const fmt = (value: number) =>
   new Intl.NumberFormat("en-US", {
     style:                 "currency",
-    currency:              "USD",
+    currency:              "TND",
     maximumFractionDigits: 0,
   }).format(value);
 

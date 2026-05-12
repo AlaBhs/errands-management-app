@@ -18,6 +18,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<Request> Requests => Set<Request>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(
@@ -28,7 +30,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information)
-                      .EnableSensitiveDataLogging();
+        optionsBuilder.LogTo(Console.WriteLine, LogLevel.Warning);
     }
 }

@@ -38,8 +38,7 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
         builder.OwnsOne(r => r.DeliveryAddress, address =>
         {
             address.Property(a => a.Street)
-                .HasMaxLength(200)
-                .IsRequired();
+                .HasMaxLength(200);
 
             address.Property(a => a.City)
                 .HasMaxLength(100)
@@ -55,6 +54,10 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
 
             address.Property(a => a.Note)
                 .HasMaxLength(500);
+
+            address.Property(a => a.Latitude);
+
+            address.Property(a => a.Longitude);
         });
         builder
             .HasMany(r => r.Assignments)

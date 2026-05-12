@@ -1,7 +1,11 @@
-﻿using ErrandsManagement.Application.Interfaces;
+﻿using ErrandsManagement.Application.CourierRecommendation.Interfaces;
+using ErrandsManagement.Application.CourierRecommendation.Settings;
+using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Infrastructure.Data;
 using ErrandsManagement.Infrastructure.FileStorage;
 using ErrandsManagement.Infrastructure.Identity;
+using ErrandsManagement.Infrastructure.RealTime;
+using ErrandsManagement.Infrastructure.Recommendation;
 using ErrandsManagement.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +24,8 @@ public static class DependencyInjection
         services.AddIdentityConfiguration();
         services.AddRepositories();
         services.AddStorage();
+        services.AddServices();
+        services.AddRecommendationEngine(configuration);
 
         return services;
     }
@@ -61,6 +67,8 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
 
         return services;
     }
@@ -71,4 +79,31 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
+
+    private static IServiceCollection AddServices(
+    this IServiceCollection services)
+    {
+        services.AddScoped<INotificationRealtimeService, SignalRNotificationService>();
+        return services;
+    }
+
+    private static IServiceCollection AddRecommendationEngine(
+    this IServiceCollection services,
+    IConfiguration configuration)
+    {
+        services
+            .AddOptions<RecommendationEngineSettings>()
+            .Bind(configuration.GetSection(RecommendationEngineSettings.SectionName))
+            .PostConfigure(s =>
+            {
+                s.NormalPriority.Validate();
+                s.UrgentPriority.Validate();
+            })
+            .ValidateOnStart();
+
+        services.AddScoped<ICourierRecommendationEngine, CourierRecommendationEngine>();
+
+        return services;
+    }
+
 }

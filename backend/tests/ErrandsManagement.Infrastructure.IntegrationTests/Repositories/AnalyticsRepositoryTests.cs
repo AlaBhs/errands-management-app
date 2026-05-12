@@ -557,6 +557,11 @@ internal sealed class StubUserRepository : IUserRepository
         CancellationToken ct = default)
         => Task.FromResult<UserDto?>(null);
 
+    public Task<List<User>> GetByRoleAsync(
+    UserRole role,
+    CancellationToken cancellationToken = default)
+    => Task.FromResult(new List<User>());
+
     public Task<UserListItemDto?> FindListItemByIdAsync(
         Guid userId,
         CancellationToken ct = default)
@@ -615,6 +620,12 @@ internal sealed class StubUserRepository : IUserRepository
         Guid userId, bool isActive,
         CancellationToken ct = default)
         => Task.CompletedTask;
+
+    public Task UpdateLocationAsync(
+    Guid userId,
+    UpdateLocationDto location,
+    CancellationToken ct = default)
+    => Task.CompletedTask;
 
     public Task SaveChangesAsync(
         CancellationToken ct = default)

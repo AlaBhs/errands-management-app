@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/figtree";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -139,6 +140,11 @@
   }
 }
 
+.body-overflow-hidden {
+  overflow: hidden;
+  height: 100%;
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -213,4 +219,57 @@
 .dark [data-sonner-toast][data-type="info"] {
   background-color: var(--ey-gray);
   border-left-color: var(--ey-yellow);
+}
+
+[data-sonner-toast] button[data-close-button="true"] {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.2s ease;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-sonner-toast] button[data-close-button="true"]:hover {
+  background: var(--muted) !important;
+  border-color: var(--muted-foreground) !important;
+}
+
+.dark [data-sonner-toast][data-type="success"] {
+  background-color: var(--ey-dark);
+  border-left: 4px solid var(--ey-green);
+  color: var(--foreground);
+}
+
+/* Custom scrollbar styling – modern, no arrows */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--background);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+*::-webkit-scrollbar-button {
+  display: none;  /* hide the arrows */
 }

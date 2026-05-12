@@ -3,6 +3,7 @@ import { DollarSign, FileText, Camera, Loader2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -68,9 +69,9 @@ export function QuickCompleteModal({
           <DialogTitle className="text-foreground">
             Complete Request
           </DialogTitle>
-          <p className="mt-2 text-xs text-muted-foreground line-clamp-1">
+          <DialogDescription className="mt-2 text-xs text-muted-foreground line-clamp-1">
             {title}
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* Body */}

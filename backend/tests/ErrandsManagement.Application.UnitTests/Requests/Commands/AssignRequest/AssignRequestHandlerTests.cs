@@ -5,6 +5,7 @@ using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
 using ErrandsManagement.Domain.UnitTests.Builders;
 using FluentAssertions;
+using MediatR;
 using Moq;
 using Xunit;
 
@@ -12,13 +13,13 @@ namespace ErrandsManagement.Application.UnitTests.Requests.Commands.AssignReques
 
 public class AssignRequestHandlerTests
 {
-    private readonly Mock<IRequestRepository> _repositoryMock;
+    private readonly Mock<IRequestRepository> _repositoryMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly AssignRequestHandler _handler;
 
     public AssignRequestHandlerTests()
     {
-        _repositoryMock = new Mock<IRequestRepository>();
-        _handler = new AssignRequestHandler(_repositoryMock.Object);
+        _handler = new AssignRequestHandler(_repositoryMock.Object, _mediatorMock.Object);
     }
 
     [Fact]
@@ -35,7 +36,6 @@ public class AssignRequestHandlerTests
         await _handler.Handle(command, CancellationToken.None);
 
         request.Status.Should().Be(RequestStatus.Assigned);
-
         _repositoryMock.Verify(
             r => r.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
@@ -54,5 +54,23 @@ public class AssignRequestHandlerTests
             await _handler.Handle(command, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task Handle_Should_Publish_Domain_Events_After_Save()
+    {
+        var request = new RequestBuilder().Build();
+
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(request.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(request);
+
+        var command = new AssignRequestCommand(request.Id, Guid.NewGuid());
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _mediatorMock.Verify(
+            m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
     }
 }

@@ -1,119 +1,163 @@
 # Errands Management App
 
-This branch delivers a comprehensive UI/UX overhaul across the entire
-application — redesigned pages, dark mode, improved navigation, and
-a more professional enterprise feel throughout.
+This branch adds a **Courier Recommendation Engine** — when an admin is
+about to assign a pending request, the system scores and ranks all
+available couriers using availability, proximity, and performance data,
+and presents a transparent breakdown so the admin can make an informed
+decision. The final assignment remains a manual admin action.
 
-## What's New — `feature/ux-improvements`
+## What's New — `feature/courier-recommendation`
 
-### Authentication & Routing
-- Redesigned login page with EY branding, animated error feedback,
-  and human-friendly error messages mapped from backend responses
-- Landing page for unauthenticated users at `/` with hero, features
-  grid, benefits section, and request lifecycle timeline
-- Fixed post-logout URL redirect — next login always lands on dashboard
-- Fixed role-based redirect after login — collaborators and couriers
-  no longer hit a 403
+### Courier Location — User Profile Extension
+- Three new fields on `ApplicationUser`: `Latitude` (`double?`),
+  `Longitude` (`double?`), `City` (`string?`)
+- New endpoint `PUT /api/users/me/location` — any authenticated user
+  can update their own GPS coordinates and city label
+- EF Core migration `AddLocationToApplicationUser` adds the columns to
+  `AspNetUsers` and `DeliveryAddress_Latitude` /
+  `DeliveryAddress_Longitude` to `Requests`
+- `RegisterUserCommand` accepts optional location parameters — admins
+  can set courier coordinates at account creation time
+- Seeded couriers carry real Tunis-area coordinates so proximity
+  scoring produces meaningful results out of the box
 
-### Navigation Shell
-- Collapsible sidebar — icon-only mode at 68px, expanded at 256px,
-  persisted across sessions
-- Nested sub-navigation for Admin Panel — User Management and future
-  admin pages expand inline with chevron toggle
-- Topbar with dynamic breadcrumb, role-based quick action, notifications
-  dropdown, and theme toggle
-- Logout moved to sidebar footer — consistent session action placement
+### Delivery Address Coordinates
+- `Address` value object extended with optional `Latitude` and
+  `Longitude` properties
+- `AddressDto` and `CreateRequestDto` accept optional coordinates —
+  the frontend passes them via browser geolocation or the Leaflet map
+- All three seeded delivery addresses (`tunis`, `lac`, `marsa`) carry
+  real GPS coordinates for demo proximity scoring
 
-### Dark Mode
-- Full dark mode support across all pages and components
-- Persisted to localStorage, respects system preference on first visit
-- Sun/Moon toggle in topbar
-- EY brand colors (`#2E2E38`, `#FFE600`) preserved in both modes
+### Scoring Model
+Each courier is scored 0–100 across three independent criteria:
 
-### Request List Pages
-- Table and card view toggle — preference persisted to localStorage
-- Unified filter toolbar matching analytics page style with active
-  filter chips and clear all button
-- Skeleton loading states matching content shape — no blank flash
-- Clickable rows — no more "View" link at end of each row
-- Priority color accent on table rows and card left border
-- Contextual empty states — different message when filters are active
+| Criterion | Formula | Weight — Normal | Weight — High/Urgent |
+|---|---|---|---|
+| Availability | `max(0, (1 − active/maxActive) × 100)` | 40% | 60% |
+| Proximity | `max(0, (1 − distanceKm/maxDistance) × 100)` | 35% | 25% |
+| Performance | `(normalisedRating × 0.5) + (completionRate × 0.5)` | 25% | 15% |
 
-### My Schedule (Courier)
-- Renamed from "My Assignments" — more human language
-- Summary strip — Awaiting Start, In Progress, Urgent counters,
-  each clickable to filter the list instantly
-- Inline Start button on Assigned cards
-- Quick complete modal — actual cost, note, and discharge photo
-  submitted without navigating to details page
-- Overdue indicator in red on deadline
-- Urgent requests show Zap badge and red ring
+- Couriers with no location score **0** on proximity — they are still
+  included, never excluded
+- If the request has no delivery coordinates, all couriers score **50**
+  on proximity (neutral, not penalised)
+- New couriers with no assignment history score **50** on performance
+  (neutral)
+- Results are sorted descending by total score, top 10 returned
 
-### My Requests (Collaborator)
-- Status summary strip — Pending, Active, Completed, Cancelled
-- Survey prompt banner on completed cards missing a review
-- Quick survey modal — star rating with hover labels, optional comment,
-  submitted directly from the list without opening details
-- Overdue indicator on active requests past their deadline
-- New Request button always visible in page header
+### Scoring Algorithm — Pure Domain Logic
+- All scoring math lives in `Domain/ValueObjects/CourierScoring.cs` —
+  a static class with zero infrastructure dependencies
+- `ComputeAvailabilityScore`, `ComputeProximityScore`,
+  `ComputePerformanceScore`, and `Haversine` are fully unit-testable
+  with no mocks or database
+- `CourierRecommendationEngine` in Infrastructure is a thin
+  orchestrator — it fetches data from EF Core and delegates all
+  calculations to `CourierScoring`
 
-### Request Details Page
-- Two-column layout — main content left, actions and info right
-- Visual activity timeline with icons and color per event type
-- Skeleton loading state matching two-column layout
-- Cancel request modal — replaces inline form, destructive action pattern
-- Star rating in survey section — replaces number circles
-- Actions panel redesigned with cleaner visual hierarchy
+### Configuration
+Weights and thresholds are bound from `appsettings.json` at startup.
+Weights are validated on startup — the app refuses to start if any
+priority group does not sum to 1.0:
 
-### Dashboard
-- KPI stat cards restored for all three roles
-- Status distribution chart visible for Admin, Collaborator, and Courier
-- Skeleton loading on all stat cards
-- Overdue panel for Admin, pending surveys panel for Collaborator,
-  avg rating for Courier in the insights section
-- Last 30 days filter on all stat queries — numbers stay meaningful
-  over time
+```json
+"RecommendationEngine": {
+  "MaxActiveAssignments": 3,
+  "MaxScoringDistanceKm": 20.0,
+  "NormalPriority": {
+    "AvailabilityWeight": 0.40,
+    "ProximityWeight": 0.35,
+    "PerformanceWeight": 0.25
+  },
+  "UrgentPriority": {
+    "AvailabilityWeight": 0.60,
+    "ProximityWeight": 0.25,
+    "PerformanceWeight": 0.15
+  }
+}
+```
 
-### User Management
-- Confirm modal before deactivating a user
-- Confirm modal before activating a user
-- Skeleton rows instead of page spinner
-- Filter toolbar matching analytics style
+### New API Endpoints
 
-### Confirm Dialogs
-- Reusable `ConfirmModal` component — configurable label, color, icon
-- Deactivate user — modal with name and access warning
-- Delete attachment — inline Yes/No confirmation, no modal overlay
+| Method | Route | Role | Description |
+|---|---|---|---|
+| `GET` | `/api/requests/{id}/candidates` | Admin | Ranked courier list with score breakdown |
+| `PUT` | `/api/users/me/location` | Any authenticated | Update own GPS coordinates and city |
 
-### 404 Page
-- EY branded dark background matching login and landing pages
-- Go back and Back to Dashboard/Home actions
-- Authenticated users go to `/dashboard`, guests go to `/`
-
-### PageErrorBoundary
-- Wraps every page route — sidebar stays functional when a page crashes
-- Error detail shown in development only
-
-### Performance
-- Route-level code splitting with `React.lazy` and `Suspense`
-- Vendor chunk splitting — react, query, radix-ui, icons, forms
-  each in separate cached chunks
-- Initial bundle reduced from 655 kB to ~200 kB core chunk
+The existing `POST /api/requests/{id}/assign` is unchanged. The admin
+calls `GET candidates` first, reviews the ranked list, then calls
+`POST assign` with their chosen courier. The two calls are fully
+independent — no coupling.
 
 ### Architecture
-- Moved layouts to `src/app/layouts/`
-- Added `src/app/pages/` for app-level pages
-- Converted all default exports to named exports
-- Moved `StatusBadge`, `PriorityBadge`, `CategoryBadge` to
-  `src/shared/components/` — used across features
-- Removed direct API calls from pages — all go through hooks
-- Removed `requestsApi` and `usersApi` from barrel exports
-- Standardized all router imports to `react-router-dom`
+
+```
+Domain/
+└── ValueObjects/
+    ├── Address.cs                  ← +Latitude?, +Longitude?
+    └── CourierScoring.cs           ← pure static scoring math
+
+Application/
+└── CourierRecommendation/
+    ├── DTOs/
+    │   ├── CourierScoreDto.cs
+    │   └── RecommendationRequest.cs
+    ├── Interfaces/
+    │   └── ICourierRecommendationEngine.cs
+    ├── Models/
+    │   └── CourierScore.cs         ← internal engine model
+    ├── Queries/
+    │   └── GetCourierCandidates/
+    │       ├── GetCourierCandidatesQuery.cs
+    │       └── GetCourierCandidatesHandler.cs
+    └── Settings/
+        └── RecommendationEngineSettings.cs
+
+Infrastructure/
+└── Recommendation/
+    └── CourierRecommendationEngine.cs  ← EF queries + delegates to CourierScoring
+```
+
+Dependency direction is strictly one-way: Infrastructure → Application
+→ Domain. The scoring algorithm has no EF Core, no HTTP, and no
+infrastructure references.
+
+### Leaflet Maps (Frontend)
+Three map integrations using `react-leaflet`:
+
+- **Register form** — interactive map for the admin to pick courier
+  GPS coordinates when creating a new account; clicking the map sets
+  latitude and longitude on the form
+- **Create request form** — interactive map for the collaborator to
+  pin the delivery address location; coordinates are submitted with
+  the request and used for proximity scoring
+- **Request details page** — read-only map showing the delivery
+  location marker for the current request
+
+### Recommendation Panel (Frontend)
+When an Admin opens a Pending request, the courier dropdown is replaced
+by a ranked candidate panel:
+
+- Each card shows: rank badge, courier name, total score (inline next
+  to name), city, distance in km, active assignment count
+- Clicking the chevron expands a score breakdown — three labelled
+  progress bars (availability, proximity, performance) plus average
+  rating and completion rate
+- Clicking a card selects it and highlights it in blue
+- A summary panel appears below the list showing the selected courier's
+  name and score, with a contextual assign button (`Assign Ali`)
+- Score color adapts to value: green ≥ 75, amber ≥ 50, red below 50
+- Loading state renders three skeleton pulses while the API call
+  resolves
+- `useUsers` and the courier dropdown are removed entirely — no dead
+  code remains
 
 ## How to Test with Docker
 
 1. Ensure Docker Desktop is running.
 2. From the repository root:
+
 ```bash
 docker-compose up --build
 ```
@@ -121,6 +165,73 @@ docker-compose up --build
 3. The frontend is available at `http://localhost:3000`
 4. The API is available at `http://localhost:5000`. Use Scalar at
    `http://localhost:5000/scalar` to explore and test the endpoints.
+
+### Testing the Recommendation Engine
+
+**Step 1 — Log in as Admin**
+```
+POST /api/auth/login
+{ "email": "admin@errands.local", "password": "Admin123!" }
+```
+
+**Step 2 — Create a request as Collaborator** (log in as Collaborator
+first), then open the request details page as Admin.
+
+**Step 3 — View candidates**
+```
+GET /api/requests/{id}/candidates
+Authorization: Bearer <admin-token>
+```
+The response is a ranked list of couriers with full score breakdowns.
+In the frontend, open any Pending request as Admin — the recommendation
+panel loads automatically.
+
+**Step 4 — Assign**
+Select a courier from the panel and click Assign, or call:
+```
+POST /api/requests/{id}/assign
+{ "courierId": "<guid>" }
+```
+
+### Score Calculation Example
+
+A courier 2 km away from the delivery address, with 1 active
+assignment, a 4.0 average rating, and 8 out of 10 completed — on a
+Normal priority request:
+
+```
+Availability:  (1 − 1/3)  × 100        = 66.7
+Proximity:     (1 − 2/20) × 100        = 90.0
+Performance:   (4.0/5 × 100) × 0.5
+             + (8/10 × 100) × 0.5      = 80.0
+
+Total = 66.7 × 0.40
+      + 90.0 × 0.35
+      + 80.0 × 0.25
+      = 26.7 + 31.5 + 20.0
+      = 78.2
+```
+
+### Extending the Engine with a New Criterion
+
+1. Add a static method to `Domain/ValueObjects/CourierScoring.cs`
+2. Add a weight field to `PriorityWeights` in
+   `RecommendationEngineSettings` and update `appsettings.json`
+3. Update `Validate()` — weights must still sum to 1.0
+4. Wire the new score in `CourierRecommendationEngine.RecommendAsync`
+5. Add a unit test in `Domain.UnitTests/Scoring/CourierScoringTests.cs`
+
+No existing code changes required — fully open/closed.
+
+## Notes
+
+- All 319 tests pass with 0 failures (`dotnet test` from the `backend`
+  directory). The 22 new tests cover scoring algorithm unit tests,
+  settings validation, handler tests, and integration tests for the
+  candidates endpoint.
+- This branch includes all features from all previous branches,
+  including the real-time notification system from
+  `feature/notifications`.
 
 ## Demo Credentials
 
@@ -131,10 +242,3 @@ docker-compose up --build
 | Collaborator | `michael.chen@ey.local` | `Dev1234!` |
 | Courier | `courier1@ey.local` | `Dev1234!` |
 | Courier | `courier2@ey.local` | `Dev1234!` |
-
-## Notes
-
-- All 265 tests pass with 0 failures (`dotnet test` from the `backend`
-  directory). No new backend changes in this branch.
-- Dark mode preference persists across sessions via localStorage.
-- This branch includes all features from all previous branches.

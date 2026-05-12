@@ -9,6 +9,8 @@ export interface AddressDto {
   postalCode: string;
   country: string;
   note?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface AssignmentDto {
@@ -75,4 +77,23 @@ export interface AttachmentDto {
   uri:         string;
   type:        AttachmentType;
   uploadedAt:  string;
+}
+
+export interface ScoreBreakdownDto {
+  availabilityScore: number;
+  proximityScore: number;
+  performanceScore: number;
+}
+
+export interface CourierScoreDto {
+  courierId: string;
+  fullName: string;
+  email: string;
+  city?: string;
+  activeAssignmentsCount: number;
+  averageRating: number;
+  completionRate: number;
+  distanceKm?: number;
+  totalScore: number;
+  scoreBreakdown: ScoreBreakdownDto;
 }

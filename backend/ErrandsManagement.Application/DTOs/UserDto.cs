@@ -5,5 +5,8 @@ public sealed record UserDto(
     string Email,
     string FullName,
     IEnumerable<string> Roles,
-    bool IsActive
+    bool IsActive,
+    double? Latitude = null,
+    double? Longitude = null,
+    string? City = null
 );

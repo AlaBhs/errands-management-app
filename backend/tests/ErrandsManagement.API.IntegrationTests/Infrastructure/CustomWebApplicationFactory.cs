@@ -47,6 +47,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<AppDbContext>();
             services.RemoveAll<IDbContextFactory<AppDbContext>>();
+            services.RemoveAll<INotificationHubProxy>();
+            services.AddScoped<INotificationHubProxy, StubNotificationHubProxy>();
 
             // Remove provider-specific services so SQL Server internals don't leak
             var efCoreServices = services
@@ -148,6 +150,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         string password = "Test1234!",
         string fullName = "Test Courier")
         => await SeedUserAsync(email, password, fullName, "Courier");
+
+    /// <summary>Seeds an Admin user, returns their Id.Idempotent.</summary>
+    public async Task<Guid> SeedAdminAsync(
+        string email = "admin@test.local",
+        string password = "Test1234!",
+        string fullName = "Test Admin")
+        => await SeedUserAsync(email, password, fullName, "Admin");
 
     // ── Private ───────────────────────────────────────────────────────────────
 

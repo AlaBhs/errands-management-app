@@ -35,3 +35,12 @@ export function useRequest(id: string) {
     enabled: !!id,
   });
 }
+
+export function useCourierCandidates(requestId: string) {
+  return useQuery({
+    queryKey: requestKeys.candidates(requestId),
+    queryFn: () => requestsApi.getCandidates(requestId),
+    select: (res) => res.data,
+    enabled: !!requestId,
+  });
+}

@@ -29,13 +29,20 @@ public static class DbInitializer
         // ── Users ──────────────────────────────────────────────────────────────
         var sarah = await EnsureUser(userManager, "sarah.johnson@ey.local", "Sarah Johnson", "Collaborator");
         var michael = await EnsureUser(userManager, "michael.chen@ey.local", "Michael Chen", "Collaborator");
-        var courier1 = await EnsureUser(userManager, "courier1@ey.local", "Ali Ben Salem", "Courier");
-        var courier2 = await EnsureUser(userManager, "courier2@ey.local", "Karim Trabelsi", "Courier");
+        var courier1 = await EnsureUser(userManager, "courier1@ey.local", "Ali Ben Salem", "Courier",
+            latitude: 36.8320, longitude: 10.2300, city: "Lac");
+        var courier2 = await EnsureUser(userManager, "courier2@ey.local", "Karim Trabelsi", "Courier",
+            latitude: 36.8781, longitude: 10.3248, city: "La Marsa");
 
         // ── Addresses ─────────────────────────────────────────────────────────
-        var tunis = new Address("Rue de la Liberté", "Tunis", "1001", "Tunisia");
-        var lac = new Address("Rue du Lac Malaren", "Lac II", "1053", "Tunisia");
-        var marsa = new Address("Avenue Habib Bourguiba", "La Marsa", "2070", "Tunisia");
+        var tunis = new Address("Rue de la Liberté", "Tunis", "1001", "Tunisia",
+            latitude: 36.8065, longitude: 10.1815);
+
+        var lac = new Address("Rue du Lac Malaren", "Lac II", "1053", "Tunisia",
+            latitude: 36.8320, longitude: 10.2300);
+
+        var marsa = new Address("Avenue Habib Bourguiba", "La Marsa", "2070", "Tunisia",
+            latitude: 36.8781, longitude: 10.3248);
 
         // ── Reflection helpers ────────────────────────────────────────────────
 
@@ -1225,7 +1232,10 @@ public static class DbInitializer
         UserManager<ApplicationUser> userManager,
         string email,
         string fullName,
-        string role)
+        string role,
+        double? latitude = null,
+        double? longitude = null,
+        string? city = null)
     {
         var existing = await userManager.FindByEmailAsync(email);
         if (existing is not null) return existing;
@@ -1238,6 +1248,9 @@ public static class DbInitializer
             UserName = email,
             EmailConfirmed = true,
             IsActive = true,
+            Latitude = latitude,
+            Longitude = longitude,
+            City = city
         };
 
         var result = await userManager.CreateAsync(user, DefaultPassword);

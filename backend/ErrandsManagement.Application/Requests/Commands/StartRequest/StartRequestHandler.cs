@@ -8,10 +8,12 @@ public sealed class StartRequestHandler
     : IRequestHandler<StartRequestCommand>
 {
     private readonly IRequestRepository _requestRepository;
+    private readonly IMediator _mediator;
 
-    public StartRequestHandler(IRequestRepository requestRepository)
+    public StartRequestHandler(IRequestRepository requestRepository, IMediator mediator)
     {
         _requestRepository = requestRepository;
+        _mediator = mediator;
     }
 
     public async Task Handle(
@@ -27,5 +29,10 @@ public sealed class StartRequestHandler
         request.Start();
 
         await _requestRepository.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in request.DomainEvents)
+            await _mediator.Publish(domainEvent, cancellationToken);
+
+        request.ClearDomainEvents();
     }
 }

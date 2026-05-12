@@ -1,9 +1,10 @@
-﻿using ErrandsManagement.Application.Requests.DTOs;
-using ErrandsManagement.Application.Interfaces;
+﻿using ErrandsManagement.Application.Interfaces;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
+using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace ErrandsManagement.Application.UnitTests.Requests.Commands.CreateRequest;
@@ -11,11 +12,12 @@ namespace ErrandsManagement.Application.UnitTests.Requests.Commands.CreateReques
 public class CreateRequestHandlerTests
 {
     private readonly Mock<IRequestRepository> _repositoryMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly CreateRequestHandler _handler;
 
     public CreateRequestHandlerTests()
     {
-        _handler = new CreateRequestHandler(_repositoryMock.Object);
+        _handler = new CreateRequestHandler(_repositoryMock.Object, _mediatorMock.Object);
     }
 
     private static CreateRequestCommand ValidCommand(Guid? requesterId = null) =>
@@ -52,7 +54,6 @@ public class CreateRequestHandlerTests
         _repositoryMock.Verify(
             r => r.AddAsync(It.IsAny<Request>(), It.IsAny<CancellationToken>()),
             Times.Once);
-
         _repositoryMock.Verify(
             r => r.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
@@ -91,5 +92,17 @@ public class CreateRequestHandlerTests
         captured.DeliveryAddress.City.Should().Be("City");
         captured.DeliveryAddress.PostalCode.Should().Be("12345");
         captured.DeliveryAddress.Country.Should().Be("Country");
+    }
+
+    [Fact]
+    public async Task Handle_Should_Publish_Domain_Events_After_Save()
+    {
+        var command = ValidCommand();
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _mediatorMock.Verify(
+            m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
     }
 }

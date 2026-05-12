@@ -5,6 +5,7 @@ import { isApiError } from "@/shared/api/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -44,9 +45,9 @@ export function CancelRequestModal({
             <DialogTitle className="text-base font-semibold text-foreground">
               Cancel Request
             </DialogTitle>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <DialogDescription className="mt-0.5 text-sm text-muted-foreground">
               This action cannot be undone.
-            </p>
+            </DialogDescription>
           </div>
         </DialogHeader>
 

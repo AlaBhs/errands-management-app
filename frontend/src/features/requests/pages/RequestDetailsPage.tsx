@@ -33,6 +33,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
+import { LocationMap } from "@/shared/components/LocationMap";
 
 // ── Audit log config ──────────────────────────────────────────────────────────
 
@@ -195,7 +196,7 @@ export function RequestDetailsPage() {
                                  bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400"
                 >
                   <DollarSign className="h-3 w-3" />
-                  Est. ${request.estimatedCost}
+                  Est. tnd {" "+request.estimatedCost}
                 </span>
               )}
             </div>
@@ -481,6 +482,17 @@ export function RequestDetailsPage() {
                 </p>
               )}
             </div>
+
+            {request.deliveryAddress.latitude &&
+              request.deliveryAddress.longitude && (
+                <div className="mt-4">
+                  <LocationMap
+                    latitude={request.deliveryAddress.latitude}
+                    longitude={request.deliveryAddress.longitude}
+                    height="200px"
+                  />
+                </div>
+              )}
 
             {(request.contactPerson || request.contactPhone) && (
               <div className="mt-4 border-t border-border pt-4">

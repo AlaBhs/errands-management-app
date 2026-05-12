@@ -2,6 +2,7 @@
 using ErrandsManagement.Application.Common.Pagination;
 using ErrandsManagement.Application.Users.Commands.ActivateUser;
 using ErrandsManagement.Application.Users.Commands.DeactivateUser;
+using ErrandsManagement.Application.Users.Commands.UpdateLocation;
 using ErrandsManagement.Application.Users.DTOs;
 using ErrandsManagement.Application.Users.Queries.GetAllUsers;
 using ErrandsManagement.Application.Users.Queries.GetUserById;
@@ -77,6 +78,21 @@ public sealed class UsersController : ControllerBase
     CancellationToken cancellationToken)
     {
         await _mediator.Send(new ActivateUserCommand(id), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPut("me/location")]
+    [Authorize]
+    public async Task<IActionResult> UpdateLocation(
+    [FromBody] UpdateLocationDto body,
+    CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        await _mediator.Send(
+            new UpdateLocationCommand(userId, body.Latitude, body.Longitude, body.City),
+            cancellationToken);
+
         return NoContent();
     }
 
