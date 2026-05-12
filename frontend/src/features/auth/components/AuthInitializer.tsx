@@ -6,8 +6,6 @@ import { extractUserFromToken } from "../utils/jwtUtils";
 import { PageSpinner } from "@/shared/components/PageSpinner";
 import { signalr } from "@/shared/api/signalr";
 import { useMessagingStore } from "@/features/messaging/store/messagingStore";
-import { systemConfigApi } from "@/features/settings/api/systemConfig.api";
-import { settingsKeys } from "@/features/settings/hooks/settingsKeys";
 import { userPreferencesApi } from "@/features/settings/api/userPreferences.api";
 
 export function AuthInitializer({ children }: { children: ReactNode }) {
@@ -18,34 +16,9 @@ export function AuthInitializer({ children }: { children: ReactNode }) {
   useEffect(() => {
     authApi
       .refresh()
-      .then(async ({ accessToken }) => {
-        // <-- added 'async' here
+      .then(({ accessToken }) => {
         const user = extractUserFromToken(accessToken);
         setAuth(user, accessToken);
-        queryClient.prefetchQuery({
-          queryKey: settingsKeys.publicConfig(),
-          queryFn: systemConfigApi.getPublicConfig,
-          staleTime: 5 * 60 * 1000,
-        });
-        const prefs = await userPreferencesApi
-          .getPreferences()
-          .catch(() => null);
-
-        if (prefs?.theme && prefs.theme !== "system") {
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(prefs.theme);
-        }
-
-        if (prefs?.language) {
-          document.documentElement.setAttribute("lang", prefs.language);
-          // A future feature might be to load language-specific resources here
-          // If you use i18n (e.g. i18next): i18n.changeLanguage(prefs.language);
-        }
-
-        if (prefs?.defaultView) {
-          useAuthStore.getState().setDefaultView(prefs.defaultView as 'list' | 'card');
-        }
-        
         signalr.connect(() => useAuthStore.getState().accessToken ?? "");
         const { startConnection: startMessagingConnection } =
           useMessagingStore.getState();
@@ -53,6 +26,34 @@ export function AuthInitializer({ children }: { children: ReactNode }) {
           () => useAuthStore.getState().accessToken ?? "",
           queryClient,
         );
+        userPreferencesApi
+          .getPreferences()
+          .then((prefs) => {
+            if (prefs.theme === "light" || prefs.theme === "dark") {
+              localStorage.setItem("ey-theme", prefs.theme);
+              document.documentElement.classList.remove("light", "dark");
+              document.documentElement.classList.add(prefs.theme);
+            }
+            if (prefs?.language) {
+              document.documentElement.setAttribute("lang", prefs.language);
+              // A future feature might be to load language-specific resources here
+              // If you use i18n (e.g. i18next): i18n.changeLanguage(prefs.language);
+            }
+            if (prefs.defaultView === "card" || prefs.defaultView === "table") {
+              // Write into every view-mode key used across pages
+              const viewKeys = [
+                "collaborator-requests-view",
+                "admin-requests-view",
+                "courier-schedule-view",
+              ];
+              viewKeys.forEach((key) =>
+                localStorage.setItem(key, prefs.defaultView!),
+              );
+            }
+          })
+          .catch(() => {
+            // Preferences fetch failing must never block login
+          });
       })
       .catch(() => {
         const { stopConnection } = useMessagingStore.getState();
