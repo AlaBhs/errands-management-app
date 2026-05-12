@@ -21,6 +21,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/notifications": "Notifications",
   "/profile": "My Profile",
   "/operational-reports": "Operational Reports",
+  "/settings/preferences": "My Preferences",
+  "/settings/system": "System Settings",
 };
 
 function getPageTitle(pathname: string): string {

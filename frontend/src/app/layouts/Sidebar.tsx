@@ -17,6 +17,7 @@ import {
   Settings2,
   SlidersHorizontal,
   Users,
+  UserCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -384,6 +385,22 @@ export function Sidebar() {
 
       {/* ── Footer ── */}
       <div className="border-t border-[var(--ey-gray)] p-3">
+        {/* Profile link — all roles */}
+        <Link
+          to="/profile"
+          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5
+                hover:bg-[var(--ey-gray)] hover:text-white transition-colors
+                ${
+                  location.pathname === "/profile"
+                    ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
+                    : "text-gray-400"
+                }
+                ${collapsed ? "justify-center px-2" : ""}`}
+          title={collapsed ? "My Profile" : undefined}
+        >
+          <UserCircle className="h-5 w-5 shrink-0" />
+          {!collapsed && <span className="text-sm">My Profile</span>}
+        </Link>
         <button
           onClick={() => logout.mutate()}
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5

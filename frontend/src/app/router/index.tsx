@@ -118,6 +118,12 @@ const UserPreferencesPage = lazy(() =>
     default: m.UserPreferencesPage,
   })),
 );
+const SetPasswordPage = lazy(() =>
+  import("@/features/auth/pages/SetPasswordPage").then((m) => ({ default: m.SetPasswordPage })),
+);
+const ProfilePage = lazy(() =>
+  import("@/features/users/pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
 
 export function AppRouter() {
   return (
@@ -125,6 +131,7 @@ export function AppRouter() {
       <Routes>
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
         <Route index element={<PublicOrDashboard />} />
 
         {/* Protected */}
@@ -133,6 +140,8 @@ export function AppRouter() {
             <Route path="/dashboard"     element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings/preferences" element={<UserPreferencesPage />} />
+            {/* Profile — all authenticated roles */}
+            <Route path="/profile" element={<ProfilePage />} />
 
             {/* ── Admin only ──────────────────────────────────────── */}
             <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
