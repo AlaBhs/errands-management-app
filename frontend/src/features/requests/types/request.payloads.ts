@@ -1,16 +1,18 @@
 import type { PaginationParams } from "@/shared/api/types";
 import type { AddressDto } from "./request.types";
-import type { RequestStatus } from "./request.enums";
-
+import type { RequestCategory, RequestStatus } from "./request.enums";
 
 // --- Command Payloads ---
 
 export interface CreateRequestPayload {
   title: string;
   description: string;
-  requesterId: string;
   deliveryAddress: AddressDto;
   priority: number;
+  category: RequestCategory;
+  contactPerson?: string;
+  contactPhone?: string;
+  comment?: string;
   deadline?: string;
   estimatedCost?: number;
 }
@@ -27,6 +29,7 @@ export interface CancelRequestPayload {
 export interface CompleteRequestPayload {
   actualCost?: number;
   note?: string;
+  dischargePhoto?: File;
 }
 
 export interface SubmitSurveyPayload {
@@ -39,4 +42,11 @@ export type SortField = "createdat" | "deadline" | "estimatedcost";
 export interface RequestQueryParams extends PaginationParams {
   sortBy?: SortField;
   status?: RequestStatus;
+  search?: string;
+  descending?: boolean;
+  isOverdue?: boolean;
+  hasSurvey?: boolean;
+  category?: RequestCategory;
+  from?: string;
+  to?:   string;
 }

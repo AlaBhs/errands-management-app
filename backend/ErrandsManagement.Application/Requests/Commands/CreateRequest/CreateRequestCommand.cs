@@ -1,15 +1,19 @@
 ﻿using ErrandsManagement.Domain.Enums;
 namespace ErrandsManagement.Application.Requests.Commands.CreateRequest;
 
-using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Requests.DTOs;
 using MediatR;
 
 public sealed record CreateRequestCommand(
     string Title,
     string Description,
-    Guid RequesterId,
     AddressDto DeliveryAddress,
     PriorityLevel Priority,
+    RequestCategory Category,
+    string? ContactPerson,
+    string? ContactPhone,
+    string? Comment,
     DateTime? Deadline,
-    decimal? EstimatedCost)
+    decimal? EstimatedCost,
+    Guid RequesterId)
     : IRequest<Guid>;

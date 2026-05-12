@@ -1,20 +1,89 @@
-import { useNavigate } from "react-router"; // updated to "react-router" for consistency
-import { useForm } from "react-hook-form";
+import { useNavigate, useLocation } from "react-router";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload } from "lucide-react"; // added for file upload icon
-import { useCreateRequest } from "../hooks";
+import { FileIcon, Upload, X, Loader2, RotateCcw } from "lucide-react";
+import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { FormSection } from "@/shared/components/FormSection";
+import { FieldGroup } from "@/shared/components/FieldGroup";
+import { DatePicker } from "@/shared/components/DatePicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { isApiError } from "@/shared/api/client";
+import { RequestCategory } from "@/features/requests/types/request.enums";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { useUploadAttachments } from "../hooks";
+import type { RequestDetailsDto } from "../types";
 
-const priorityLevels = ["Low", "Normal", "High", "Urgent"] as const;
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const PRIORITY_LEVELS = ["Low", "Normal", "High", "Urgent"] as const;
+
+const CATEGORY_OPTIONS: { value: RequestCategory; label: string }[] = [
+  { value: RequestCategory.OfficeSupplies, label: "Office Supplies" },
+  { value: RequestCategory.ITEquipment, label: "IT Equipment" },
+  { value: RequestCategory.Travel, label: "Travel" },
+  { value: RequestCategory.Facilities, label: "Facilities" },
+  { value: RequestCategory.Other, label: "Other" },
+];
+
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+];
+const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_FILES = 5;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const minDeadlineDate = (): string => {
+  const d = new Date();
+  d.setHours(d.getHours() + 24);
+  return d.toISOString().split("T")[0];
+};
+
+// ── Schema ────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().min(1, "Description is required").max(500),
-  requesterId: z.uuid("Requester ID must be a valid UUID"),
   priority: z.number().min(0).max(3),
-  deadline: z.string().optional(),
+  category: z.enum(
+    [
+      RequestCategory.OfficeSupplies,
+      RequestCategory.ITEquipment,
+      RequestCategory.Travel,
+      RequestCategory.Facilities,
+      RequestCategory.Other,
+    ],
+    { message: "Category is required" },
+  ),
+  contactPerson: z.string().max(100).optional(),
+  contactPhone: z.string().max(20).optional(),
+  comment: z.string().max(500).optional(),
+  deadline: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      return new Date(val) >= new Date(minDeadlineDate());
+    }, "Deadline must be at least 24 hours from now."),
   estimatedCost: z
     .string()
     .optional()
@@ -33,43 +102,182 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+// ── Prefill helper — maps RequestDetailsDto → FormValues ──────────────────────
+
+function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
+  if (!prefill) return { priority: 1 };
+
+  const priorityMap: Record<string, number> = {
+    Low: 0,
+    Normal: 1,
+    High: 2,
+    Urgent: 3,
+  };
+
+  return {
+    title: prefill.title,
+    description: prefill.description,
+    priority: priorityMap[prefill.priority] ?? 1,
+    category: prefill.category,
+    contactPerson: prefill.contactPerson ?? "",
+    contactPhone: prefill.contactPhone ?? "",
+    comment: prefill.comment ?? "",
+    estimatedCost:
+      prefill.estimatedCost != null ? String(prefill.estimatedCost) : "",
+    deliveryAddress: {
+      street: prefill.deliveryAddress.street,
+      city: prefill.deliveryAddress.city,
+      postalCode: prefill.deliveryAddress.postalCode,
+      country: prefill.deliveryAddress.country,
+      note: prefill.deliveryAddress.note ?? "",
+    },
+    // deadline intentionally omitted — old deadline is likely stale
+  };
+}
+
+// ── Shared input className ────────────────────────────────────────────────────
+
+const inputCls =
+  "w-full px-4 py-2 border border-border rounded-lg text-sm " +  "bg-background dark:bg-card text-foreground " +  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "placeholder:text-muted-foreground";
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function CreateRequestPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /** Router-state prefill: set by the Resubmit button in MyRequestsPage */
+  const resubmitSource = location.state?.resubmitFrom as
+    | RequestDetailsDto
+    | undefined;
+  const isResubmit = Boolean(resubmitSource);
+
   const { mutate, isPending, isError, error } = useCreateRequest();
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+
+  const { mutateAsync: uploadFiles, isPending: isUploadingFiles } =
+    useUploadAttachments();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      priority: 1, // "Normal"
-    },
+    defaultValues: buildDefaultValues(resubmitSource),
   });
+
+  // ── File handling ──────────────────────────────────────────────────────────
+
+  const validateFile = (file: File): string | null => {
+    if (!ALLOWED_TYPES.includes(file.type))
+      return "Only images (JPEG, PNG, GIF, WEBP) and PDF files are allowed.";
+    if (file.size > MAX_SIZE_BYTES)
+      return `Exceeds 10 MB limit (${formatBytes(file.size)}).`;
+    return null;
+  };
+
+  const addFiles = (incoming: FileList | File[]) => {
+    const arr = Array.from(incoming);
+    const newFiles = arr.slice(0, MAX_FILES - selectedFiles.length);
+    const newErrors: Record<string, string> = {};
+
+    const valid = newFiles.filter((f) => {
+      const err = validateFile(f);
+      if (err) newErrors[f.name] = err;
+      return !err;
+    });
+
+    setSelectedFiles((prev) => [...prev, ...valid]);
+    if (Object.keys(newErrors).length > 0)
+      setFileErrors((prev) => ({ ...prev, ...newErrors }));
+  };
+
+  const removeFile = (name: string) => {
+    setSelectedFiles((prev) => prev.filter((f) => f.name !== name));
+    setFileErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
   const onSubmit = (values: FormValues) => {
     mutate(
       {
-        ...values,
+        title: values.title,
+        description: values.description,
+        priority: values.priority,
+        category: values.category,
+        contactPerson: values.contactPerson || undefined,
+        contactPhone: values.contactPhone || undefined,
+        comment: values.comment || undefined,
         deadline: values.deadline || undefined,
         estimatedCost: values.estimatedCost
           ? parseFloat(values.estimatedCost)
           : undefined,
+        deliveryAddress: values.deliveryAddress,
       },
       {
-        onSuccess: () => navigate("/requests"),
+        onSuccess: async (response) => {
+          const requestId = response.data;
+          if (!requestId) {
+            navigate("/requests/mine");
+            return;
+          }
+
+          if (selectedFiles.length > 0) {
+            try {
+              await uploadFiles({ requestId, files: selectedFiles });
+              toast.success(
+                `Request submitted with ${selectedFiles.length} attachment${selectedFiles.length > 1 ? "s" : ""}.`,
+              );
+            } catch {
+              toast.warning(
+                "Request created but some attachments failed to upload. " +
+                  "You can add them from the request details page.",
+              );
+            }
+          } else {
+            toast.success("Request submitted successfully.");
+          }
+
+          navigate("/requests/mine");
+        },
       },
     );
   };
 
+  const isSubmitting = isPending || isUploadingFiles;
+  const canAddMore = selectedFiles.length < MAX_FILES;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl text-[#2E2E38] mb-1">Create New Request</h1>
-        <p className="text-gray-600">Submit a new errand request for processing</p>
-      </div>
+    <div>
+      <PageHeader
+        title={isResubmit ? "Resubmit Request" : "Create New Request"}
+        subtitle={
+          isResubmit
+            ? `Pre-filled from "${resubmitSource!.title}" — review and resubmit.`
+            : "Submit a new errand request for processing."
+        }
+        actions={
+          isResubmit ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+              <RotateCcw className="h-3 w-3" />
+              Resubmitting cancelled request
+            </span>
+          ) : undefined
+        }
+      />
 
       {isError && (
         <ErrorMessage
@@ -77,242 +285,381 @@ export function CreateRequestPage() {
         />
       )}
 
-      {/* Form Card */}
-      <div className="bg-white rounded-lg border border-border p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-[#2E2E38] mb-2">
-              Request Title *
-            </label>
-            <input
-              id="title"
-              type="text"
-              {...register("title")}
-              placeholder="Enter a descriptive title"
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-            />
-            {errors.title && (
-              <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-[#2E2E38] mb-2">
-              Description *
-            </label>
-            <textarea
-              id="description"
-              {...register("description")}
-              placeholder="Provide detailed information about your request"
-              rows={5}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38] resize-none"
-            />
-            {errors.description && (
-              <p className="mt-1 text-xs text-red-500">{errors.description.message}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Be as detailed as possible to help us process your request efficiently
-            </p>
-          </div>
-
-          {/* Two‑column row: Requester ID (temporary) and Deadline */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Requester ID (temporary) */}
-            <div>
-              <label htmlFor="requesterId" className="block text-sm font-medium text-[#2E2E38] mb-2">
-                Requester ID *
-                <span className="ml-1 text-xs text-gray-400">
-                  (temporary — replaced by auth in Phase 5)
-                </span>
-              </label>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {/* ── General Info ─────────────────────────────────────────────────── */}
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
+          <FormSection
+            title="General Info"
+            description="Describe your request in detail so it can be processed accurately."
+          >
+            <FieldGroup
+              label="Request Title"
+              htmlFor="title"
+              error={errors.title?.message}
+            >
               <input
-                id="requesterId"
-                {...register("requesterId")}
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+                id="title"
+                type="text"
+                {...register("title")}
+                placeholder="e.g. Deliver office supplies to floor 3"
+                className={inputCls}
               />
-              {errors.requesterId && (
-                <p className="mt-1 text-xs text-red-500">{errors.requesterId.message}</p>
-              )}
-            </div>
+            </FieldGroup>
 
-            {/* Due Date (previously deadline) */}
-            <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-[#2E2E38] mb-2">
-                Due Date *
-              </label>
-              <input
-                id="deadline"
-                type="date"
-                {...register("deadline")}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
+            <FieldGroup
+              label="Description"
+              htmlFor="description"
+              error={errors.description?.message}
+            >
+              <textarea
+                id="description"
+                {...register("description")}
+                placeholder="Provide detailed information about what needs to be done..."
+                rows={4}
+                className={inputCls + " resize-none"}
               />
-              {errors.deadline && (
-                <p className="mt-1 text-xs text-red-500">{errors.deadline.message}</p>
-              )}
-            </div>
+            </FieldGroup>
+
+            <FieldGroup
+              label="Additional Comments"
+              htmlFor="comment"
+              optional
+              error={errors.comment?.message}
+            >
+              <textarea
+                id="comment"
+                {...register("comment")}
+                rows={2}
+                placeholder="Access codes, schedule constraints, special handling instructions..."
+                className={inputCls + " resize-none"}
+              />
+            </FieldGroup>
+          </FormSection>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6 space-y-5">
+          {/* ── Classification ───────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
+            <FormSection
+              title="Classification"
+              description="Helps route your request to the right team."
+            >
+              <FieldGroup label="Category" error={errors.category?.message}>
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full !rounded-lg">
+                        <SelectValue placeholder="Select a category…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FieldGroup>
+
+              <FieldGroup
+                label="Due Date"
+                htmlFor="deadline"
+                optional
+                error={errors.deadline?.message}
+              >
+                <Controller
+                  name="deadline"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      minDate={minDeadlineDate()}
+                      placeholder="Pick a date"
+                    />
+                  )}
+                />
+              </FieldGroup>
+
+              <FieldGroup
+                label="Priority Level"
+                error={errors.priority?.message}
+              >
+                <Controller
+                  name="priority"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(value) =>
+                        field.onChange(parseInt(value, 10))
+                      }
+                    >
+                      <SelectTrigger className="w-full !rounded-lg">
+                        <SelectValue placeholder="Select priority…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_LEVELS.map((label, idx) => (
+                          <SelectItem key={label} value={String(idx)}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FieldGroup>
+
+              <FieldGroup
+                label="Estimated Cost"
+                htmlFor="estimatedCost"
+                optional
+                error={errors.estimatedCost?.message}
+              >
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+                    $
+                  </span>
+                  <input
+                    id="estimatedCost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register("estimatedCost")}
+                    placeholder="0.00"
+                    className={`${inputCls} pl-7`}
+                  />
+                </div>
+              </FieldGroup>
+            </FormSection>
           </div>
 
-          {/* Priority (radio buttons) */}
-          <div>
-            <label className="block text-sm font-medium text-[#2E2E38] mb-3">
-              Priority Level *
-            </label>
-            <div className="flex gap-4">
-              {priorityLevels.map((priority, index) => (
-                <label
-                  key={priority}
-                  className="flex items-center gap-2 cursor-pointer"
+          {/* ── Contact & Address ────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white dark:bg-card rounded-xl border border-border p-6 mb-5">
+            <FormSection
+              title="Contact & Address"
+              description="Who to meet on-site and where to deliver."
+            >
+              {/* Contact row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <FieldGroup
+                  label="Contact Person"
+                  htmlFor="contactPerson"
+                  optional
+                  error={errors.contactPerson?.message}
                 >
                   <input
-                    type="radio"
-                    value={index}
-                    {...register("priority")}
-                    defaultChecked={index === 1} // "Normal"
-                    className="w-4 h-4 text-[#2E2E38] focus:ring-[#2E2E38]"
+                    id="contactPerson"
+                    type="text"
+                    {...register("contactPerson")}
+                    placeholder="Name of person to meet on-site"
+                    className={inputCls}
                   />
-                  <span className="text-sm text-gray-700">{priority}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+                </FieldGroup>
 
-          {/* Estimated Cost */}
-          <div>
-            <label htmlFor="estimatedCost" className="block text-sm font-medium text-[#2E2E38] mb-2">
-              Estimated Cost
-              <span className="ml-1 text-xs text-gray-400">(optional)</span>
-            </label>
-            <input
-              id="estimatedCost"
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("estimatedCost")}
-              placeholder="0.00"
-              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-            />
-            {errors.estimatedCost && (
-              <p className="mt-1 text-xs text-red-500">{errors.estimatedCost.message}</p>
-            )}
-          </div>
-
-          {/* Delivery Address */}
-          <fieldset className="space-y-4 border-t border-border pt-4">
-            <legend className="text-sm font-medium text-[#2E2E38] px-2 bg-white">
-              Delivery Address
-            </legend>
-
-            <div>
-              <input
-                {...register("deliveryAddress.street")}
-                placeholder="Street *"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deliveryAddress?.street && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deliveryAddress.street.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <input
-                  {...register("deliveryAddress.city")}
-                  placeholder="City *"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.deliveryAddress?.city && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.deliveryAddress.city.message}
-                  </p>
-                )}
+                <FieldGroup
+                  label="Contact Phone"
+                  htmlFor="contactPhone"
+                  optional
+                  error={errors.contactPhone?.message}
+                >
+                  <input
+                    id="contactPhone"
+                    type="tel"
+                    {...register("contactPhone")}
+                    placeholder="+216 XX XXX XXX"
+                    className={inputCls}
+                  />
+                </FieldGroup>
               </div>
-              <div>
-                <input
-                  {...register("deliveryAddress.postalCode")}
-                  placeholder="Postal Code *"
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-                />
-                {errors.deliveryAddress?.postalCode && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.deliveryAddress.postalCode.message}
-                  </p>
-                )}
+
+              {/* Address grid – 2 columns, fields: City, Postal Code, Country, Street */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FieldGroup
+                  label="City"
+                  htmlFor="city"
+                  error={errors.deliveryAddress?.city?.message}
+                >
+                  <input
+                    id="city"
+                    {...register("deliveryAddress.city")}
+                    placeholder="City"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Postal Code"
+                  htmlFor="postalCode"
+                  error={errors.deliveryAddress?.postalCode?.message}
+                >
+                  <input
+                    id="postalCode"
+                    {...register("deliveryAddress.postalCode")}
+                    placeholder="Postal code"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Country"
+                  htmlFor="country"
+                  error={errors.deliveryAddress?.country?.message}
+                >
+                  <input
+                    id="country"
+                    {...register("deliveryAddress.country")}
+                    placeholder="Country"
+                    className={inputCls}
+                  />
+                </FieldGroup>
+
+                <FieldGroup
+                  label="Street"
+                  htmlFor="street"
+                  error={errors.deliveryAddress?.street?.message}
+                >
+                  <input
+                    id="street"
+                    {...register("deliveryAddress.street")}
+                    placeholder="123 Main Street"
+                    className={inputCls}
+                  />
+                </FieldGroup>
               </div>
-            </div>
 
-            <div>
-              <input
-                {...register("deliveryAddress.country")}
-                placeholder="Country *"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-              {errors.deliveryAddress?.country && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.deliveryAddress.country.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <input
-                {...register("deliveryAddress.note")}
-                placeholder="Note (optional)"
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E2E38]"
-              />
-            </div>
-          </fieldset>
-
-          {/* File Upload (visual placeholder) */}
-          <div>
-            <label className="block text-sm font-medium text-[#2E2E38] mb-2">
-              Attachments
-              <span className="ml-1 text-xs text-gray-400">(coming soon)</span>
-            </label>
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-[#2E2E38] transition-colors cursor-not-allowed bg-gray-50/50">
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-600 mb-1">
-                <span className="text-[#2E2E38] font-medium">Click to upload</span> or drag and drop
+              <FieldGroup label="Address Note" htmlFor="addressNote" optional>
+                <input
+                  id="addressNote"
+                  {...register("deliveryAddress.note")}
+                  placeholder="Floor, building, landmark…"
+                  className={inputCls}
+                />
+              </FieldGroup>
+            </FormSection>
+          </div>
+        </div>
+        {/* ── Attachments ──────────────────────────────────────────────────── */}
+        <div className="bg-white dark:bg-card rounded-xl border border-border p-6 mb-4 space-y-5">
+          <FormSection
+            title="Attachments"
+            description="Images or PDF documents up to 10 MB each."
+          >
+            <div
+              onClick={() => canAddMore && inputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (canAddMore) addFiles(e.dataTransfer.files);
+              }}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
+                ${
+                  canAddMore
+                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
+                    : "cursor-not-allowed opacity-50"
+                } border-border`}
+            >
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-1">
+                <span className="font-medium text-foreground">
+                  Click to upload
+                </span>{" "}
+                or drag and drop
               </p>
-              <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX (max. 10MB)</p>
+              <p className="text-xs text-muted-foreground">
+                Images or PDF · Max 10 MB · Up to {MAX_FILES} files
+              </p>
+              {!canAddMore && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  Maximum {MAX_FILES} files reached
+                </p>
+              )}
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => navigate("/requests")}
-              className="px-6 py-2 border border-border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-6 py-2 bg-[#2E2E38] text-white rounded-lg hover:bg-[#1a1a24] transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              {isPending ? "Submitting..." : "Submit Request"}
-            </button>
-          </div>
-        </form>
-      </div>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={ALLOWED_TYPES.join(",")}
+              className="hidden"
+              onChange={(e) => e.target.files && addFiles(e.target.files)}
+            />
 
-      {/* Help Section */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Need Help?</h3>
-        <p className="text-sm text-blue-700">
-          For urgent requests, please contact the Facilities team at{" "}
-          <a href="mailto:facilities@ey.com" className="underline">
-            facilities@ey.com
-          </a>{" "}
-          or call ext. 2345
-        </p>
-      </div>
+            {Object.entries(fileErrors).map(([name, err]) => (
+              <p key={name} className="text-xs text-red-500">
+                {name}: {err}
+              </p>
+            ))}
+
+            {selectedFiles.length > 0 && (
+              <ul className="space-y-2">
+                {selectedFiles.map((file) => (
+                  <li
+                    key={file.name}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm"
+                  >
+                    <FileIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-foreground">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatBytes(file.size)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(file.name)}
+                      className="shrink-0 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </FormSection>
+        </div>
+
+        {/* ── Form Actions ─────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-end gap-3 py-4 border-t border-border">
+          <button
+            type="button"
+            onClick={() => navigate("/requests/mine")}
+            disabled={isSubmitting}
+            className="px-6 py-2 border border-border rounded-lg text-sm text-foreground
+                       hover:bg-muted dark:hover:bg-muted/40 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-[#2E2E38] text-white
+                       rounded-lg text-sm hover:bg-[#1a1a24] transition-colors
+                       disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {isUploadingFiles
+                  ? `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""}…`
+                  : "Submitting…"}
+              </>
+            ) : isResubmit ? (
+              <>
+                <RotateCcw className="h-4 w-4" />
+                Resubmit Request
+              </>
+            ) : (
+              "Submit Request"
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

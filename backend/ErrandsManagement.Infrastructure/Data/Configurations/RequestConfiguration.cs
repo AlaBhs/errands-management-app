@@ -31,6 +31,9 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
 
         builder.Property(r => r.Deadline);
 
+        builder.Property(r => r.Category)
+            .IsRequired();
+
         // Owned Value Object
         builder.OwnsOne(r => r.DeliveryAddress, address =>
         {
@@ -73,6 +76,17 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
         builder
             .Navigation(r => r.AuditLogs)
             .HasField("_auditLogs")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder
+            .HasMany(r => r.Attachments)
+            .WithOne()
+            .HasForeignKey(a => a.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Navigation(r => r.Attachments)
+            .HasField("_attachments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 

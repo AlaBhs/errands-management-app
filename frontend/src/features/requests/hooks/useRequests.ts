@@ -11,6 +11,22 @@ export function useRequests(params?: RequestQueryParams) {
   });
 }
 
+export function useMyRequests(params?: RequestQueryParams) {
+  return useQuery({
+    queryKey: requestKeys.mine(params),
+    queryFn: () => requestsApi.getMine(params),
+    select: (res) => res.data,
+  });
+}
+
+export function useMyAssignments(params?: RequestQueryParams) {
+  return useQuery({
+    queryKey: requestKeys.assignments(params),
+    queryFn: () => requestsApi.getMyAssignments(params),
+    select: (res) => res.data,
+  });
+}
+
 export function useRequest(id: string) {
   return useQuery({
     queryKey: requestKeys.detail(id),

@@ -1,25 +1,102 @@
-import { Routes, Route } from "react-router-dom";
-import { MainLayout } from "@/layouts/MainLayout";
-import { RequestsListPage } from "@/features/requests/pages/RequestsListPage";
-import { RequestDetailsPage } from "@/features/requests/pages/RequestDetailsPage";
-import { CreateRequestPage } from "@/features/requests/pages/CreateRequestPage";
-import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
-import { CourierSchedulePage } from "@/features/courier/pages/CourierSchedulePage";
-import { AdminPage } from "@/features/admin/pages/AdminPage";
-import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
+import { Routes, Route } from "react-router";
+import { MainLayout } from "@/app/layouts/MainLayout";
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { RoleGuard } from "@/features/auth/components/RoleGuard";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { UserRole } from "@/features/auth";
+import { PageSpinner } from "@/shared/components/PageSpinner";
+import { lazy, Suspense } from "react";
+
+// Heavy pages — loaded only when visited
+const DashboardPage = lazy(() =>
+  import("@/features/dashboard/pages/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const RequestsListPage = lazy(() =>
+  import("@/features/requests/pages/RequestsListPage").then((m) => ({
+    default: m.RequestsListPage,
+  })),
+);
+const RequestDetailsPage = lazy(() =>
+  import("@/features/requests/pages/RequestDetailsPage").then((m) => ({
+    default: m.RequestDetailsPage,
+  })),
+);
+const CreateRequestPage = lazy(() =>
+  import("@/features/requests/pages/CreateRequestPage").then((m) => ({
+    default: m.CreateRequestPage,
+  })),
+);
+const MyRequestsPage = lazy(() =>
+  import("@/features/requests/pages/MyRequestsPage").then((m) => ({
+    default: m.MyRequestsPage,
+  })),
+);
+const MySchedulePage = lazy(() =>
+  import("@/features/requests/pages/MySchedulePage").then((m) => ({
+    default: m.MySchedulePage,
+  })),
+);
+const AdminPage = lazy(() =>
+  import("@/features/admin/pages/AdminPage").then((m) => ({
+    default: m.AdminPage,
+  })),
+);
+const AnalyticsPage = lazy(() =>
+  import("@/features/analytics/pages/AnalyticsPage").then((m) => ({
+    default: m.AnalyticsPage,
+  })),
+);
+const UserManagementPage = lazy(() =>
+  import("@/features/users/pages/UserManagementPage").then((m) => ({
+    default: m.UserManagementPage,
+  })),
+);
+const PublicOrDashboard = lazy(() =>
+  import("@/app/router/PublicOrDashboard").then((m) => ({
+    default: m.PublicOrDashboard,
+  })),
+);
+const NotFoundPage = lazy(() =>
+  import("../pages/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  })),
+);
 
 export function AppRouter() {
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="/requests" element={<RequestsListPage />} />
-        <Route path="/requests/new" element={<CreateRequestPage />} />
-        <Route path="/requests/:id" element={<RequestDetailsPage />} />
-        <Route path="/courier/schedule" element={<CourierSchedulePage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/admin" element={<AdminPage />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<PageSpinner />}>
+      <Routes>
+        {/* Public */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route index element={<PublicOrDashboard />} />
+        {/* Protected */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/requests/:id" element={<RequestDetailsPage />} />
+
+            <Route element={<RoleGuard allowed={[UserRole.Admin]} />}>
+              <Route path="/requests" element={<RequestsListPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/users" element={<UserManagementPage />} />
+            </Route>
+
+            <Route element={<RoleGuard allowed={[UserRole.Collaborator]} />}>
+              <Route path="/requests/mine" element={<MyRequestsPage />} />
+              <Route path="/requests/new" element={<CreateRequestPage />} />
+            </Route>
+
+            <Route element={<RoleGuard allowed={[UserRole.Courier]} />}>
+              <Route path="/assignments" element={<MySchedulePage />} />
+            </Route>
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 }

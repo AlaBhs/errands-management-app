@@ -1,4 +1,4 @@
-﻿using ErrandsManagement.Application.DTOs;
+﻿using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Commands.CreateRequest;
 using ErrandsManagement.Domain.Enums;
 using FluentAssertions;
@@ -15,11 +15,15 @@ public class CreateRequestValidatorTests
         return new CreateRequestCommand(
             "Buy groceries",
             "Milk, bread and eggs",
-            Guid.NewGuid(),
             new AddressDto("Street", "City", "12345", "Country"),
             PriorityLevel.Normal,
-            DateTime.UtcNow.AddDays(1),
-            50);
+            RequestCategory.Other,
+            "John Doe",
+            "555-1234",
+            "Please buy fresh products",
+            DateTime.UtcNow.AddDays(2),
+            50,
+            Guid.NewGuid());
     }
 
     [Fact]
@@ -74,5 +78,42 @@ public class CreateRequestValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "RequesterId");
+    }
+
+    [Fact]
+    public void Should_Fail_When_Deadline_Is_Less_Than_24Hours_From_Now()
+    {
+        var command = CreateValidCommand() with
+        {
+            Deadline = DateTime.UtcNow.AddHours(12)
+        };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Deadline");
+    }
+
+    [Fact]
+    public void Should_Pass_When_Deadline_Is_More_Than_24Hours_From_Now()
+    {
+        var command = CreateValidCommand() with
+        {
+            Deadline = DateTime.UtcNow.AddDays(3)
+        };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Should_Pass_When_Deadline_Is_Null()
+    {
+        var command = CreateValidCommand() with { Deadline = null };
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeTrue();
     }
 }

@@ -1,5 +1,5 @@
 ﻿using ErrandsManagement.Application.Common.Pagination;
-using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Requests.DTOs;
 using MediatR;
 
 namespace ErrandsManagement.Application.Requests.Queries.GetAllRequests;

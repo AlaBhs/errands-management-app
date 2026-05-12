@@ -11,7 +11,7 @@ public class CancelRequestValidatorTests
     [Fact]
     public void Should_Pass_When_Reason_Is_Valid()
     {
-        var command = new CancelRequestCommand(Guid.NewGuid(), "Customer cancelled");
+        var command = new CancelRequestCommand(Guid.NewGuid(), "Customer cancelled", "Admin");
 
         var result = _validator.Validate(command);
 
@@ -21,7 +21,7 @@ public class CancelRequestValidatorTests
     [Fact]
     public void Should_Fail_When_RequestId_Is_Empty()
     {
-        var command = new CancelRequestCommand(Guid.Empty, "Reason");
+        var command = new CancelRequestCommand(Guid.Empty, "Reason", "Admin");
 
         var result = _validator.Validate(command);
 
@@ -34,7 +34,7 @@ public class CancelRequestValidatorTests
     {
         var longReason = new string('a', 600);
 
-        var command = new CancelRequestCommand(Guid.NewGuid(), longReason);
+        var command = new CancelRequestCommand(Guid.NewGuid(), longReason, "Admin");
 
         var result = _validator.Validate(command);
 

@@ -1,8 +1,5 @@
 import { apiClient } from "@/shared/api/client";
-import type {
-  ApiResponse,
-  PaginatedResponse,
-} from "@/shared/api/types";
+import type { ApiResponse, PaginatedResponse } from "@/shared/api/types";
 import type {
   RequestListItemDto,
   RequestDetailsDto,
@@ -14,11 +11,22 @@ import type {
   RequestQueryParams,
 } from "@/features/requests/types";
 
-
 export const requestsApi = {
   getAll: (params?: RequestQueryParams) =>
     apiClient
       .get<PaginatedResponse<RequestListItemDto>>("/requests", { params })
+      .then((res) => res.data),
+
+  getMine: (params?: RequestQueryParams) =>
+    apiClient
+      .get<PaginatedResponse<RequestListItemDto>>("/requests/mine", { params })
+      .then((res) => res.data),
+
+  getMyAssignments: (params?: RequestQueryParams) =>
+    apiClient
+      .get<
+        PaginatedResponse<RequestListItemDto>
+      >("/requests/assignments", { params })
       .then((res) => res.data),
 
   getById: (id: string) =>
@@ -45,10 +53,27 @@ export const requestsApi = {
       .post<ApiResponse<null>>(`/requests/${id}/cancel`, payload)
       .then((res) => res.data),
 
-  complete: (id: string, payload: CompleteRequestPayload) =>
-    apiClient
-      .post<ApiResponse<null>>(`/requests/${id}/complete`, payload)
-      .then((res) => res.data),
+  complete: async (
+    id: string,
+    payload: CompleteRequestPayload,
+  ): Promise<ApiResponse<null>> => {
+    const form = new FormData();
+
+    if (payload.actualCost !== undefined && payload.actualCost !== null)
+      form.append("actualCost", payload.actualCost.toString());
+
+    if (payload.note) form.append("note", payload.note);
+
+    if (payload.dischargePhoto)
+      form.append("dischargePhoto", payload.dischargePhoto);
+
+    const { data } = await apiClient.post<ApiResponse<null>>(
+      `/requests/${id}/complete`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data;
+  },
 
   submitSurvey: (id: string, payload: SubmitSurveyPayload) =>
     apiClient

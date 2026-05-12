@@ -1,4 +1,4 @@
-import type { PriorityLevel, RequestStatus } from "./request.enums";
+import type { AttachmentType, PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
 
 
 // --- Nested DTOs ---
@@ -13,6 +13,7 @@ export interface AddressDto {
 
 export interface AssignmentDto {
   courierId: string;
+  courierName: string;
   assignedAt: string;
   startedAt?: string;
   completedAt?: string;
@@ -39,8 +40,10 @@ export interface RequestListItemDto {
   description: string;
   status: RequestStatus;
   priority: PriorityLevel;
+  category: RequestCategory;
   estimatedCost?: number;
   deadline?: string;
+  hasSurvey?: boolean;
 }
 
 export interface RequestDetailsDto {
@@ -49,11 +52,27 @@ export interface RequestDetailsDto {
   description: string;
   status: RequestStatus;
   priority: PriorityLevel;
+  category: RequestCategory;
+  contactPerson?: string;
+  contactPhone?: string;
+  comment?: string;
   deadline?: string;
   estimatedCost?: number;
   requesterId: string;
+  createdAt: string;
+  requesterName: string;
   deliveryAddress: AddressDto;
   currentAssignment?: AssignmentDto;
   auditLogs: AuditLogDto[];
+  attachments: AttachmentDto[];
   survey?: SurveyDto;
+}
+
+export interface AttachmentDto {
+  id:          string;
+  fileName:    string;
+  contentType: string;
+  uri:         string;
+  type:        AttachmentType;
+  uploadedAt:  string;
 }

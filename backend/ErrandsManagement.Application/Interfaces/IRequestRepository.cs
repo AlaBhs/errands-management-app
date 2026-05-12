@@ -1,5 +1,5 @@
 ﻿using ErrandsManagement.Application.Common.Pagination;
-using ErrandsManagement.Application.DTOs;
+using ErrandsManagement.Application.Requests.DTOs;
 using ErrandsManagement.Application.Requests.Queries.GetAllRequests;
 using ErrandsManagement.Domain.Entities;
 using ErrandsManagement.Domain.Enums;
@@ -14,10 +14,12 @@ public interface IRequestRepository
     Task<PagedResult<RequestListItemDto>> GetPagedAsync(
         RequestQueryParameters parameters,
         CancellationToken cancellationToken);
-
-    // ============================ Temporary debug methods ============================
-    //Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken);
-    //string GetEntityState(object entity);
-    //void MarkAsAdded<T>(T entity) where T : class;
-    // ============================ Temporary debug methods ============================
+    Task<PagedResult<RequestListItemDto>> GetMyRequestsAsync(
+        Guid requesterId,
+        RequestQueryParameters parameters,
+        CancellationToken cancellationToken);
+    Task<PagedResult<RequestListItemDto>> GetMyAssignmentsAsync(
+    Guid courierId,
+    RequestQueryParameters parameters,
+    CancellationToken cancellationToken);
 }

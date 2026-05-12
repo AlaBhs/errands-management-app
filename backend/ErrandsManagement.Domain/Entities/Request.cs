@@ -17,9 +17,15 @@ public class Request : BaseEntity
     public decimal? EstimatedCost { get; private set; }
 
     public PriorityLevel Priority { get; private set; }
+    public RequestCategory Category { get; private set; }
     public RequestStatus Status { get; private set; }
 
     public Guid RequesterId { get; private set; }
+
+    public string? ContactPerson { get; private set; }
+    public string? ContactPhone { get; private set; }
+
+    public string? Comment { get; private set; }
 
     public Address DeliveryAddress { get; private set; }
 
@@ -39,6 +45,10 @@ public class Request : BaseEntity
         Guid requesterId,
         Address deliveryAddress,
         PriorityLevel priority,
+        RequestCategory category,
+        string? contactPerson = null,
+        string? contactPhone = null,
+        string? comment = null,
         DateTime? deadline = null,
         decimal? estimatedCost = null)
     {
@@ -47,6 +57,10 @@ public class Request : BaseEntity
         RequesterId = requesterId;
         DeliveryAddress = deliveryAddress;
         Priority = priority;
+        Category = category;
+        ContactPerson = contactPerson;
+        ContactPhone = contactPhone;
+        Comment = comment;
         Deadline = deadline;
         EstimatedCost = estimatedCost;
 
@@ -140,6 +154,51 @@ public class Request : BaseEntity
             throw new InvalidRequestStateException("No active assignment found.");
 
         return assignment;
+    }
+
+    public void AddAttachment(
+        string fileName,
+        string contentType,
+        string uri,
+        AttachmentType type = AttachmentType.Document)
+    {
+
+        if (Status == RequestStatus.Completed || Status == RequestStatus.Cancelled)
+            throw new InvalidRequestStateException(
+                "Attachments cannot be added to completed or cancelled requests.");
+
+        if (_attachments.Count >= 5)
+            throw new InvalidRequestStateException(
+                "A request cannot have more than 5 attachments.");
+
+        _attachments.Add(new Attachment(Id, fileName, contentType, uri, type));
+    }
+
+    public void AddDischargePhoto(string fileName, string contentType, string uri)
+    {
+        if (Status != RequestStatus.Completed)
+            throw new InvalidRequestStateException(
+                "Discharge photo can only be added to completed requests.");
+
+        var existing = _attachments
+            .Any(a => a.Type == AttachmentType.DischargePhoto);
+
+        if (existing)
+            throw new InvalidRequestStateException(
+                "A discharge photo has already been submitted for this request.");
+
+        _attachments.Add(new Attachment(
+            Id, fileName, contentType, uri,
+            AttachmentType.DischargePhoto));
+    }
+
+    public void RemoveAttachment(Guid attachmentId)
+    {
+        var attachment = _attachments.FirstOrDefault(a => a.Id == attachmentId)
+            ?? throw new InvalidRequestStateException(
+                "Attachment not found on this request.");
+
+        _attachments.Remove(attachment);
     }
 
 }
