@@ -1,59 +1,49 @@
 #  Errands Management App
 
-This branch adds full request lifecycle management: assign, start, cancel, complete, and submit survey.
+This branch connects the frontend to the backend, providing a complete user interface for managing requests. It builds on all previous backend features and adds the following frontend functionality.
 
 ## Key Features
 
-- **Domain Enhancements**  
-  - Strengthened `Assignment` lifecycle  
-  - Simplified `RequestStatus` (removed Failed state)
+- **Backend**
+  - Added CORS policy with configurable allowed origins (to allow frontend access).
+  - (All previous backend features remain intact.)
 
-- **Application Layer**  
-  - Commands and handlers for:  
-    - Assign request  
-    - Start request  
-    - Cancel request  
-    - Complete request  
-    - Submit survey  
-  - `GetAllRequests` query  
-  - Projection‑based `GetRequestById` with enriched read model  
-  - FluentValidation integration and structured error responses  
-  - Custom exception handling
+- **Frontend**
+  - **Layout**: Main layout with sidebar (navigation), topbar, and placeholder pages for Dashboard, Courier, Analytics, Admin.
+  - **Requests Pages**:
+    - List page with sorting, filtering (by status), and pagination.
+    - Details page showing request information and related data.
+    - Create page matching backend `CreateRequestCommand`.
+  - **Request Actions**: Buttons to assign, start, cancel, complete, and submit survey (with conditional rendering based on status).
+  - **API Integration**:
+    - React Query hooks for fetching and mutating requests.
+    - Axios client with error handling and type guards (`isApiError`).
+    - Vite proxy configured for local API development (`/api` → `http://localhost:5000`).
+  - **Type Safety**: All frontend types aligned with backend API contracts.
+  - **Database Seeding** – On first run, the database is automatically seeded with sample users and requests in various statuses (Pending, Assigned, InProgress, Completed, Cancelled, Surveyed). This allows immediate testing of all features.
 
-- **Infrastructure Layer**  
-  - Fixed EF Core tracking issues  
-  - Enabled SQL logging for debugging
-
-- **API Layer**  
-  - Endpoints for all lifecycle actions  
-  - Improved exception middleware
-
-## How to Test with Docker
+## How to Test with Docker (Full Stack)
 
 1. Ensure Docker Desktop is running.
-2. From the repository root, start the backend and database:
+2. From the repository root, start all services:
    ```bash
    docker-compose up --build
    ```
-3. The API will be available at `http://localhost:5000`. Use tools like Scalar to test the new endpoints (already integrated) at `http://localhost:5000/scalar`.
+3. Access the application:
+- **Frontend**: `http://localhost:3000`
 
-## Domain Enhancements 
-  - `POST /api/requests` – Create a new request 
+- **Backend API**: `http://localhost:5000` (or via proxy at /api)
 
-  - `GET /api/requests` – List all requests (pagination comes later)
-  
-  - `GET /api/requests/{id}` – Get detailed request info
+4. The frontend will communicate with the backend through the proxy, so no additional CORS issues.
 
-  - `POST /api/requests/{id}/assign` – Assign request
+## Notes
+- Pages like Dashboard, Courier, Analytics and Admin are all placeholders for now.
 
-  - `POST /api/requests/{id}/start` – Start request
+- The frontend is now integrated and ready for user testing. Please verify the main flows:
 
-  - `POST /api/requests/{id}/cancel` – Cancel request
+    - Create a request
 
-  - `POST /api/requests/{id}/complete` – Complete request
+    - View list and details
 
-  - `POST /api/requests/{id}/survey` – Submit survey
-
-## Notes 
-  - The frontend is not yet connected – testing is via API tools (scalar).
-  - This branch includes all features from feature/request-creation (including Docker).
+    - Perform lifecycle actions (assign, start, etc.)
+- Added DB Initializer for Seeding dummy data for testing.
