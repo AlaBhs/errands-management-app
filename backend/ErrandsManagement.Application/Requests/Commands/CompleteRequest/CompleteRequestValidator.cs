@@ -24,10 +24,6 @@ public sealed class CompleteRequestValidator
             .NotEmpty()
             .WithMessage("Request ID is required.");
 
-        RuleFor(x => x.ActualCost)
-            .GreaterThanOrEqualTo(0)
-            .When(x => x.ActualCost.HasValue)
-            .WithMessage("Actual cost must be a positive number.");
 
         // Only validate photo fields when a photo is provided
         When(x => x.DischargePhotoStream is not null, () =>

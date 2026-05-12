@@ -50,8 +50,11 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
                 currentAssignment.StartedAt,
                 currentAssignment.CompletedAt,
                 currentAssignment.ActualCost,
-                currentAssignment.Note);
+                currentAssignment.Note,
+                currentAssignment.AdvancedAmount,
+                currentAssignment.ReconciledAt.HasValue);
         }
+        var expenseSummary = await _repository.GetExpenseSummaryAsync(request.Id, cancellationToken);
 
         return new RequestDetailsDto(
             request.Id,
@@ -94,6 +97,7 @@ public sealed class GetRequestByIdHandler : IRequestHandler<GetRequestByIdQuery,
                 .ToList(),
             request.Survey is null
                 ? null
-                : new SurveyDto(request.Survey.Rating, request.Survey.Comment));
+                : new SurveyDto(request.Survey.Rating, request.Survey.Comment),
+            expenseSummary);
     }
-}
+}   

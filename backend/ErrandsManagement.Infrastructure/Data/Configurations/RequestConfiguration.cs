@@ -34,6 +34,20 @@ public sealed class RequestConfiguration : IEntityTypeConfiguration<Request>
         builder.Property(r => r.Category)
             .IsRequired();
 
+        builder.Property(r => r.LastRiskAlertAt)
+            .IsRequired(false);
+
+        builder
+            .HasMany(r => r.ExpenseRecords)
+            .WithOne()
+            .HasForeignKey(e => e.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Navigation(r => r.ExpenseRecords)
+            .HasField("_expenseRecords")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         // Owned Value Object
         builder.OwnsOne(r => r.DeliveryAddress, address =>
         {

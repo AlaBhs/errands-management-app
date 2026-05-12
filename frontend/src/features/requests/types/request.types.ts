@@ -1,4 +1,4 @@
-import type { AttachmentType, PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
+import type { AttachmentType, ExpenseCategory, PriorityLevel, RequestCategory, RequestStatus } from "./request.enums";
 
 
 // --- Nested DTOs ---
@@ -21,6 +21,8 @@ export interface AssignmentDto {
   completedAt?: string;
   actualCost?: number;
   note?: string;
+  advancedAmount?: number; 
+  isReconciled: boolean;
 }
 
 export interface AuditLogDto {
@@ -34,6 +36,22 @@ export interface SurveyDto {
   comment?: string;
 }
 
+export interface ExpenseRecordDto {
+  id: string;
+  category: ExpenseCategory;
+  amount: number;
+  description?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ExpenseSummaryDto {
+  advancedAmount?: number;       
+  totalExpenses: number;
+  difference?: number;           
+  isReconciled: boolean;
+  reconciledAt?: string;
+}
 // --- Response DTOs ---
 
 export interface RequestListItemDto {
@@ -68,6 +86,7 @@ export interface RequestDetailsDto {
   auditLogs: AuditLogDto[];
   attachments: AttachmentDto[];
   survey?: SurveyDto;
+  expenseSummary?: ExpenseSummaryDto;
 }
 
 export interface AttachmentDto {

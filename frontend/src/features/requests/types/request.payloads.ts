@@ -1,6 +1,6 @@
 import type { PaginationParams } from "@/shared/api/types";
 import type { AddressDto } from "./request.types";
-import type { RequestCategory, RequestStatus } from "./request.enums";
+import type { ExpenseCategory, RequestCategory, RequestStatus } from "./request.enums";
 
 // --- Command Payloads ---
 
@@ -16,6 +16,16 @@ export interface CreateRequestPayload {
   deadline?: string;
   estimatedCost?: number;
 }
+
+export interface SetAdvancedAmountPayload {
+  amount: number;
+}
+
+export interface AddExpenseRecordPayload {
+  category: ExpenseCategory;
+  amount: number;
+  description?: string;
+}
 // --- Lifecycle Command Payloads ---
 
 export interface AssignRequestPayload {
@@ -27,7 +37,6 @@ export interface CancelRequestPayload {
 }
 
 export interface CompleteRequestPayload {
-  actualCost?: number;
   note?: string;
   dischargePhoto?: File;
 }

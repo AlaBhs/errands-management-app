@@ -8,5 +8,6 @@ public sealed record UserDto(
     bool IsActive,
     double? Latitude = null,
     double? Longitude = null,
-    string? City = null
+    string? City = null,
+    string? ProfilePhotoUrl = null
 );

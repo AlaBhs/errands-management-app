@@ -1,5 +1,6 @@
-import { apiClient } from '@/shared/api/client';
-import type { LoginPayload, RegisterPayload } from '../types';
+import { apiClient } from "@/shared/api/client";
+import type { LoginPayload, RegisterPayload } from "../types";
+import type { SetPasswordPayload } from "@/features/users/types";
 
 export interface AccessTokenResponse {
   accessToken: string;
@@ -11,14 +12,18 @@ export interface AccessTokenResponse {
 
 export const authApi = {
   login: (payload: LoginPayload): Promise<AccessTokenResponse> =>
-    apiClient.post<AccessTokenResponse>('/auth/login', payload).then((r) => r.data),
+    apiClient.post<AccessTokenResponse>("/auth/login", payload).then((r) => r.data),
 
   refresh: (): Promise<AccessTokenResponse> =>
-    apiClient.post<AccessTokenResponse>('/auth/refresh').then((r) => r.data),
+    apiClient.post<AccessTokenResponse>("/auth/refresh").then((r) => r.data),
 
   logout: (): Promise<void> =>
-    apiClient.post('/auth/logout').then(() => undefined),
+    apiClient.post("/auth/logout").then(() => undefined),
 
   register: (payload: RegisterPayload): Promise<void> =>
-    apiClient.post('/auth/register', payload).then(() => undefined),
+    apiClient.post("/auth/register", payload).then(() => undefined),
+
+  /** Public endpoint — activates account using the token from the activation email. */
+  setPassword: (payload: SetPasswordPayload): Promise<void> =>
+    apiClient.post("/auth/set-password", payload).then(() => undefined),
 };

@@ -21,5 +21,10 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 
         builder.Property(a => a.ActualCost)
                .HasPrecision(18, 2);
+
+        builder.Property(a => a.AdvancedAmount)
+       .HasPrecision(18, 2);
+
+        builder.Property(a => a.ReconciledAt);
     }
 }

@@ -12,6 +12,8 @@ public class Assignment : BaseEntity
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
     public decimal? ActualCost { get; private set; }
+    public decimal? AdvancedAmount { get; private set; }
+    public DateTime? ReconciledAt { get; private set; }
     public string? Note { get; private set; }
 
     private Assignment() { }
@@ -41,7 +43,7 @@ public class Assignment : BaseEntity
         StartedAt = DateTime.UtcNow;
     }
 
-    public void Complete(decimal? actualCost, string? note = null)
+    public void Complete(string? note = null)
     {
         if (!IsStarted)
             throw new InvalidRequestStateException("Assignment must be started before completion.");
@@ -50,7 +52,41 @@ public class Assignment : BaseEntity
             throw new InvalidRequestStateException("Assignment already completed.");
 
         CompletedAt = DateTime.UtcNow;
-        ActualCost = actualCost;
         Note = note;
+    }
+
+    internal void SetAdvancedAmount(decimal amount)
+    {
+        if (AdvancedAmount.HasValue)
+            throw new BusinessRuleException("AdvancedAmount has already been set.");
+
+        if (amount < 0)
+            throw new BusinessRuleException("AdvancedAmount must be zero or positive.");
+
+        AdvancedAmount = amount;
+        MarkAsUpdated();
+    }
+
+    internal void MarkReconciled()
+    {
+        if (!AdvancedAmount.HasValue)
+            throw new BusinessRuleException(
+                "Cannot reconcile without a set AdvancedAmount.");
+
+        if (ReconciledAt.HasValue)
+            throw new BusinessRuleException("Assignment has already been reconciled.");
+
+        ReconciledAt = DateTime.UtcNow;
+        MarkAsUpdated();
+    }
+
+    internal void LockActualCost(decimal totalExpenses)
+    {
+        if (ActualCost.HasValue)
+            throw new InvalidRequestStateException(
+                "ActualCost has already been locked.");
+
+        ActualCost = totalExpenses;
+        MarkAsUpdated();
     }
 }

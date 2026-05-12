@@ -86,7 +86,7 @@ export function AdminPage() {
             onClick={() => setActiveTab('users')}
             className={`pb-3 px-1 border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'users'
-                ? 'border-[#FFE600] text-foreground font-medium'
+                ? 'border-[var(--ey-yellow)] text-foreground font-medium'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -97,7 +97,7 @@ export function AdminPage() {
             onClick={() => setActiveTab('categories')}
             className={`pb-3 px-1 border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'categories'
-                ? 'border-[#FFE600] text-foreground font-medium'
+                ? 'border-[var(--ey-yellow)] text-foreground font-medium'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >

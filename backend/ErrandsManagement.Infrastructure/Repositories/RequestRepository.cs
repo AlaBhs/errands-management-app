@@ -262,4 +262,87 @@ public sealed class RequestRepository : IRequestRepository
             parameters.PageSize,
             totalCount);
     }
+
+    public async Task<List<AtRiskRequestDto>> GetAtRiskRequestsAsync(
+    DateTime now,
+    CancellationToken cancellationToken)
+    {
+        var atRiskStatuses = new[] { RequestStatus.Assigned, RequestStatus.InProgress };
+
+        return await _context.Requests
+            .AsNoTracking()
+            .Where(r =>
+                atRiskStatuses.Contains(r.Status)
+                && r.Deadline != null
+                && r.Deadline > now
+                && r.LastRiskAlertAt == null
+                && (
+                    EF.Functions.DateDiffSecond(now, r.Deadline.Value) <= 7200
+                    ||
+                    EF.Functions.DateDiffSecond(now, r.Deadline.Value) * 5
+                        <= EF.Functions.DateDiffSecond(r.CreatedAt, r.Deadline.Value)
+                )
+            )
+            .Select(r => new AtRiskRequestDto(
+                r.Id,
+                r.Title,
+                r.Deadline!.Value,
+                r.RequesterId,
+                r.Assignments
+                    .Where(a => a.CompletedAt == null)
+                    .Select(a => (Guid?)a.CourierId)
+                    .FirstOrDefault()
+            ))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ExpenseRecordDto>> GetExpenseRecordsAsync(
+    Guid requestId,
+    CancellationToken cancellationToken)
+    {
+        return await _context.Set<ExpenseRecord>()
+            .AsNoTracking()
+            .Where(e => e.RequestId == requestId)
+            .OrderBy(e => e.CreatedAt)
+            .Select(e => new ExpenseRecordDto(
+                e.Id,
+                e.Category.ToString(),
+                e.Amount,
+                e.Description,
+                e.CreatedBy,
+                e.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ExpenseSummaryDto> GetExpenseSummaryAsync(
+        Guid requestId,
+        CancellationToken cancellationToken)
+    {
+        // SUM at DB level — no collection loaded into memory
+        var totalExpenses = await _context.Set<ExpenseRecord>()
+            .AsNoTracking()
+            .Where(e => e.RequestId == requestId)
+            .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
+
+        var assignment = await _context.Set<Assignment>()
+            .AsNoTracking()
+            .Where(a => a.RequestId == requestId)
+            .OrderByDescending(a => a.AssignedAt)
+            .Select(a => new { a.AdvancedAmount, a.ReconciledAt })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var advanced = assignment?.AdvancedAmount;
+        var reconciledAt = assignment?.ReconciledAt;
+
+        decimal? difference = advanced.HasValue
+            ? totalExpenses - advanced.Value
+            : null;
+
+        return new ExpenseSummaryDto(
+            advanced,
+            totalExpenses,
+            difference,
+            reconciledAt.HasValue,
+            reconciledAt);
+    }
 }

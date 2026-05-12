@@ -37,7 +37,7 @@ export const CostBreakdownTable = ({ data }: CostBreakdownTableProps) => {
               Estimated
             </th>
             <th className="pb-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Actual
+              Expenses
             </th>
             <th className="pb-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Variance

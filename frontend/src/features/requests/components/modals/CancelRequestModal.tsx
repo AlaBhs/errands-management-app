@@ -75,7 +75,7 @@ export function CancelRequestModal({
               rows={3}
               className="w-full rounded-lg border border-border bg-background
                          px-4 py-2.5 text-sm text-foreground resize-none
-                         focus:border-[#2E2E38] focus:bg-background
+                         focus:border-[var(--ey-dark)] focus:bg-background
                          focus:outline-none transition-colors"
             />
             {reasonRequired && !reason.trim() && (

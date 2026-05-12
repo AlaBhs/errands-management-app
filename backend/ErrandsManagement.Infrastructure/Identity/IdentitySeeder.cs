@@ -6,7 +6,7 @@ namespace ErrandsManagement.Infrastructure.Identity;
 
 public static class IdentitySeeder
 {
-    private static readonly string[] Roles = ["Admin", "Collaborator", "Courier"];
+    private static readonly string[] Roles = ["Admin", "Collaborator", "Courier", "Reception"];
 
     public static async Task SeedAsync(IServiceProvider services)
     {
@@ -17,13 +17,13 @@ public static class IdentitySeeder
 
         await SeedRolesAsync(roleManager, logger);
         await SeedDefaultAdminAsync(userManager, logger);
+        await SeedDefaultReceptionUsersAsync(userManager, logger);
     }
 
     // ── Private helpers ────────────────────────────────────────────────────
 
     private static async Task SeedRolesAsync(
-        RoleManager<IdentityRole<Guid>> roleManager,
-        ILogger logger)
+        RoleManager<IdentityRole<Guid>> roleManager, ILogger logger)
     {
         foreach (var role in Roles)
         {
@@ -40,8 +40,7 @@ public static class IdentitySeeder
     }
 
     private static async Task SeedDefaultAdminAsync(
-        UserManager<ApplicationUser> userManager,
-        ILogger logger)
+        UserManager<ApplicationUser> userManager, ILogger logger)
     {
         const string adminEmail = "admin@errands.local";
         const string adminPassword = "Admin123!";
@@ -49,7 +48,6 @@ public static class IdentitySeeder
         var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
         if (existingAdmin is not null)
         {
-            // Ensure the seeded admin is always active after migrations
             if (!existingAdmin.IsActive)
             {
                 existingAdmin.IsActive = true;
@@ -66,6 +64,7 @@ public static class IdentitySeeder
             Email = adminEmail,
             UserName = adminEmail,
             EmailConfirmed = true,
+            IsActive = true,
         };
 
         var createResult = await userManager.CreateAsync(admin, adminPassword);
@@ -82,5 +81,61 @@ public static class IdentitySeeder
         else
             logger.LogError("Failed to assign Admin role to seeded user: {Errors}",
                 string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+    }
+
+    private static async Task SeedDefaultReceptionUsersAsync(
+        UserManager<ApplicationUser> userManager, ILogger logger)
+    {
+        var accounts = new[]
+        {
+            (Email: "reception1@errands.local", FullName: "Amira Belhaj"),
+            (Email: "reception2@errands.local", FullName: "Youssef Mansour"),
+        };
+
+        const string receptionPassword = "Reception123!";
+
+        foreach (var (email, fullName) in accounts)
+        {
+            var existing = await userManager.FindByEmailAsync(email);
+            if (existing is not null)
+            {
+                if (!existing.IsActive)
+                {
+                    existing.IsActive = true;
+                    await userManager.UpdateAsync(existing);
+                    logger.LogInformation("Reactivated seeded reception user: {Email}", email);
+                }
+                continue;
+            }
+
+            var user = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                FullName = fullName,
+                Email = email,
+                UserName = email,
+                EmailConfirmed = true,
+                IsActive = true,
+            };
+
+            var createResult = await userManager.CreateAsync(user, receptionPassword);
+            if (!createResult.Succeeded)
+            {
+                logger.LogError(
+                    "Failed to seed reception user {Email}: {Errors}",
+                    email,
+                    string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                continue;
+            }
+
+            var roleResult = await userManager.AddToRoleAsync(user, "Reception");
+            if (roleResult.Succeeded)
+                logger.LogInformation("Reception user seeded: {Email}", email);
+            else
+                logger.LogError(
+                    "Failed to assign Reception role to {Email}: {Errors}",
+                    email,
+                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+        }
     }
 }

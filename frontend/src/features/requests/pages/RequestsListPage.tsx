@@ -8,7 +8,7 @@ import { formatDate } from "@/shared/utils/date";
 import { StatusBadge } from "@/shared/components/StatusBadge";
 import { PriorityBadge } from "@/shared/components/PriorityBadge";
 import { cn } from "@/shared/utils/utils";
-import { useViewMode } from "../hooks/useViewMode";
+import { useViewMode } from "../../../shared/hooks/useViewMode";
 import {
   RequestFilters,
   type RequestFiltersValue,
@@ -95,7 +95,7 @@ export function RequestsListPage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "table"
-                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                 : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >
@@ -108,7 +108,7 @@ export function RequestsListPage() {
               "flex h-8 w-8 items-center justify-center rounded-md",
               "transition-colors",
               viewMode === "card"
-                ? "bg-[#2E2E38] text-white dark:bg-[#FFE600] dark:text-[#2E2E38] shadow-sm"
+                ? "bg-[var(--ey-dark)] text-white dark:bg-[var(--ey-yellow)] dark:text-[var(--ey-dark)] shadow-sm"
                 : "text-muted-foreground hover:bg-muted dark:hover:bg-white/10",
             )}
           >

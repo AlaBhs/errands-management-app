@@ -35,5 +35,9 @@ public sealed class AttachmentConfiguration : IEntityTypeConfiguration<Attachmen
 
         builder.Property(a => a.UploadedAt)
                .IsRequired();
+
+        builder.Property<Guid?>("DeliveryBatchId")
+                .IsRequired(false);
+
     }
 }

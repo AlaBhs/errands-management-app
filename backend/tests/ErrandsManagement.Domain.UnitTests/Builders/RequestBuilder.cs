@@ -118,7 +118,7 @@ public class RequestBuilder
                 request.Start();
 
             if (_completed)
-                request.Complete(null, null);
+                request.Complete(null);
         }
 
         return request;

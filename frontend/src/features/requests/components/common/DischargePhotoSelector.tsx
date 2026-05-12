@@ -55,7 +55,7 @@ export function DischargePhotoSelector({
           onClick={() => inputRef.current?.click()}
           className="w-full flex items-center gap-2 rounded-md border
                      border-dashed border-gray-300 px-3 py-2 text-xs
-                     text-gray-500 hover:border-[#2E2E38] hover:text-[#2E2E38]
+                     text-gray-500 hover:border-[var(--ey-dark)] hover:text-[var(--ey-dark)]
                      transition-colors"
         >
           <Camera className="w-4 h-4" />

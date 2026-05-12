@@ -55,8 +55,8 @@ public sealed class AnalyticsRepository : IAnalyticsRepository
             .FirstOrDefaultAsync(cancellationToken);
 
         var totalActualCost = await base_
-            .SelectMany(r => r.Assignments)
-            .SumAsync(a => a.ActualCost ?? 0m, cancellationToken);
+            .SelectMany(r => r.ExpenseRecords)
+            .SumAsync(e => e.Amount, cancellationToken);
 
         // avg lifecycle
         var lifecyclePairs = await base_
@@ -175,6 +175,12 @@ public sealed class AnalyticsRepository : IAnalyticsRepository
             .Where(r => r.Survey != null)
             .AverageAsync(r => (double?)r.Survey!.Rating, cancellationToken);
 
+        var totalEstimated = totals?.TotalEstimated ?? 0m;
+
+        decimal? budgetVariance = totalEstimated > 0
+            ? totalActualCost - totalEstimated
+            : null;
+
         return new AnalyticsSummaryDto(
             TotalRequests: totals?.Total ?? 0,
             ByStatus: statusCounts.ToDictionary(
@@ -188,7 +194,8 @@ public sealed class AnalyticsRepository : IAnalyticsRepository
             AvgSurveyRating: avgSurveyRating,
             DeadlineComplianceRate: deadlineComplianceRate,
             TotalEstimatedCost: totals?.TotalEstimated ?? 0m,
-            TotalActualCost: totalActualCost
+            TotalActualCost: totalActualCost,
+            BudgetVariance: budgetVariance
         );
     }
 
@@ -258,11 +265,11 @@ public sealed class AnalyticsRepository : IAnalyticsRepository
             .ToListAsync(cancellationToken);
 
         var actualPairs = await base_
-            .Where(r => r.Assignments.Any())
+            .Where(r => r.ExpenseRecords.Any())
             .Select(r => new
             {
                 Category = r.Category,
-                ActualCost = r.Assignments.Sum(a => a.ActualCost ?? 0m),
+                ActualCost = r.ExpenseRecords.Sum(e => e.Amount),
             })
             .ToListAsync(cancellationToken);
 

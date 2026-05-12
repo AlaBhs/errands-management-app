@@ -59,6 +59,22 @@ public sealed class ExceptionHandlingMiddleware
                 new { message = ex.Message },
                 StatusCodes.Status400BadRequest);
         }
+        catch (ForbiddenAccessException ex)
+        {
+            _logger.LogWarning(ex, "Forbidden access.");
+            await WriteErrorResponse(
+                context,
+                new { message = ex.Message },
+                StatusCodes.Status403Forbidden);
+        }
+        catch (ConflictException ex)
+        {
+            _logger.LogWarning(ex, "Conflict: resource already exists.");
+            await WriteErrorResponse(
+                context,
+                new { message = ex.Message },
+                StatusCodes.Status409Conflict);
+        }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized access.");

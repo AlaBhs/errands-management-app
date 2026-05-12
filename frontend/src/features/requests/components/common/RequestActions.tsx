@@ -237,7 +237,6 @@ export function RequestActions({ request }: RequestActionsProps) {
 
   // State
   const [selectedCourierId, setSelectedCourierId] = useState("");
-  const [actualCost, setActualCost] = useState("");
   const [completeNote, setCompleteNote] = useState("");
   const [dischargePhoto, setDischargePhoto] = useState<File | null>(null);
   const [rating, setRating] = useState(0);
@@ -436,20 +435,7 @@ export function RequestActions({ request }: RequestActionsProps) {
           {/* ── IN PROGRESS — Courier: complete ─────────────────────── */}
           {status === "InProgress" && role === UserRole.Courier && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Actual Cost
-                    <span className="ml-1 font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={actualCost}
-                    onChange={(e) => setActualCost(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">
                     Note
@@ -459,7 +445,7 @@ export function RequestActions({ request }: RequestActionsProps) {
                     value={completeNote}
                     onChange={(e) => setCompleteNote(e.target.value)}
                     placeholder="Delivery note..."
-                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
+                    className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[var(--ey-dark)] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -472,7 +458,6 @@ export function RequestActions({ request }: RequestActionsProps) {
               <Button
                 onClick={() =>
                   complete.mutate({
-                    actualCost: actualCost ? parseFloat(actualCost) : undefined,
                     note: completeNote || undefined,
                     dischargePhoto: dischargePhoto ?? undefined,
                   })
@@ -542,7 +527,7 @@ export function RequestActions({ request }: RequestActionsProps) {
                   value={surveyComment}
                   onChange={(e) => setSurveyComment(e.target.value)}
                   placeholder="Comment (optional)"
-                  className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[#2E2E38] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-border bg-background dark:bg-card px-3 py-2.5 text-sm text-foreground focus:border-[var(--ey-dark)] focus:bg-background dark:focus:bg-card focus:outline-none transition-colors"
                 />
 
                 <Button

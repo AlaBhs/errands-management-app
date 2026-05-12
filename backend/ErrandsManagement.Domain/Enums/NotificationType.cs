@@ -7,5 +7,11 @@ public enum NotificationType
     RequestStarted = 3,
     RequestCompleted = 4,
     RequestCancelled = 5,
+    NewMessageReceived = 6,
+    DeadlineRisk = 7,
+
+    DeliveryHandedToReception = 10,
+    DeliveryPickedUp = 11,
+
     General = 99
 }

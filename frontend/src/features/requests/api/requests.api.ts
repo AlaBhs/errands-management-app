@@ -10,6 +10,10 @@ import type {
   SubmitSurveyPayload,
   RequestQueryParams,
   CourierScoreDto,
+  AddExpenseRecordPayload,
+  ExpenseRecordDto,
+  ExpenseSummaryDto,
+  SetAdvancedAmountPayload,
 } from "@/features/requests/types";
 
 export const requestsApi = {
@@ -80,9 +84,43 @@ export const requestsApi = {
     apiClient
       .post<ApiResponse<null>>(`/requests/${id}/survey`, payload)
       .then((res) => res.data),
-  
+
   getCandidates: (id: string) =>
-  apiClient
-    .get<ApiResponse<CourierScoreDto[]>>(`/requests/${id}/candidates`)
-    .then((res) => res.data),
+    apiClient
+      .get<ApiResponse<CourierScoreDto[]>>(`/requests/${id}/candidates`)
+      .then((res) => res.data),
+
+  getExpenses: (requestId: string) =>
+    apiClient
+      .get<ApiResponse<ExpenseRecordDto[]>>(`/requests/${requestId}/expenses`)
+      .then((res) => res.data),
+
+  getExpenseSummary: (requestId: string) =>
+    apiClient
+      .get<
+        ApiResponse<ExpenseSummaryDto>
+      >(`/requests/${requestId}/expenses/summary`)
+      .then((res) => res.data),
+
+  setAdvancedAmount: (requestId: string, payload: SetAdvancedAmountPayload) =>
+    apiClient
+      .post<
+        ApiResponse<null>
+      >(`/requests/${requestId}/expenses/advanced-amount`, payload)
+      .then((res) => res.data),
+
+  addExpense: (requestId: string, payload: AddExpenseRecordPayload) =>
+    apiClient
+      .post<ApiResponse<string>>(`/requests/${requestId}/expenses`, payload)
+      .then((res) => res.data),
+
+  removeExpense: (requestId: string, expenseId: string) =>
+    apiClient
+      .delete<ApiResponse<null>>(`/requests/${requestId}/expenses/${expenseId}`)
+      .then((res) => res.data),
+
+  reconcileExpenses: (requestId: string) =>
+    apiClient
+      .post<ApiResponse<null>>(`/requests/${requestId}/expenses/reconcile`, {})
+      .then((res) => res.data),
 };

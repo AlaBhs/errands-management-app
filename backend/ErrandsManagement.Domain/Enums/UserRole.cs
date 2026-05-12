@@ -4,5 +4,6 @@ public enum UserRole
 {
     Collaborator,
     Admin,
-    Courier
+    Courier,
+    Reception
 }

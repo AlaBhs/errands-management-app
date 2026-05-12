@@ -2,7 +2,14 @@ import { useNavigate, useLocation } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileIcon, Upload, X, Loader2, RotateCcw } from "lucide-react";
+import {
+  FileIcon,
+  Upload,
+  X,
+  Loader2,
+  RotateCcw,
+  BookTemplate,
+} from "lucide-react";
 import { useCreateRequest } from "@/features/requests";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -23,6 +30,9 @@ import { toast } from "sonner";
 import { useUploadAttachments } from "../hooks";
 import type { RequestDetailsDto } from "../types";
 import { AddressMapPicker } from "@/shared/components/AddressMapPicker";
+import type { RequestTemplateListItemDto } from "@/features/request-templates";
+import { TemplatePicker } from "@/features/request-templates";
+import { templatesApi } from "@/features/request-templates/api/templates.api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -144,7 +154,7 @@ function buildDefaultValues(prefill?: RequestDetailsDto): Partial<FormValues> {
 const inputCls =
   "w-full px-4 py-2 border border-border rounded-lg text-sm " +
   "bg-background dark:bg-card text-foreground " +
-  "focus:outline-none focus:ring-2 focus:ring-[#2E2E38] " +
+  "focus:outline-none focus:ring-2 focus:ring-[var(--ey-dark)] " +
   "placeholder:text-muted-foreground";
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -168,11 +178,20 @@ export function CreateRequestPage() {
   const { mutateAsync: uploadFiles, isPending: isUploadingFiles } =
     useUploadAttachments();
 
+  const [appliedTemplate, setAppliedTemplate] = useState<
+    RequestTemplateListItemDto | undefined
+  >(undefined);
+
+  const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
+
+  const [mapKey, setMapKey] = useState(0);
+
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -214,6 +233,77 @@ export function CreateRequestPage() {
     });
   };
 
+  const applyTemplate = async (template: RequestTemplateListItemDto) => {
+    setIsApplyingTemplate(true);
+    try {
+      const res = await templatesApi.getById(template.id);
+      const t = res.data;
+      console.log("Applying template :", t);
+
+      // Core fields
+      setValue("title", t.title, { shouldDirty: true });
+      setValue("description", t.description, { shouldDirty: true });
+      setValue("category", t.category, { shouldDirty: true });
+
+      if (t.estimatedCost != null) {
+        setValue("estimatedCost", String(t.estimatedCost), {
+          shouldDirty: true,
+        });
+      }
+
+      if (t.contactPerson) {
+        setValue("contactPerson", t.contactPerson, { shouldDirty: true });
+      }
+      if (t.contactPhone) {
+        setValue("contactPhone", t.contactPhone, { shouldDirty: true });
+      }
+
+      const addr = t.address;
+      if (addr) {
+        setValue("deliveryAddress.city", addr.city ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.postalCode", addr.postalCode ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.country", addr.country ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.street", addr.street ?? "", {
+          shouldDirty: true,
+        });
+        setValue("deliveryAddress.note", addr.note ?? "", {
+          shouldDirty: true,
+        });
+        // Coordinates — shouldValidate forces Controller to re-render map pin
+        if (addr.latitude != null) {
+          setValue("deliveryAddress.latitude", addr.latitude, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+        if (addr.longitude != null) {
+          setValue("deliveryAddress.longitude", addr.longitude, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+        setMapKey(prev => prev + 1);
+      }
+
+      setAppliedTemplate(template);
+    } catch {
+      toast.error("Failed to load template details.");
+    } finally {
+      setIsApplyingTemplate(false);
+    }
+  };
+
+  const clearTemplate = () => {
+    setAppliedTemplate(undefined);
+    reset({ priority: 1 });
+    setMapKey(prev => prev + 1);
+  };
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   const onSubmit = (values: FormValues) => {
@@ -300,6 +390,32 @@ export function CreateRequestPage() {
         />
       )}
 
+      {/* ── Template Picker ──────────────────────────────────────────────────── */}
+      <div
+        className="rounded-xl border border-indigo-100 dark:border-indigo-900/30
+                bg-indigo-50/50 dark:bg-indigo-950/10 p-4"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <BookTemplate className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+            Use a Template
+          </span>
+          {isApplyingTemplate && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500 ml-1" />
+          )}
+          {appliedTemplate && !isApplyingTemplate && (
+            <span className="ml-auto text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+              ✓ Form pre-filled from "{appliedTemplate.name}"
+            </span>
+          )}
+        </div>
+        <TemplatePicker
+          onSelect={applyTemplate}
+          onClear={clearTemplate}
+          selectedName={appliedTemplate?.name}
+          disabled={isApplyingTemplate}
+        />
+      </div>
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         {/* ── General Info ─────────────────────────────────────────────────── */}
         <div className="bg-white dark:bg-card rounded-xl border border-border p-6 space-y-5">
@@ -475,7 +591,7 @@ export function CreateRequestPage() {
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors bg-muted/30 dark:bg-muted/10
                 ${
                   canAddMore
-                    ? "cursor-pointer hover:border-foreground dark:hover:border-[#FFE600] hover:bg-muted/50 dark:hover:bg-muted/20"
+                    ? "cursor-pointer hover:border-foreground dark:hover:border-[var(--ey-yellow)] hover:bg-muted/50 dark:hover:bg-muted/20"
                     : "cursor-not-allowed opacity-50"
                 } border-border`}
                 >
@@ -594,6 +710,7 @@ export function CreateRequestPage() {
                       control={control}
                       render={({ field: lngField }) => (
                         <AddressMapPicker
+                          key={mapKey}
                           latitude={latField.value}
                           longitude={lngField.value}
                           onCoordinatesChange={(lat, lng) => {
@@ -652,8 +769,8 @@ export function CreateRequestPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-[#2E2E38] text-white
-                       rounded-lg text-sm hover:bg-[#1a1a24] transition-colors
+            className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--ey-dark)] text-white
+                       rounded-lg text-sm hover:bg-[var(--ey-text-hover)] transition-colors
                        disabled:opacity-50"
           >
             {isSubmitting ? (

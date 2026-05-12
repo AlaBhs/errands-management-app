@@ -21,6 +21,7 @@ public class SignalRNotificationService : INotificationRealtimeService
             notification.Message,
             notification.Type,
             notification.ReferenceId,
+            notification.Metadata,
             notification.IsRead,
             notification.CreatedAt);
 

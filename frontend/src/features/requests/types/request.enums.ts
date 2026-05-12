@@ -35,3 +35,11 @@ export const AttachmentType = {
 } as const;
 
 export type AttachmentType = typeof AttachmentType[keyof typeof AttachmentType];
+
+export const ExpenseCategory = {
+  Transport: 'Transport',
+  Purchase:  'Purchase',
+  Other:     'Other',
+} as const;
+
+export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];

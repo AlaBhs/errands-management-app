@@ -22,7 +22,7 @@ public class RequestAttachmentTests
         var courierId = Guid.NewGuid();
         r.Assign(courierId);
         r.Start();
-        r.Complete(null, null);
+        r.Complete(null);
         return r;
     }
 

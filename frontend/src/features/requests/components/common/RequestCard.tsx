@@ -1,5 +1,5 @@
 import { useNavigate }        from "react-router-dom";
-import { Calendar, DollarSign, Tag, ArrowRight } from "lucide-react";
+import { Calendar, Tag, ArrowRight } from "lucide-react";
 import { StatusBadge }        from "@/shared/components/StatusBadge";
 import { PriorityBadge }      from "@/shared/components/PriorityBadge";
 import { formatDate }         from "@/shared/utils/date";
@@ -65,10 +65,10 @@ export function RequestCard({ request }: RequestCardProps) {
           {request.deadline ? formatDate(request.deadline) : "No deadline"}
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <DollarSign className="h-3.5 w-3.5" />
+          tnd
           {request.estimatedCost != null
-            ? `${request.estimatedCost}`
-            : "—"}
+            ? `${" "+request.estimatedCost}`
+            : " —"}
         </div>
       </div>
 

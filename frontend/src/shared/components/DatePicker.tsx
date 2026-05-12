@@ -42,7 +42,7 @@ export function DatePicker({
           className={cn(
             "w-full px-4 py-2 border border-border rounded-lg text-sm",
             "bg-background dark:bg-card text-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-[#2E2E38]",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--ey-dark)]",
             "flex items-center justify-between",
             "hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors",
             disabled && "opacity-50 cursor-not-allowed"

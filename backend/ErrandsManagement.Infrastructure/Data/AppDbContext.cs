@@ -20,6 +20,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<RequestMessage> RequestMessages => Set<RequestMessage>();
+
+    public DbSet<RequestTemplate> RequestTemplates => Set<RequestTemplate>();
+
+    public DbSet<DeliveryBatch> DeliveryBatches => Set<DeliveryBatch>();
+
+    public DbSet<DeliveryBatchAttachment> DeliveryBatchAttachments => Set<DeliveryBatchAttachment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(

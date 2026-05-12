@@ -13,6 +13,7 @@ namespace ErrandsManagement.Application.Analytics.DTOs
         double? AvgSurveyRating,
         double? DeadlineComplianceRate,
         decimal TotalEstimatedCost,
-        decimal TotalActualCost
+        decimal TotalActualCost,
+        decimal? BudgetVariance
     );
 }

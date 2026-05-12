@@ -24,7 +24,7 @@ public class CreateRequestHandlerTests
         new(
             Title: "Buy groceries",
             Description: "Milk, bread and eggs",
-            DeliveryAddress: new AddressDto("Main Street", "City", "12345", "Country"),
+            DeliveryAddress: new AddressDto("City", "12345", "Country", "Main Street"),
             Priority: PriorityLevel.Normal,
             Category: RequestCategory.Other,
             ContactPerson: "John Doe",

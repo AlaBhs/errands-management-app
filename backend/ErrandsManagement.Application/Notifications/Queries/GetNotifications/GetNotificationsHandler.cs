@@ -35,7 +35,7 @@ public sealed class GetNotificationsHandler
         var dtos = notifications
             .Select(n => new NotificationDto(
                 n.Id, n.Message, n.Type,
-                n.ReferenceId, n.IsRead, n.CreatedAt))
+                n.ReferenceId, n.Metadata, n.IsRead, n.CreatedAt))
             .ToList();
 
         return new NotificationListDto(

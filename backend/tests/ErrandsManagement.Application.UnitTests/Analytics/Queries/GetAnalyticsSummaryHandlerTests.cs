@@ -27,7 +27,9 @@ public class GetAnalyticsSummaryHandlerTests
         AvgSurveyRating: 4.5,
         DeadlineComplianceRate: 80.0,
         TotalEstimatedCost: 500m,
-        TotalActualCost: 480m);
+        TotalActualCost: 480m,
+        BudgetVariance: 20m
+        );
 
     [Fact]
     public async Task Handle_Should_Return_Dto_From_Repository()

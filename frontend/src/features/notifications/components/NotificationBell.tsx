@@ -39,7 +39,7 @@ export function NotificationBell() {
             <span
               className="absolute right-1.5 top-1.5 flex h-4 w-4
                 items-center justify-center rounded-full
-                bg-[#FFE600] text-[9px] font-bold text-[#2E2E38]"
+                bg-[var(--ey-yellow)] text-[9px] font-bold text-[var(--ey-dark)]"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>

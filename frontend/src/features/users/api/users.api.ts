@@ -1,11 +1,15 @@
-import { apiClient } from '@/shared/api/client';
-import type { ApiResponse, PaginatedResponse } from '@/shared/api/types';
-import type { UserListItemDto, UserQueryParameters } from '../types';
+import { apiClient } from "@/shared/api/client";
+import type { ApiResponse, PaginatedResponse } from "@/shared/api/types";
+import type {
+  UserListItemDto,
+  UserQueryParameters,
+  CreateUserPayload,
+} from "../types";
 
 export const usersApi = {
   getAll: (params?: UserQueryParameters) =>
     apiClient
-      .get<PaginatedResponse<UserListItemDto>>('/users', { params })
+      .get<PaginatedResponse<UserListItemDto>>("/users", { params })
       .then((res) => res.data),
 
   getById: (id: string) =>
@@ -13,13 +17,14 @@ export const usersApi = {
       .get<ApiResponse<UserListItemDto>>(`/users/${id}`)
       .then((res) => res.data),
 
-  deactivate: (id: string) =>
+  create: (payload: CreateUserPayload) =>
     apiClient
-      .patch<void>(`/users/${id}/deactivate`)
-      .then(() => undefined),
+      .post<ApiResponse<{ userId: string }>>("/users", payload)
+      .then((res) => res.data),
+
+  deactivate: (id: string) =>
+    apiClient.patch<void>(`/users/${id}/deactivate`).then(() => undefined),
 
   activate: (id: string) =>
-    apiClient
-      .patch<void>(`/users/${id}/activate`)
-      .then(() => undefined),
+    apiClient.patch<void>(`/users/${id}/activate`).then(() => undefined),
 };

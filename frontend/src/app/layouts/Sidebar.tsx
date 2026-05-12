@@ -11,6 +11,9 @@ import {
   PanelLeft,
   ChevronRight,
   CalendarClock,
+  BookTemplate,
+  Truck,
+  UserCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -41,6 +44,7 @@ const adminNav: NavGroup[] = [
         exact: true,
       },
       { path: "/requests", label: "All Requests", icon: FileText, exact: true },
+      { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
       { path: "/analytics", label: "Analytics", icon: BarChart3, exact: true },
     ],
   },
@@ -83,6 +87,12 @@ const collaboratorNav: NavGroup[] = [
         icon: PlusCircle,
         exact: true,
       },
+      {
+        path: "/templates",
+        label: "My Templates",
+        icon: BookTemplate,
+        exact: true,
+      },
     ],
   },
 ];
@@ -100,6 +110,25 @@ const courierNav: NavGroup[] = [
         path: "/assignments",
         label: "My Schedule",
         icon: CalendarClock,
+        exact: true,
+      },
+    ],
+  },
+];
+
+const receptionNav: NavGroup[] = [
+  {
+    items: [
+      {
+        path: "/dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        path: "/delivery",
+        label: "Deliveries",
+        icon: Truck,
         exact: true,
       },
     ],
@@ -151,10 +180,10 @@ function NavItemRow({
                       px-3 py-2.5 transition-colors text-sm
                       ${
                         selfActive && !childActive
-                          ? "bg-[#FFE600] text-[#2E2E38] font-medium"
+                          ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
                           : childActive
                             ? "text-white"
-                            : "text-gray-400 hover:bg-[#3a3a48] hover:text-white"
+                            : "text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white"
                       }
                       ${collapsed ? "justify-center px-2" : ""}`}
         >
@@ -167,7 +196,7 @@ function NavItemRow({
           <button
             onClick={() => setOpen((o) => !o)}
             className="flex h-7 w-7 items-center justify-center
-                       rounded-lg text-gray-500 hover:bg-[#3a3a48]
+                       rounded-lg text-gray-500 hover:bg-[var(--ey-gray)]
                        hover:text-white transition-colors"
             aria-label={open ? "Collapse" : "Expand"}
           >
@@ -183,7 +212,7 @@ function NavItemRow({
       {hasChildren && !collapsed && open && (
         <ul
           className="mt-0.5 space-y-0.5 ml-4 pl-3
-                       border-l border-[#3a3a48]"
+                       border-l border-[var(--ey-gray)]"
         >
           {item.children!.map((child) => {
             const childSelfActive = child.exact
@@ -198,8 +227,8 @@ function NavItemRow({
                               px-3 py-2 text-sm transition-colors
                               ${
                                 childSelfActive
-                                  ? "bg-[#FFE600] text-[#2E2E38] font-medium"
-                                  : "text-gray-400 hover:bg-[#3a3a48] hover:text-white"
+                                  ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
+                                  : "text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white"
                               }`}
                 >
                   <span className="truncate">{child.label}</span>
@@ -221,6 +250,8 @@ function getNavGroups(role?: UserRole): NavGroup[] {
       return collaboratorNav;
     case UserRole.Courier:
       return courierNav;
+    case UserRole.Reception:
+      return receptionNav;
     default:
       return [];
   }
@@ -238,7 +269,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`relative flex flex-col bg-[#252930] text-white
+      className={`relative flex flex-col bg-[var(--ey-aside-bg)] text-white
               transition-all duration-300 ease-in-out
               border-r border-transparent dark:border-white/10
               ${collapsed ? "w-[68px]" : "w-64"}`}
@@ -246,14 +277,14 @@ export function Sidebar() {
       onMouseLeave={() => collapsed && setIsHoveringLogo(false)}
     >
       {/* ── Logo ──────────────────────────────────────────────────────── */}
-      <div className="flex h-16 items-center border-b border-[#3a3a48] px-4">
+      <div className="flex h-16 items-center border-b border-[var(--ey-gray)] px-4">
         {collapsed ? (
           // Collapsed mode: show logo or expand button on hover
           isHoveringLogo ? (
             <button
               onClick={() => setCollapsed(false)}
               className="flex h-8 w-8 items-center justify-center rounded-lg
-                         text-gray-400 hover:bg-[#3a3a48] hover:text-white
+                         text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white
                          transition-colors mx-auto"
               aria-label="Expand sidebar"
             >
@@ -262,9 +293,11 @@ export function Sidebar() {
           ) : (
             <div
               className="flex h-8 w-8 items-center justify-center
-                         rounded-lg bg-[#FFE600] mx-auto"
+                         rounded-lg bg-[var(--ey-yellow)] mx-auto"
             >
-              <span className="text-sm font-black text-[#2E2E38]">EY</span>
+              <span className="text-sm font-black text-[var(--ey-dark)]">
+                EY
+              </span>
             </div>
           )
         ) : (
@@ -273,15 +306,17 @@ export function Sidebar() {
             <div className="flex items-center gap-3">
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center
-                           rounded-lg bg-[#FFE600]"
+                           rounded-lg bg-[var(--ey-yellow)]"
               >
-                <span className="text-sm font-black text-[#2E2E38]">EY</span>
+                <span className="text-sm font-black text-[var(--ey-dark)]">
+                  EY
+                </span>
               </div>
               <div className="leading-tight">
                 <p className="text-sm font-semibold">EY Errands</p>
                 <p
                   className="text-[10px] font-medium tracking-widest
-                             text-[#FFE600]/60 uppercase"
+                             text-[var(--ey-yellow)]/60 uppercase"
                 >
                   Management
                 </p>
@@ -291,7 +326,7 @@ export function Sidebar() {
             <button
               onClick={() => setCollapsed(true)}
               className="flex h-7 w-7 items-center justify-center rounded-lg
-                         text-gray-400 hover:bg-[#3a3a48] hover:text-white
+                         text-gray-400 hover:bg-[var(--ey-gray)] hover:text-white
                          transition-colors"
               aria-label="Close sidebar"
               title="Close sidebar"
@@ -315,7 +350,7 @@ export function Sidebar() {
               </p>
             )}
             {group.label && collapsed && (
-              <div className="mb-1.5 mx-3 h-px bg-[#3a3a48]" />
+              <div className="mb-1.5 mx-3 h-px bg-[var(--ey-gray)]" />
             )}
 
             <ul className="space-y-0.5">
@@ -332,12 +367,30 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── footer ───────────────────────────────────────────────── */}
-      <div className="border-t border-[#3a3a48] p-3">
+      {/* ── footer ─────────────────────────────────────────────────── */}
+      <div className="border-t border-[var(--ey-gray)] p-3 space-y-0.5">
+        {/* Profile link — all roles */}
+        <Link
+          to="/profile"
+          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5
+                hover:bg-[var(--ey-gray)] hover:text-white transition-colors
+                ${
+                  location.pathname === "/profile"
+                    ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
+                    : "text-gray-400"
+                }
+                ${collapsed ? "justify-center px-2" : ""}`}
+          title={collapsed ? "My Profile" : undefined}
+        >
+          <UserCircle className="h-5 w-5 shrink-0" />
+          {!collapsed && <span className="text-sm">My Profile</span>}
+        </Link>
+
+        {/* Sign out */}
         <button
           onClick={() => logout.mutate()}
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5
-                text-gray-400 hover:bg-[#3a3a48] hover:text-red-400
+                text-gray-400 hover:bg-[var(--ey-gray)] hover:text-red-400
                 transition-colors
                 ${collapsed ? "justify-center px-2" : ""}`}
           title={collapsed ? "Sign out" : undefined}

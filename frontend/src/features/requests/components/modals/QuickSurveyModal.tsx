@@ -124,7 +124,7 @@ export function QuickSurveyModal({
                 rows={3}
                 className="w-full rounded-lg border border-border
                            bg-background dark:bg-card py-2.5 pl-9 pr-4 text-sm text-foreground
-                           resize-none focus:border-[#2E2E38]
+                           resize-none focus:border-[var(--ey-dark)]
                            focus:bg-background dark:focus:bg-card focus:outline-none
                            transition-colors"
               />

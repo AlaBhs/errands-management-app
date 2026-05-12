@@ -2,6 +2,7 @@
 using ErrandsManagement.Application.Auth.Commands.Logout;
 using ErrandsManagement.Application.Auth.Commands.RefreshToken;
 using ErrandsManagement.Application.Auth.Commands.RegisterUser;
+using ErrandsManagement.Application.Users.Commands.SetPassword;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,7 @@ public sealed class AuthController : ControllerBase
     [HttpPost("register")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Register(
-        [FromBody] RegisterUserCommand command,
-        CancellationToken ct)
+        [FromBody] RegisterUserCommand command, CancellationToken ct)
     {
         var result = await _mediator.Send(command, ct);
         return Ok(result);
@@ -30,8 +30,7 @@ public sealed class AuthController : ControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login(
-        [FromBody] LoginUserCommand command,
-        CancellationToken ct)
+        [FromBody] LoginUserCommand command, CancellationToken ct)
     {
         var result = await _mediator.Send(command, ct);
         SetRefreshTokenCookie(result.RefreshToken);
@@ -76,13 +75,24 @@ public sealed class AuthController : ControllerBase
         if (!string.IsNullOrWhiteSpace(refreshToken))
             await _mediator.Send(new LogoutCommand(refreshToken), ct);
 
-        Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions
-        {
-            Path = "/"
-        });
-
+        Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions { Path = "/" });
         return NoContent();
     }
+
+    /// <summary>
+    /// Public endpoint. User sets their password using the token from the activation email.
+    /// On success the account is activated and the email is confirmed.
+    /// </summary>
+    [HttpPost("set-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SetPassword(
+        [FromBody] SetPasswordCommand command, CancellationToken ct)
+    {
+        await _mediator.Send(command, ct);
+        return NoContent();
+    }
+
+    // ── Private helpers ────────────────────────────────────────────────────
 
     private void SetRefreshTokenCookie(string token)
     {
