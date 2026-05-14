@@ -13,7 +13,7 @@ import {
   CalendarClock,
   BookTemplate,
   Truck,
-  UserCircle,
+  BrainCircuit,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLogout } from "@/features/auth/hooks/useAuthMutations";
@@ -37,15 +37,11 @@ type NavGroup = {
 const adminNav: NavGroup[] = [
   {
     items: [
-      {
-        path: "/dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        exact: true,
-      },
-      { path: "/requests", label: "All Requests", icon: FileText, exact: true },
-      { path: "/delivery", label: "Deliveries", icon: Truck, exact: true },
-      { path: "/analytics", label: "Analytics", icon: BarChart3, exact: true },
+      { path: "/dashboard",            label: "Dashboard",      icon: LayoutDashboard, exact: true },
+      { path: "/requests",             label: "All Requests",   icon: FileText,        exact: true },
+      { path: "/delivery",             label: "Deliveries",     icon: Truck,           exact: true },
+      { path: "/analytics",            label: "Analytics",      icon: BarChart3,       exact: true },
+      { path: "/operational-reports",  label: "Operational Reports",   icon: BrainCircuit,    exact: true },
     ],
   },
   {
@@ -57,9 +53,9 @@ const adminNav: NavGroup[] = [
         icon: Settings,
         exact: true,
         children: [
-          { path: "/admin/users", label: "User Management", exact: true },
-          { path: "/admin/categories", label: "Categories (soon)" },
-          { path: "/admin/settings", label: "Settings (soon)" },
+          { path: "/admin/users",       label: "User Management", exact: true },
+          { path: "/admin/categories",  label: "Categories (soon)" },
+          { path: "/admin/settings",    label: "Settings (soon)" },
         ],
       },
     ],
@@ -69,30 +65,10 @@ const adminNav: NavGroup[] = [
 const collaboratorNav: NavGroup[] = [
   {
     items: [
-      {
-        path: "/dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        exact: true,
-      },
-      {
-        path: "/requests/mine",
-        label: "My Requests",
-        icon: FileText,
-        exact: true,
-      },
-      {
-        path: "/requests/new",
-        label: "New Request",
-        icon: PlusCircle,
-        exact: true,
-      },
-      {
-        path: "/templates",
-        label: "My Templates",
-        icon: BookTemplate,
-        exact: true,
-      },
+      { path: "/dashboard",     label: "Dashboard",    icon: LayoutDashboard, exact: true },
+      { path: "/requests/mine", label: "My Requests",  icon: FileText,        exact: true },
+      { path: "/requests/new",  label: "New Request",  icon: PlusCircle,      exact: true },
+      { path: "/templates",     label: "My Templates", icon: BookTemplate,    exact: true },
     ],
   },
 ];
@@ -100,18 +76,8 @@ const collaboratorNav: NavGroup[] = [
 const courierNav: NavGroup[] = [
   {
     items: [
-      {
-        path: "/dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        exact: true,
-      },
-      {
-        path: "/assignments",
-        label: "My Schedule",
-        icon: CalendarClock,
-        exact: true,
-      },
+      { path: "/dashboard",   label: "Dashboard",  icon: LayoutDashboard, exact: true },
+      { path: "/assignments", label: "My Schedule", icon: CalendarClock,  exact: true },
     ],
   },
 ];
@@ -119,18 +85,8 @@ const courierNav: NavGroup[] = [
 const receptionNav: NavGroup[] = [
   {
     items: [
-      {
-        path: "/dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        exact: true,
-      },
-      {
-        path: "/delivery",
-        label: "Deliveries",
-        icon: Truck,
-        exact: true,
-      },
+      { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { path: "/delivery",  label: "Deliveries", icon: Truck,          exact: true },
     ],
   },
 ];
@@ -148,7 +104,6 @@ function NavItemRow({
 }) {
   const hasChildren = item.children && item.children.length > 0;
 
-  // Auto-expand when any child route is active
   const childActive = hasChildren
     ? item.children!.some((c) =>
         c.exact ? pathname === c.path : pathname.startsWith(c.path),
@@ -163,7 +118,6 @@ function NavItemRow({
 
   const Icon = item.icon;
 
-  // Keep expanded when navigating to a child route
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (childActive) setOpen(true);
@@ -171,7 +125,6 @@ function NavItemRow({
 
   return (
     <li>
-      {/* Main item */}
       <div className="flex items-center gap-1">
         <Link
           to={item.path}
@@ -191,7 +144,6 @@ function NavItemRow({
           {!collapsed && <span className="truncate flex-1">{item.label}</span>}
         </Link>
 
-        {/* Expand toggle — only shown when expanded and has children */}
         {hasChildren && !collapsed && (
           <button
             onClick={() => setOpen((o) => !o)}
@@ -208,12 +160,8 @@ function NavItemRow({
         )}
       </div>
 
-      {/* Children */}
       {hasChildren && !collapsed && open && (
-        <ul
-          className="mt-0.5 space-y-0.5 ml-4 pl-3
-                       border-l border-[var(--ey-gray)]"
-        >
+        <ul className="mt-0.5 space-y-0.5 ml-4 pl-3 border-l border-[var(--ey-gray)]">
           {item.children!.map((child) => {
             const childSelfActive = child.exact
               ? pathname === child.path
@@ -244,16 +192,11 @@ function NavItemRow({
 
 function getNavGroups(role?: UserRole): NavGroup[] {
   switch (role) {
-    case UserRole.Admin:
-      return adminNav;
-    case UserRole.Collaborator:
-      return collaboratorNav;
-    case UserRole.Courier:
-      return courierNav;
-    case UserRole.Reception:
-      return receptionNav;
-    default:
-      return [];
+    case UserRole.Admin:       return adminNav;
+    case UserRole.Collaborator: return collaboratorNav;
+    case UserRole.Courier:     return courierNav;
+    case UserRole.Reception:   return receptionNav;
+    default:                   return [];
   }
 }
 
@@ -276,10 +219,9 @@ export function Sidebar() {
       onMouseEnter={() => collapsed && setIsHoveringLogo(true)}
       onMouseLeave={() => collapsed && setIsHoveringLogo(false)}
     >
-      {/* ── Logo ──────────────────────────────────────────────────────── */}
+      {/* ── Logo ── */}
       <div className="flex h-16 items-center border-b border-[var(--ey-gray)] px-4">
         {collapsed ? (
-          // Collapsed mode: show logo or expand button on hover
           isHoveringLogo ? (
             <button
               onClick={() => setCollapsed(false)}
@@ -291,38 +233,23 @@ export function Sidebar() {
               <PanelLeft className="h-5 w-5" />
             </button>
           ) : (
-            <div
-              className="flex h-8 w-8 items-center justify-center
-                         rounded-lg bg-[var(--ey-yellow)] mx-auto"
-            >
-              <span className="text-sm font-black text-[var(--ey-dark)]">
-                EY
-              </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ey-yellow)] mx-auto">
+              <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
             </div>
           )
         ) : (
-          // Expanded mode: full logo + collapse button
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center
-                           rounded-lg bg-[var(--ey-yellow)]"
-              >
-                <span className="text-sm font-black text-[var(--ey-dark)]">
-                  EY
-                </span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--ey-yellow)]">
+                <span className="text-sm font-black text-[var(--ey-dark)]">EY</span>
               </div>
               <div className="leading-tight">
                 <p className="text-sm font-semibold">EY Errands</p>
-                <p
-                  className="text-[10px] font-medium tracking-widest
-                             text-[var(--ey-yellow)]/60 uppercase"
-                >
+                <p className="text-[10px] font-medium tracking-widest text-[var(--ey-yellow)]/60 uppercase">
                   Management
                 </p>
               </div>
             </div>
-
             <button
               onClick={() => setCollapsed(true)}
               className="flex h-7 w-7 items-center justify-center rounded-lg
@@ -337,22 +264,18 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* ── Navigation ────────────────────────────────────────────────── */}
+      {/* ── Navigation ── */}
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
         {groups.map((group, gi) => (
           <div key={gi}>
             {group.label && !collapsed && (
-              <p
-                className="mb-1.5 px-3 text-[10px] font-semibold
-                      uppercase tracking-widest text-gray-500"
-              >
+              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
                 {group.label}
               </p>
             )}
             {group.label && collapsed && (
               <div className="mb-1.5 mx-3 h-px bg-[var(--ey-gray)]" />
             )}
-
             <ul className="space-y-0.5">
               {group.items.map((item) => (
                 <NavItemRow
@@ -367,26 +290,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── footer ─────────────────────────────────────────────────── */}
-      <div className="border-t border-[var(--ey-gray)] p-3 space-y-0.5">
-        {/* Profile link — all roles */}
-        <Link
-          to="/profile"
-          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5
-                hover:bg-[var(--ey-gray)] hover:text-white transition-colors
-                ${
-                  location.pathname === "/profile"
-                    ? "bg-[var(--ey-yellow)] text-[var(--ey-dark)] font-medium"
-                    : "text-gray-400"
-                }
-                ${collapsed ? "justify-center px-2" : ""}`}
-          title={collapsed ? "My Profile" : undefined}
-        >
-          <UserCircle className="h-5 w-5 shrink-0" />
-          {!collapsed && <span className="text-sm">My Profile</span>}
-        </Link>
-
-        {/* Sign out */}
+      {/* ── Footer ── */}
+      <div className="border-t border-[var(--ey-gray)] p-3">
         <button
           onClick={() => logout.mutate()}
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5

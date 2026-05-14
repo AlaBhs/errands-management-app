@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
 import { CategoryBarChart } from "../components/CategoryBarChart";
 import { CostBreakdownTable } from "../components/CostBreakdownTable";
@@ -8,7 +10,6 @@ import { DateRangeFilter } from "../components/DateRangeFilter";
 import { KpiCard } from "../components/KpiCard";
 import { KpiCardSkeleton } from "../components/skeletons/KpiCardSkeleton";
 import { PipelineTimingCard } from "../components/PipelineTimingCard";
-
 import { TrendChart } from "../components/TrendChart";
 import { WidgetEmptyState } from "../components/WidgetEmptyState";
 import {
@@ -117,6 +118,21 @@ const IconCurrency = () => (
     />
   </svg>
 );
+const IconAI = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+    />
+  </svg>
+);
 
 const toIsoDate = (d: Date): string => d.toISOString().split("T")[0];
 
@@ -127,6 +143,7 @@ const DEFAULT_FILTER: AnalyticsFilter = {
 
 export const AnalyticsPage = () => {
   const [filter, setFilter] = useState<AnalyticsFilter>(DEFAULT_FILTER);
+  const navigate = useNavigate();
 
   const summary = useAnalyticsSummary(filter);
   const trend = useAnalyticsTrend(filter);
@@ -135,6 +152,14 @@ export const AnalyticsPage = () => {
 
   const s = summary.data;
   const completedCount = s?.byStatus["Completed"] ?? 0;
+
+  // Navigate to Operational Reports page, pre-filling the current date range
+  const handleGenerateReport = () => {
+    const params = new URLSearchParams();
+    if (filter.from) params.set("from", filter.from);
+    if (filter.to) params.set("to", filter.to);
+    navigate(`/operational-reports?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,38 +172,53 @@ export const AnalyticsPage = () => {
               Operational overview of all errand requests
             </p>
           </div>
-          {s && (
-            <div className="hidden items-center gap-6 text-sm sm:flex">
-              <div className="text-center">
-                <p className="text-lg font-bold tabular-nums">
-                  {s.totalRequests}
-                </p>
-                <p className="text-xs text-muted-foreground">Total</p>
+
+          <div className="flex items-center gap-4">
+            {/* ── Live stats ── */}
+            {s && (
+              <div className="hidden items-center gap-6 text-sm sm:flex">
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums">
+                    {s.totalRequests}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                    {completedCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Completed</p>
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-[var(--chart-1)]">
+                    {(s.byStatus["Assigned"] ?? 0) +
+                      (s.byStatus["InProgress"] ?? 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-rose-500 dark:text-rose-400">
+                    {s.byStatus["Cancelled"] ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Cancelled</p>
+                </div>
               </div>
-              <Separator orientation="vertical" className="h-8" />
-              <div className="text-center">
-                <p className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                  {completedCount}
-                </p>
-                <p className="text-xs text-muted-foreground">Completed</p>
-              </div>
-              <Separator orientation="vertical" className="h-8" />
-              <div className="text-center">
-                <p className="text-lg font-bold tabular-nums text-[var(--chart-1)]">
-                  {(s.byStatus["Assigned"] ?? 0) +
-                    (s.byStatus["InProgress"] ?? 0)}
-                </p>
-                <p className="text-xs text-muted-foreground">Active</p>
-              </div>
-              <Separator orientation="vertical" className="h-8" />
-              <div className="text-center">
-                <p className="text-lg font-bold tabular-nums text-rose-500 dark:text-rose-400">
-                  {s.byStatus["Cancelled"] ?? 0}
-                </p>
-                <p className="text-xs text-muted-foreground">Cancelled</p>
-              </div>
-            </div>
-          )}
+            )}
+
+            {/* ── Generate Report button — passes the current filter range ── */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateReport}
+              className="gap-2 border-[var(--ey-yellow)] text-[var(--ey-text)] bg-[var(--ey-yellow)]/10 hover:bg-[var(--ey-yellow)] hover:text-[var(--ey-dark)] transition-colors h-[stretch] rounded-md"
+            >
+              <IconAI />
+              Generate Report
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -349,7 +389,6 @@ export const AnalyticsPage = () => {
 
         {/* ── Status Distribution + Pipeline Timing ─────────────────────────── */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Status distribution */}
           <div className="rounded-xl border-0 bg-transparent p-0 shadow-none">
             {summary.isLoading ? (
               <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -368,7 +407,6 @@ export const AnalyticsPage = () => {
             )}
           </div>
 
-          {/* Pipeline timing */}
           {summary.isLoading ? (
             <PipelineTimingSkeleton />
           ) : s &&
@@ -418,8 +456,6 @@ export const AnalyticsPage = () => {
                 ? "Request volume over the last 6 months"
                 : "Request volume over the selected period"}
             </p>
-
-            {/* Peak month stat */}
             {trend.data && (
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -441,8 +477,6 @@ export const AnalyticsPage = () => {
                 </div>
               </div>
             )}
-
-            {/* Chart area — flex-1 makes it fill remaining space */}
             <div className="flex-1 min-h-0">
               {trend.isLoading ? (
                 <TrendChartSkeleton />
